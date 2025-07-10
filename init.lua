@@ -1,157 +1,160 @@
--- === Screen cycling with Option key ===
-local optionPressed = false
-local otherKeyPressed = false
-local lastScreenIndex = 1
+-- === VIM-STYLE NAV SYSTEM (Data Science Optimized) ===
 
-local function getRealScreens()
-    local all = hs.screen.allScreens()
-    local real = {}
-    for _, screen in ipairs(all) do
-        local name = screen:name() or ""
-        if not name:lower():find("virtual") then
-            table.insert(real, screen)
-        end
-    end
-    return real
+local modal = hs.hotkey.modal.new()
+
+-- === Option Tap: Center Mouse on Next Real Screen ===
+local optionPressed, optionOtherKey = false, false
+local optionIndex = 1
+
+local function getScreens()
+  local all = hs.screen.allScreens()
+  local real = {}
+  for _, s in ipairs(all) do
+    if not (s:name() or ""):lower():find("virtual") then table.insert(real, s) end
+  end
+  return real
 end
 
-local screens = getRealScreens()
-local screenCount = #screens
+local function centerMouseOn(index)
+  local screen = getScreens()[index]
+  if not screen then return end
+  local f = screen:frame()
+  hs.mouse.setAbsolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+end
 
-hs.screen.watcher.new(function()
-    screens = getRealScreens()
-    screenCount = #screens
+hs.eventtap.new({hs.eventtap.event.types.flagsChanged}, function(e)
+  local f = e:getFlags()
+  if f.alt and not optionPressed then
+    optionPressed = true; optionOtherKey = false
+  elseif not f.alt and optionPressed then
+    optionPressed = false
+    if not optionOtherKey then
+      local total = #getScreens()
+      optionIndex = (optionIndex % total) + 1
+      centerMouseOn(optionIndex)
+    end
+  end
 end):start()
 
-local function moveToScreen(index)
-    if screenCount == 0 then return end
-    local screen = screens[index]
-    local frame = screen:frame()
-    local center = hs.geometry.rectMidPoint(frame)
-    hs.mouse.setAbsolutePosition(center)
+hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(e)
+  if optionPressed then optionOtherKey = true end
+end):start()
+
+-- === Control Tap: Click Bottom Center of Next Screen ===
+local ctrlPressed, ctrlOtherKey = false, false
+local ctrlIndex = 1
+
+local function clickBottom(index)
+  local screen = getScreens()[index]
+  if not screen then return end
+  local f = screen:frame()
+  local pos = { x = f.x + f.w / 2, y = f.y + f.h - 80 }
+  hs.mouse.setAbsolutePosition(pos)
+  hs.eventtap.leftClick(pos)
 end
 
-local flagsWatcher = hs.eventtap.new({hs.eventtap.event.types.flagsChanged}, function(event)
-    local flags = event:getFlags()
-    if flags.alt and not optionPressed then
-        optionPressed = true
-        otherKeyPressed = false
-    elseif not flags.alt and optionPressed then
-        optionPressed = false
-        if not otherKeyPressed then
-            lastScreenIndex = (lastScreenIndex % screenCount) + 1
-            moveToScreen(lastScreenIndex)
-        end
+hs.eventtap.new({hs.eventtap.event.types.flagsChanged}, function(e)
+  local f = e:getFlags()
+  if f.ctrl and not ctrlPressed then
+    ctrlPressed = true; ctrlOtherKey = false
+  elseif not f.ctrl and ctrlPressed then
+    ctrlPressed = false
+    if not ctrlOtherKey then
+      local total = #getScreens()
+      ctrlIndex = (ctrlIndex % total) + 1
+      clickBottom(ctrlIndex)
     end
-end)
+  end
+end):start()
 
-local keyWatcher = hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(event)
-    if optionPressed then
-        otherKeyPressed = true
-    end
-end)
+hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(e)
+  if ctrlPressed then ctrlOtherKey = true end
+end):start()
 
-flagsWatcher:start()
-keyWatcher:start()
+-- === NAV MODE TRIGGERS ===
+hs.hotkey.bind({"ctrl", "alt", "cmd"}, "space", function() modal:enter() end)
+hs.hotkey.bind({}, "f12", function() modal:enter() end)
 
--- === Modal: VIM-Like Navigation ===
-local modal = hs.hotkey.modal.new({"ctrl", "alt", "cmd"}, "space")
-
--- Optional floating overlay
+-- === NAV MODE Overlay ===
 local overlay = hs.canvas.new({
   x = hs.screen.mainScreen():frame().w - 140,
   y = hs.screen.mainScreen():frame().h - 40,
-  h = 30,
-  w = 120
-})
-
-overlay:appendElements({
-  action = "fill",
-  fillColor = { alpha = 0.3 },
-  type = "rectangle",
+  h = 30, w = 120
+}):appendElements({
+  action = "fill", fillColor = { alpha = 0.3 }, type = "rectangle",
   roundedRectRadii = { xRadius = 8, yRadius = 8 }
 }, {
-  type = "text",
-  text = "NAV MODE",
-  textSize = 14,
-  textColor = { white = 1 },
-  frame = { x = 0, y = 5, h = 30, w = 120 },
+  type = "text", text = "NAV MODE", textSize = 14,
+  textColor = { white = 1 }, frame = { x = 0, y = 5, h = 30, w = 120 },
   textAlignment = "center"
 })
-overlay:hide()
 
-function modal:entered()
-  overlay:show()
-end
+function modal:entered() overlay:show() end
+function modal:exited() overlay:hide() end
 
-function modal:exited()
-  overlay:hide()
-end
-
--- Window movement
+-- === NAV KEYS ===
 modal:bind({}, "h", function() hs.window.focusedWindow():focusWindowWest() end)
 modal:bind({}, "j", function() hs.window.focusedWindow():focusWindowSouth() end)
 modal:bind({}, "k", function() hs.window.focusedWindow():focusWindowNorth() end)
 modal:bind({}, "l", function() hs.window.focusedWindow():focusWindowEast() end)
+modal:bind({}, "d", function() hs.eventtap.scrollWheel({0, -20}, {}, "pixel") end)
+modal:bind({}, "u", function() hs.eventtap.scrollWheel({0, 20}, {}, "pixel") end)
 
--- Scroll
-modal:bind({}, "d", function()
-  hs.eventtap.event.newScrollEvent({0, -20}, {}, "pixel"):post()
-end)
-
-modal:bind({}, "u", function()
-  hs.eventtap.event.newScrollEvent({0, 20}, {}, "pixel"):post()
-end)
-
--- gg = scroll to top
+local gPressedOnce = false
 modal:bind({}, "g", function()
-  modal:bind({}, "g", function()
-    hs.eventtap.event.newScrollEvent({0, 99999}, {}, "pixel"):post()
-  end)
+  if gPressedOnce then
+    hs.eventtap.scrollWheel({0, 99999}, {}, "pixel")
+    gPressedOnce = false
+  else
+    gPressedOnce = true
+    hs.timer.doAfter(0.4, function() gPressedOnce = false end)
+  end
 end)
-
--- G = scroll to bottom
 modal:bind({"shift"}, "g", function()
-  hs.eventtap.event.newScrollEvent({0, -99999}, {}, "pixel"):post()
+  hs.eventtap.scrollWheel({0, -99999}, {}, "pixel")
 end)
 
--- c = focus ChatGPT and click input
 modal:bind({}, "c", function()
-  local chatWindow = hs.window.get("ChatGPT")
-  if chatWindow then
-    chatWindow:focus()
+  local win = hs.window.get("ChatGPT")
+  if win then
+    win:focus()
     hs.timer.doAfter(0.4, function()
-      local f = chatWindow:frame()
-      hs.mouse.setAbsolutePosition({x = f.x + f.w / 2, y = f.y + f.h - 100})
-      hs.eventtap.leftClick(hs.mouse.getAbsolutePosition())
+      local f = win:frame()
+      local pt = { x = f.x + f.w / 2, y = f.y + f.h - 100 }
+      hs.mouse.setAbsolutePosition(pt)
+      hs.eventtap.leftClick(pt)
     end)
   else
     hs.alert("ChatGPT window not found")
   end
+  modal:exit()
 end)
 
--- o = open Arc and new tab
 modal:bind({}, "o", function()
   hs.application.launchOrFocus("Arc")
+  hs.timer.doAfter(0.4, function() hs.eventtap.keyStroke({"cmd"}, "t") end)
+  modal:exit()
+end)
+
+modal:bind({}, "v", function()
+  hs.application.launchOrFocus("Visual Studio Code")
   hs.timer.doAfter(0.4, function()
-    hs.eventtap.keyStroke({"cmd"}, "t")
+    local win = hs.window.focusedWindow()
+    if win then
+      local f = win:frame()
+      hs.mouse.setAbsolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+    end
   end)
+  modal:exit()
 end)
 
--- w = next tab
-modal:bind({}, "w", function()
-  hs.eventtap.keyStroke({"cmd", "shift"}, "]")
-end)
+modal:bind({}, "w", function() hs.eventtap.keyStroke({"cmd", "shift"}, "]") end)
+modal:bind({}, "b", function() hs.eventtap.keyStroke({"cmd", "shift"}, "[") end)
 
--- b = previous tab
-modal:bind({}, "b", function()
-  hs.eventtap.keyStroke({"cmd", "shift"}, "[")
-end)
-
--- Escape to exit modal
 modal:bind({}, "escape", function() modal:exit() end)
+modal:bind({"ctrl"}, "c", function() modal:exit() end)
 
--- Optional manual reload shortcut: Option + R
+-- === Reload Shortcut ===
 hs.hotkey.bind({"alt"}, "r", function()
   hs.reload()
   hs.alert("Hammerspoon reloaded")
