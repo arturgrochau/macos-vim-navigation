@@ -1,8 +1,11 @@
--- === VIM-STYLE NAV SYSTEM (Data Science Optimized) ===
+-- === VIM-STYLE NAV SYSTEM FOR macOS ===
+-- Author: Artur Grochau
+-- Usage: Customize keybindings and apps below to fit your workflow
+-- Hammerspoon: https://www.hammerspoon.org/
 
 local modal = hs.hotkey.modal.new()
 
--- === Option Tap: Center Mouse on Next Real Screen ===
+-- === TAP OPTION TO MOVE MOUSE TO CENTER OF NEXT SCREEN ===
 local optionPressed, optionOtherKey = false, false
 local optionIndex = 1
 
@@ -40,7 +43,7 @@ hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(e)
   if optionPressed then optionOtherKey = true end
 end):start()
 
--- === Control Tap: Click Bottom Center of Next Screen ===
+-- === TAP CONTROL TO CLICK BOTTOM CENTER OF NEXT SCREEN ===
 local ctrlPressed, ctrlOtherKey = false, false
 local ctrlIndex = 1
 
@@ -71,11 +74,13 @@ hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(e)
   if ctrlPressed then ctrlOtherKey = true end
 end):start()
 
--- === NAV MODE TRIGGERS ===
+-- === TRIGGER NAV MODE ===
+-- You can change or remove triggers below as desired
 hs.hotkey.bind({"ctrl", "alt", "cmd"}, "space", function() modal:enter() end)
 hs.hotkey.bind({}, "f12", function() modal:enter() end)
+hs.hotkey.bind({"ctrl"}, "=", function() modal:enter() end)
 
--- === NAV MODE Overlay ===
+-- === NAV MODE OVERLAY INDICATOR ===
 local overlay = hs.canvas.new({
   x = hs.screen.mainScreen():frame().w - 140,
   y = hs.screen.mainScreen():frame().h - 40,
@@ -92,14 +97,17 @@ local overlay = hs.canvas.new({
 function modal:entered() overlay:show() end
 function modal:exited() overlay:hide() end
 
--- === NAV KEYS ===
+-- === NAV MODE KEYS ===
 modal:bind({}, "h", function() hs.window.focusedWindow():focusWindowWest() end)
 modal:bind({}, "j", function() hs.window.focusedWindow():focusWindowSouth() end)
 modal:bind({}, "k", function() hs.window.focusedWindow():focusWindowNorth() end)
 modal:bind({}, "l", function() hs.window.focusedWindow():focusWindowEast() end)
+
+-- Scroll (down/up)
 modal:bind({}, "d", function() hs.eventtap.scrollWheel({0, -20}, {}, "pixel") end)
 modal:bind({}, "u", function() hs.eventtap.scrollWheel({0, 20}, {}, "pixel") end)
 
+-- Scroll to top/bottom (gg/G)
 local gPressedOnce = false
 modal:bind({}, "g", function()
   if gPressedOnce then
@@ -114,6 +122,7 @@ modal:bind({"shift"}, "g", function()
   hs.eventtap.scrollWheel({0, -99999}, {}, "pixel")
 end)
 
+-- c = Focus ChatGPT and click into input
 modal:bind({}, "c", function()
   local win = hs.window.get("ChatGPT")
   if win then
@@ -130,12 +139,21 @@ modal:bind({}, "c", function()
   modal:exit()
 end)
 
+-- o = Open Arc and new tab
 modal:bind({}, "o", function()
   hs.application.launchOrFocus("Arc")
-  hs.timer.doAfter(0.4, function() hs.eventtap.keyStroke({"cmd"}, "t") end)
+  hs.timer.doAfter(0.4, function()
+    hs.eventtap.keyStroke({"cmd"}, "t")
+  end)
   modal:exit()
 end)
 
+-- a = Open/focus Arc browser (no exit)
+modal:bind({}, "a", function()
+  hs.application.launchOrFocus("Arc")
+end)
+
+-- v = Focus or launch VS Code and center cursor
 modal:bind({}, "v", function()
   hs.application.launchOrFocus("Visual Studio Code")
   hs.timer.doAfter(0.4, function()
@@ -148,13 +166,15 @@ modal:bind({}, "v", function()
   modal:exit()
 end)
 
+-- w / b = next / previous browser tab
 modal:bind({}, "w", function() hs.eventtap.keyStroke({"cmd", "shift"}, "]") end)
 modal:bind({}, "b", function() hs.eventtap.keyStroke({"cmd", "shift"}, "[") end)
 
+-- Exit NAV mode
 modal:bind({}, "escape", function() modal:exit() end)
 modal:bind({"ctrl"}, "c", function() modal:exit() end)
 
--- === Reload Shortcut ===
+-- Manual reload
 hs.hotkey.bind({"alt"}, "r", function()
   hs.reload()
   hs.alert("Hammerspoon reloaded")
