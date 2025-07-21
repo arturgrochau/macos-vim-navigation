@@ -9,6 +9,8 @@
 This is a **Vim-style keyboard navigation system for macOS**, built using Hammerspoon.  
 It helps you control screens, apps, inputs, and the mouse — all without lifting your hands off the keyboard.
 
+👉 **[📦 Download Latest Version](https://github.com/arturpedrotti/macos-vim-navigation/releases/latest/download/macos-vim-navigation.zip)** 👈
+
 This config includes:
 
 - 🖱️ One-tap screen switching with `⌥` or `⌃`
