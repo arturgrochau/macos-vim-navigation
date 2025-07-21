@@ -128,22 +128,4 @@ Made by **Artur Grochau**
 
 ---
 
-## 🟢 Add a Green Download Button
-
-1. Zip your project:
-
-```bash
-zip -r vim-nav.zip init.lua README.md
-```
-
-2. On GitHub:
-   - Go to **Releases** tab → click **Draft a new release**
-   - Tag version: `v1.0.0`
-   - Upload your `vim-nav.zip`
-   - Publish the release
-
-3. Add this to your README for the green button:
-
-```markdown
-### 📦 [Download ZIP](https://github.com/arturpedrotti/macos-vim-navigation/releases/latest)
 ```
