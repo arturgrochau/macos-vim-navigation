@@ -1,245 +1,148 @@
 local modal = hs.hotkey.modal.new()
-local heldTimers = {}
-
-local ax = hs.axuielement
+local held = {}
 local mouse = hs.mouse
 local screen = hs.screen
 local eventtap = hs.eventtap
-local scrollStep = 20
-local mouseStep = 30
+local window = hs.window
+local scrollStep, mouseStep = 20, 30
 
--- === OVERLAY INDICATOR ===
+-- === OVERLAY ===
 local overlay = hs.canvas.new({
   x = screen.mainScreen():frame().w - 160,
   y = screen.mainScreen():frame().h - 40,
   h = 30, w = 140
 }):appendElements({
-  type = "rectangle", action = "fill",
-  fillColor = { alpha = 0.4, red = 0, green = 0, blue = 0 },
-  roundedRectRadii = { xRadius = 8, yRadius = 8 }
-}, {
-  type = "text", text = "-- NORMAL --",
-  textSize = 14, textColor = { white = 1 },
-  frame = { x = 0, y = 5, h = 30, w = 140 },
-  textAlignment = "center"
+  type="rectangle", action="fill",
+  fillColor={alpha=0.4, red=0, green=0, blue=0},
+  roundedRectRadii={xRadius=8,yRadius=8}
+},{
+  type="text", text="-- NORMAL --",
+  textSize=14, textColor={white=1},
+  frame={x=0,y=5,h=30,w=140}, textAlignment="center"
 })
-
 function modal:entered() overlay:show() end
 function modal:exited() overlay:hide() end
 
 -- === HELD KEYS ===
-local function bindHeldKey(mod, key, fn)
+local function bindHeld(mod, key, fn)
   modal:bind(mod, key,
     function()
       fn()
-      heldTimers[key] = hs.timer.doEvery(0.05, fn)
+      held[key] = hs.timer.doEvery(0.05, fn)
     end,
     function()
-      if heldTimers[key] then heldTimers[key]:stop() heldTimers[key] = nil end
+      if held[key] then held[key]:stop(); held[key] = nil end
     end
   )
 end
 
-local function moveMouse(dx, dy)
-  local pos = mouse.absolutePosition()
-  mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+-- === MOUSE MOVEMENT ===
+local function moveMouse(dx,dy)
+  local p = mouse.absolutePosition()
+  mouse.absolutePosition({x = p.x + dx, y = p.y + dy})
 end
+bindHeld({}, "h", function() moveMouse(-mouseStep,0) end)
+bindHeld({}, "l", function() moveMouse(mouseStep,0) end)
+bindHeld({}, "j", function() moveMouse(0,mouseStep) end)
+bindHeld({}, "k", function() moveMouse(0,-mouseStep) end)
+bindHeld({"shift"}, "H", function() moveMouse(-mouseStep*4,0) end)
+bindHeld({"shift"}, "L", function() moveMouse(mouseStep*4,0) end)
+bindHeld({"shift"}, "J", function() moveMouse(0,mouseStep*4) end)
+bindHeld({"shift"}, "K", function() moveMouse(0,-mouseStep*4) end)
 
-bindHeldKey({}, "h", function() moveMouse(-mouseStep, 0) end)
-bindHeldKey({}, "l", function() moveMouse(mouseStep, 0) end)
-bindHeldKey({}, "j", function() moveMouse(0, mouseStep) end)
-bindHeldKey({}, "k", function() moveMouse(0, -mouseStep) end)
-bindHeldKey({"shift"}, "H", function() moveMouse(-mouseStep * 4, 0) end)
-bindHeldKey({"shift"}, "L", function() moveMouse(mouseStep * 4, 0) end)
-bindHeldKey({"shift"}, "J", function() moveMouse(0, mouseStep * 4) end)
-bindHeldKey({"shift"}, "K", function() moveMouse(0, -mouseStep * 4) end)
-
+-- === CLICKING ===
 modal:bind({}, "i", function() eventtap.leftClick(mouse.absolutePosition()) end)
 modal:bind({}, "a", function() eventtap.rightClick(mouse.absolutePosition()) end)
 
--- === WINDOW ELEMENTS ===
-local function getWindowElements(win)
-  if not win then return {} end
-  local axWin = ax.windowElement(win)
-  if not axWin then return {} end
-  local function flatten(el)
-    local out = {}
-    for _, child in ipairs(el:attributeValue("AXChildren") or {}) do
-      table.insert(out, child)
-      for _, sub in ipairs(flatten(child)) do table.insert(out, sub) end
-    end
-    return out
-  end
-  return flatten(axWin)
-end
-
--- === TEXTBOX LOOKUP ===
-local function findTextbox(win, direction, rightmostOnly)
-  local pos = mouse.absolutePosition()
-  local candidates = {}
-  for _, el in ipairs(getWindowElements(win)) do
-    local role = el:attributeValue("AXRole")
-    if role == "AXTextField" or role == "AXTextArea" then
-      local f = el:attributeValue("AXFrame")
-      if f then
-        local cx, cy = f.x + f.w / 2, f.y + f.h / 2
-        if math.abs(cy - pos.y) < 100 then
-          if rightmostOnly or
-            (direction == "left" and cx < pos.x) or
-            (direction == "right" and cx > pos.x)
-          then
-            table.insert(candidates, {
-              pt = { x = cx, y = cy },
-              rank = rightmostOnly and -cx or math.abs(cx - pos.x)
-            })
-          end
-        end
-      end
-    end
-  end
-  table.sort(candidates, function(a, b) return a.rank < b.rank end)
-  return candidates[1] and candidates[1].pt or nil
-end
-
--- === FOCUS + CLICK FOR SHIFT+A / SHIFT+I ===
-local function shiftJump(dir)
+-- === APP FOCUS (SHIFT+A / SHIFT+I) ===
+local function focusAppOffset(offset)
+  local wins = hs.window.orderedWindows()
   local cur = hs.window.focusedWindow()
-  local winList = hs.window.orderedWindows()
-  local target = winList[2] or winList[1]
-  if target and target:id() ~= cur:id() then target:focus() end
-  hs.timer.doAfter(0.2, function()
-    local pt = findTextbox(hs.window.focusedWindow(), dir)
-    if pt then
-      mouse.absolutePosition(pt)
-      eventtap.leftClick(pt)
-      modal:exit()
-    else
-      hs.alert("No textbox found")
-    end
-  end)
-end
-
-modal:bind({"shift"}, "A", function() shiftJump("right") end)
-modal:bind({"shift"}, "I", function() shiftJump("left") end)
-
--- === MOUSE TO LEFTMOST / RIGHTMOST TEXTBOX (NO CLICK) ===
-local function moveToLeftmostTextbox()
-  local win = hs.window.focusedWindow()
-  local elements = getWindowElements(win)
-  local best = nil
-  for _, el in ipairs(elements) do
-    local role = el:attributeValue("AXRole")
-    if role == "AXTextField" or role == "AXTextArea" then
-      local f = el:attributeValue("AXFrame")
-      if f then
-        local pt = { x = f.x, y = f.y + f.h / 2 }
-        if not best or f.x < best.x then best = pt end
-      end
+  for idx, w in ipairs(wins) do
+    if w:id() == cur:id() then
+      local nextWin = wins[(idx + offset - 1) % #wins + 1]
+      if nextWin then nextWin:focus() end
+      return
     end
   end
-  if best then mouse.absolutePosition(best) end
 end
+modal:bind({"shift"}, "A", function() focusAppOffset(1) end)
+modal:bind({"shift"}, "I", function() focusAppOffset(-1) end)
 
-local function moveToRightmostTextbox()
-  local win = hs.window.focusedWindow()
-  local pt = findTextbox(win, "right", true)
-  if pt then mouse.absolutePosition(pt) end
-end
-
-modal:bind({}, "0", moveToLeftmostTextbox)
-modal:bind({"shift"}, "6", moveToLeftmostTextbox) -- ^
-modal:bind({"shift"}, "4", moveToRightmostTextbox) -- $
-
--- === SCREEN EDGE ===
-local function edgeJump(dx, dy)
+-- === SCREEN EDGE + CENTER ===
+local function edge(dx,dy)
   local f = screen.mainScreen():frame()
-  mouse.absolutePosition({
-    x = f.x + f.w / 2 + f.w / 2 * dx * 0.9,
-    y = f.y + f.h / 2 + f.h / 2 * dy * 0.9
-  })
+  mouse.absolutePosition({ x = f.x + f.w/2 + dx*f.w*0.45, y = f.y + f.h/2 + dy*f.h*0.45 })
 end
-
-modal:bind({"shift"}, "W", function() edgeJump(1, 0) end)
-modal:bind({"shift"}, "B", function() edgeJump(-1, 0) end)
-modal:bind({"shift"}, "U", function() edgeJump(0, -1) end)
-modal:bind({"shift"}, "D", function() edgeJump(0, 1) end)
-
--- === MIDDLE SCREEN ===
-modal:bind({"shift"}, "M", function()
+modal:bind({"shift"},"W",function() edge(1,0) end)
+modal:bind({"shift"},"B",function() edge(-1,0) end)
+modal:bind({"shift"},"U",function() edge(0,-1) end)
+modal:bind({"shift"},"D",function() edge(0,1) end)
+modal:bind({"shift"},"M",function()
   local f = screen.mainScreen():frame()
-  mouse.absolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  mouse.absolutePosition({x = f.x + f.w/2, y = f.y + f.h/2})
 end)
 
--- === SCROLLING ===
-bindHeldKey({}, "d", function() eventtap.scrollWheel({0, -scrollStep}, {}, "pixel") end)
-bindHeldKey({}, "u", function() eventtap.scrollWheel({0, scrollStep}, {}, "pixel") end)
-bindHeldKey({}, "w", function() eventtap.scrollWheel({-scrollStep, 0}, {}, "pixel") end)
-bindHeldKey({}, "b", function() eventtap.scrollWheel({scrollStep, 0}, {}, "pixel") end)
+-- === SCROLLING (HOLDABLE) ===
+bindHeld({}, "d", function() eventtap.scrollWheel({0,-scrollStep},{}, "pixel") end)
+bindHeld({}, "u", function() eventtap.scrollWheel({0,scrollStep},{}, "pixel") end)
+bindHeld({}, "w", function() eventtap.scrollWheel({-scrollStep,0},{}, "pixel") end)
+bindHeld({}, "b", function() eventtap.scrollWheel({scrollStep,0},{}, "pixel") end)
 
--- === NAV MODE KEYS ===
-hs.hotkey.bind({"ctrl", "alt", "cmd"}, "space", function() modal:enter() end)
+-- === NAV MODE TRIGGERS ===
+hs.hotkey.bind({"ctrl","alt","cmd"}, "space", function() modal:enter() end)
 hs.hotkey.bind({}, "f12", function() modal:enter() end)
 hs.hotkey.bind({"ctrl"}, "=", function() modal:enter() end)
 modal:bind({}, "escape", function() modal:exit() end)
 modal:bind({"ctrl"}, "c", function() modal:exit() end)
 
--- === RELOAD ===
-hs.hotkey.bind({"alt"}, "r", function()
+-- === RELOAD CONFIG ===
+hs.hotkey.bind({"alt"},"r",function()
   hs.reload()
-  hs.alert("Hammerspoon reloaded")
+  hs.alert("Reloaded")
 end)
 
--- === SCREEN JUMP (OPTION / CONTROL) ===
-local function getScreens()
-  local real = {}
+-- === MULTI-SCREEN SHORTCUTS (⌥ Tap and ⌃ Tap) ===
+local function screenList()
+  local out = {}
   for _, s in ipairs(hs.screen.allScreens()) do
-    if not (s:name() or ""):lower():find("virtual") then table.insert(real, s) end
+    if not s:name():lower():find("virtual") then table.insert(out, s) end
   end
-  return real
+  return out
 end
 
--- OPTION = center mouse on next screen
 do
-  local optPressed, optOtherKey = false, false
-  local optIndex = 1
+  local opt,other = false,false
+  local idx = 1
   hs.eventtap.new({eventtap.event.types.flagsChanged}, function(e)
     local f = e:getFlags()
-    if f.alt and not optPressed then
-      optPressed = true; optOtherKey = false
-    elseif not f.alt and optPressed then
-      optPressed = false
-      if not optOtherKey then
-        optIndex = (optIndex % #getScreens()) + 1
-        local f = getScreens()[optIndex]:frame()
-        mouse.setAbsolutePosition({ x = f.x + f.w/2, y = f.y + f.h/2 })
+    if f.alt and not opt then opt,other = true,false
+    elseif not f.alt and opt then opt = false
+      if not other then
+        idx = (idx % #screenList()) + 1
+        local f = screenList()[idx]:frame()
+        mouse.setAbsolutePosition({x = f.x + f.w/2, y = f.y + f.h/2})
       end
     end
   end):start()
-  hs.eventtap.new({eventtap.event.types.keyDown}, function()
-    if optPressed then optOtherKey = true end
-  end):start()
+  hs.eventtap.new({eventtap.event.types.keyDown}, function() if opt then other = true end end):start()
 end
 
--- CONTROL = click bottom middle of next screen
 do
-  local ctrlPressed, ctrlOtherKey = false, false
-  local ctrlIndex = 1
+  local ctrl,other = false,false
+  local idx = 1
   hs.eventtap.new({eventtap.event.types.flagsChanged}, function(e)
     local f = e:getFlags()
-    if f.ctrl and not ctrlPressed then
-      ctrlPressed = true; ctrlOtherKey = false
-    elseif not f.ctrl and ctrlPressed then
-      ctrlPressed = false
-      if not ctrlOtherKey then
-        ctrlIndex = (ctrlIndex % #getScreens()) + 1
-        local f = getScreens()[ctrlIndex]:frame()
-        local pt = { x = f.x + f.w/2, y = f.y + f.h - 80 }
+    if f.ctrl and not ctrl then ctrl,other = true,false
+    elseif not f.ctrl and ctrl then ctrl = false
+      if not other then
+        idx = (idx % #screenList()) + 1
+        local f = screenList()[idx]:frame()
+        local pt = {x = f.x + f.w/2, y = f.y + f.h - 80}
         mouse.setAbsolutePosition(pt)
         eventtap.leftClick(pt)
       end
     end
   end):start()
-  hs.eventtap.new({eventtap.event.types.keyDown}, function()
-    if ctrlPressed then ctrlOtherKey = true end
-  end):start()
+  hs.eventtap.new({eventtap.event.types.keyDown}, function() if ctrl then other = true end end):start()
 end
