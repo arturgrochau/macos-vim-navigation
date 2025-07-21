@@ -1,165 +1,129 @@
 # 🟩 VIM-STYLE MAC NAVIGATION SYSTEM  
 ### Powered by Hammerspoon  
-#### Customized by **Artur Grochau**
+#### Designed by **Artur Grochau**
 
 ---
 
 ## ✨ What is this?
 
-This is a **Vim-style keyboard navigation system for macOS**, built on Hammerspoon.  
-It gives you ultra-fast control over:
+This is a **Vim-style keyboard navigation system for macOS**, built using Hammerspoon.  
+It helps you control screens, apps, inputs, and the mouse — all without lifting your hands off the keyboard.
 
-- Switching screens
-- Clicking into text inputs
-- Scrolling and mouse movement
-- Navigating apps
-- Without touching your mouse
+This config includes:
+
+- 🖱️ One-tap screen switching with `⌥` or `⌃`
+- 🧭 Modal **NAV MODE** for full mouse, scroll, and UI movement
+- 🔎 Auto-jump to text boxes
+- 🖥️ Works across multi-monitor setups
+- 🧼 Minimal, fast, and customizable
 
 ---
 
-## 🧠 Quick Commands
+## 🧠 Commands Summary
 
-| Mode / Key(s)                      | Action                                                                 |
+| Key                                | Action                                                                 |
 |-----------------------------------|------------------------------------------------------------------------|
-| `⌥` (tap)                         | Move mouse to center of next screen                                    |
-| `⌃` (tap)                         | Click near bottom of next screen (where input fields usually are)      |
-| `⌃⌥⌘ + Space` / `F12` / `⌃ =`     | Enter **-- NORMAL --** mode                                            |
-| `Esc` or `⌃ + c`                  | Exit NORMAL mode                                                       |
-
-### While in NORMAL Mode
-
-| Key(s)                            | Action                                                                 |
-|----------------------------------|------------------------------------------------------------------------|
-| `h / j / k / l`                  | Move mouse left / down / up / right (hold to repeat)                   |
-| `H / J / K / L`                  | Move mouse 4× faster in same direction                                 |
-| `d / u`                          | Scroll down / up (holdable)                                            |
-| `w / b`                          | Scroll right / left (holdable)                                         |
-| `W / B / U / D`                  | Move mouse to right / left / top / bottom edge                         |
-| `i / a`                          | Left click / right click at cursor                                     |
-| `I / A`                          | Jump to & click nearest textbox on left / right (tries next app too)  |
-| `0` or `^`                       | Move mouse to leftmost textbox                                         |
-| `$`                              | Move mouse to rightmost textbox                                      |
-| `M`                              | Center mouse on current screen                                         |
+| `⌥ tap`                           | Move mouse to center of next screen                                   |
+| `⌃ tap`                           | Click near bottom-middle of next screen                               |
+| `⌃⌥⌘ + space` / `F12` / `⌃ =`     | Enter **NAV MODE** (shows `-- NORMAL --` overlay)                     |
+| `⎋` or `⌃ + c`                    | Exit NAV MODE                                                         |
+| `h / j / k / l`                   | Move mouse (← ↓ ↑ →), holdable                                        |
+| `H / J / K / L`                   | Move mouse faster (×4 speed)                                          |
+| `d / u / w / b`                   | Scroll down / up / right / left, holdable                             |
+| `i`                               | Left click                                                            |
+| `a`                               | Right click                                                           |
+| `Shift + A` / `Shift + I`         | Jump to nearest textbox (→ / ←), click + **exit NAV MODE**            |
+| `0` or `Shift + 6` (`^`)          | Move mouse to leftmost textbox (no click, stay in NAV MODE)           |
+| `Shift + 4` (`$`)                 | Move mouse to rightmost textbox (no click, stay in NAV MODE)          |
+| `Shift + M`                       | Move mouse to center of current screen                                |
+| `Shift + W / B / U / D`           | Move mouse near screen edge (→ ← ↑ ↓)                                 |
+| `⌥ + r`                           | Reload Hammerspoon config                                             |
 
 ---
 
-## 🧱 Setup Instructions
+## 🛠 Setup Instructions
 
-### 1. Install Hammerspoon
-
-Download: https://www.hammerspoon.org/  
-Then open it and grant **Accessibility + Automation** in:
-
-> System Settings → Privacy & Security → Accessibility
-
----
-
-### 2. Install the Config
-
-Clone and copy the `init.lua` file:
+### 1. 🔁 Clone this config
 
 ```bash
 git clone https://github.com/yourname/vim-nav-hs.git
-cp vim-nav-hs/init.lua ~/.hammerspoon/init.lua
+cd vim-nav-hs
+```
+
+### 2. 🧱 Install Hammerspoon
+
+Download it: 👉 [https://www.hammerspoon.org](https://www.hammerspoon.org)
+
+Then:
+
+- Open Hammerspoon once
+- Go to `System Settings → Privacy & Security → Accessibility`
+- Enable **Hammerspoon**
+- Grant Automation if prompted
+
+---
+
+### 3. 🔗 Install the Config
+
+```bash
+cp init.lua ~/.hammerspoon/init.lua
 ```
 
 Then either:
 
-- Click the Hammerspoon menu icon → "Reload Config"
-- Or press `⌥ + r` (it's built in)
+- Click the Hammerspoon menu bar icon → "Reload Config"  
+- Or press `⌥ + r` to reload manually
 
 ---
 
-## 🚀 Feature Overview
+## 🧪 Test It Works
 
-### 🔁 Screen Switching
-
-- Tap `⌥` to move the mouse to the center of the next screen.
-- Tap `⌃` to click near the bottom of the next screen (usually near input boxes).
-
-You can cycle through screens infinitely.
+1. Tap `⌥` → mouse moves to center of next screen  
+2. Tap `⌃` → mouse clicks near bottom of next screen  
+3. Press `⌃⌥⌘ + Space` or `F12` or `⌃ =` → "NORMAL" appears  
+4. Use `h/j/k/l`, scroll with `d/u/w/b`, try jumps like `Shift+A`, `0`, `$`
 
 ---
 
-### 🧭 NORMAL Mode
+## 🧩 Customization
 
-Enter with:
+### Change App Focuses (if used in your build)
 
-- `⌃⌥⌘ + Space`
-- `F12`
-- `⌃ =`
+Inside your `init.lua`, you can replace `Arc`, `ChatGPT`, `Visual Studio Code`, etc., with your preferred app names:
 
-You'll see a small overlay: `-- NORMAL --`
+```lua
+hs.application.launchOrFocus("Google Chrome")
+hs.application.launchOrFocus("iTerm")
+```
 
-While in this mode:
-
-#### 🖱 Mouse Movement
-
-- `h/j/k/l`: Move mouse in respective direction (hold to repeat)
-- `H/J/K/L`: Same as above but 4× faster
-- `M`: Jump mouse to center of screen
-- `W/B/U/D`: Jump mouse near edge (right, left, top, bottom)
-
-#### ⬇️ Scrolling
-
-- `d/u`: Scroll down/up
-- `w/b`: Scroll right/left  
-All scrolls repeat if held.
-
-#### 🖱 Clicking
-
-- `i`: Left click
-- `a`: Right click
-
-#### ✍️ Textbox Navigation
-
-- `A`: Jump to textbox to the right (tries focused app first, then fallback)
-- `I`: Jump to textbox to the left (same logic)
-- `$`: Jump near right edge of screen
-- `0` / `^`: Jump to leftmost visible textbox
-
-#### 🔚 Exit
-
-- `Esc` or `Ctrl + c`: Exits NORMAL mode
-
----
-
-## 🔁 Reloading
-
-You can manually reload the config with:
-
-- `⌥ + r`  
-- Or click the menu bar → "Reload Config"
-
----
-
-## 👨‍💻 Customization
-
-Change default apps, text detection filters, or modifier keys by editing `~/.hammerspoon/init.lua`.
-
-To inspect any app name:
+To discover the current app name:
 
 ```lua
 hs.application.frontmostApplication():name()
 ```
 
-Paste in Hammerspoon's console (⌘ + 4).
+Paste this into Hammerspoon’s console (`⌘ + 4` from the menu icon).
 
 ---
 
-## 📁 File Structure
+## 📁 Project Structure
 
-```
+```bash
 vim-nav-hs/
-├── README.md
-└── init.lua
+├── README.md       # This file
+└── init.lua        # Hammerspoon config
 ```
 
-Install by copying `init.lua` to `~/.hammerspoon/`.
+---
+
+## 👨‍💻 Contributing
+
+Fork it. Hack it. Extend it.  
+Open issues or ideas anytime.
 
 ---
 
 ## 📜 License
 
 MIT License  
-Created & customized by **Artur Grochau**
+Made by **Artur Grochau**
