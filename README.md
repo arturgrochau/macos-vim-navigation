@@ -1,188 +1,165 @@
 # 🟩 VIM-STYLE MAC NAVIGATION SYSTEM  
 ### Powered by Hammerspoon  
-#### Designed by **Artur Grochau**
+#### Customized by **Artur Grochau**
 
 ---
 
 ## ✨ What is this?
 
-This is a **Vim-style navigation system for macOS**, built for pure keyboard control.  
-It's designed to help you focus, work faster, and switch between screens, apps, and inputs — without touching your mouse.
+This is a **Vim-style keyboard navigation system for macOS**, built on Hammerspoon.  
+It gives you ultra-fast control over:
 
-This config includes:
-
-- 🖱️ One-tap switching between screens with `⌥` and `⌃`
-- 🧭 NAV MODE (modal key layer) to move windows, scroll like Vim, jump to apps
-- 💻 Launch apps like VS Code, Arc, or ChatGPT
-- 🧹 Works in any workspace setup — even multi-monitor
+- Switching screens
+- Clicking into text inputs
+- Scrolling and mouse movement
+- Navigating apps
+- Without touching your mouse
 
 ---
 
-## 🧠 Quick Commands Summary
+## 🧠 Quick Commands
 
-| Key                                | Action                                                                 |
+| Mode / Key(s)                      | Action                                                                 |
 |-----------------------------------|------------------------------------------------------------------------|
-| `⌥ tap`                           | Move mouse to center of next physical screen                          |
-| `⌃ tap`                           | Click bottom-middle of next screen (where input fields usually are)   |
-| `⌃⌥⌘ + space` / `F12` / `⌃ =`     | Activate **NAV MODE**                                                 |
-| `h / j / k / l`                   | Move window focus (← ↓ ↑ →)                                           |
-| `d / u`                           | Scroll down / up slightly (like `Ctrl-d`, `Ctrl-u` in Vim)            |
-| `gg / G`                          | Scroll to top / bottom                                                |
-| `c`                               | Focus ChatGPT and click text input                                    |
-| `v`                               | Focus or open VS Code                                                 |
-| `o`                               | Open Arc and new tab, then exit NAV MODE                              |
-| `a`                               | Focus or open Arc (stay in NAV MODE)                                  |
-| `w / b`                           | Next / previous browser tab                                           |
-| `⎋` or `⌃ + c`                    | Exit NAV MODE                                                         |
-| `⌥ + r`                           | Reload config manually                                                |
+| `⌥` (tap)                         | Move mouse to center of next screen                                    |
+| `⌃` (tap)                         | Click near bottom of next screen (where input fields usually are)      |
+| `⌃⌥⌘ + Space` / `F12` / `⌃ =`     | Enter **-- NORMAL --** mode                                            |
+| `Esc` or `⌃ + c`                  | Exit NORMAL mode                                                       |
+
+### While in NORMAL Mode
+
+| Key(s)                            | Action                                                                 |
+|----------------------------------|------------------------------------------------------------------------|
+| `h / j / k / l`                  | Move mouse left / down / up / right (hold to repeat)                   |
+| `H / J / K / L`                  | Move mouse 4× faster in same direction                                 |
+| `d / u`                          | Scroll down / up (holdable)                                            |
+| `w / b`                          | Scroll right / left (holdable)                                         |
+| `W / B / U / D`                  | Move mouse to right / left / top / bottom edge                         |
+| `i / a`                          | Left click / right click at cursor                                     |
+| `I / A`                          | Jump to & click nearest textbox on left / right (tries next app too)  |
+| `0` or `^`                       | Move mouse to leftmost textbox                                         |
+| `$`                              | Move mouse to rightmost textbox                                      |
+| `M`                              | Center mouse on current screen                                         |
 
 ---
 
-## 🛠 Installation & Setup
+## 🧱 Setup Instructions
 
-### 1. 🔁 Clone this repo
+### 1. Install Hammerspoon
 
-```bash
-git clone git@github.com:arturpedrotti/vim-nav-hs.git
-cd vim-nav-hs
-```
+Download: https://www.hammerspoon.org/  
+Then open it and grant **Accessibility + Automation** in:
 
-### 2. 🧱 Install Hammerspoon
-
-Download and install:
-
-👉 https://www.hammerspoon.org/
-
-Then:
-
-- Open Hammerspoon once
-- Go to `System Settings → Privacy & Security → Accessibility`
-- Enable access for **Hammerspoon**
-- Also allow **Automation** if prompted
+> System Settings → Privacy & Security → Accessibility
 
 ---
 
-### 3. 🔗 Link the configuration
+### 2. Install the Config
 
-Copy the file to Hammerspoon’s expected config location:
+Clone and copy the `init.lua` file:
 
 ```bash
-cp init.lua ~/.hammerspoon/init.lua
+git clone https://github.com/yourname/vim-nav-hs.git
+cp vim-nav-hs/init.lua ~/.hammerspoon/init.lua
 ```
 
 Then either:
 
-- Click the Hammerspoon menu bar icon → "Reload Config"  
-- Or press `⌥ + r` (already built into this config)
+- Click the Hammerspoon menu icon → "Reload Config"
+- Or press `⌥ + r` (it's built in)
 
 ---
 
-## 🚀 How to Use
+## 🚀 Feature Overview
 
-### Tap-Based Mouse Navigation (⚡ Works anywhere)
+### 🔁 Screen Switching
 
-| Action                          | How it works                                  |
-|--------------------------------|-----------------------------------------------|
-| `⌥ tap` (just press/release)   | Mouse jumps to center of next screen          |
-| `⌃ tap`                         | Mouse clicks bottom of next screen            |
+- Tap `⌥` to move the mouse to the center of the next screen.
+- Tap `⌃` to click near the bottom of the next screen (usually near input boxes).
 
-You can cycle through screens infinitely, no need to hold keys.
+You can cycle through screens infinitely.
 
 ---
 
-### Enter NAV MODE (modal layer for keyboard commands)
+### 🧭 NORMAL Mode
 
-Press any of the following:
+Enter with:
 
 - `⌃⌥⌘ + Space`
 - `F12`
 - `⌃ =`
 
-You’ll see a floating "NAV MODE" popup in the corner. This means it's active.
+You'll see a small overlay: `-- NORMAL --`
+
+While in this mode:
+
+#### 🖱 Mouse Movement
+
+- `h/j/k/l`: Move mouse in respective direction (hold to repeat)
+- `H/J/K/L`: Same as above but 4× faster
+- `M`: Jump mouse to center of screen
+- `W/B/U/D`: Jump mouse near edge (right, left, top, bottom)
+
+#### ⬇️ Scrolling
+
+- `d/u`: Scroll down/up
+- `w/b`: Scroll right/left  
+All scrolls repeat if held.
+
+#### 🖱 Clicking
+
+- `i`: Left click
+- `a`: Right click
+
+#### ✍️ Textbox Navigation
+
+- `A`: Jump to textbox to the right (tries focused app first, then fallback)
+- `I`: Jump to textbox to the left (same logic)
+- `$`: Jump near right edge of screen
+- `0` / `^`: Jump to leftmost visible textbox
+
+#### 🔚 Exit
+
+- `Esc` or `Ctrl + c`: Exits NORMAL mode
 
 ---
 
-### While in NAV MODE
+## 🔁 Reloading
 
-| Keys         | What it does                              |
-|--------------|--------------------------------------------|
-| `h / j / k / l` | Focus next window in direction (like Vim) |
-| `d / u`         | Scroll slightly down / up                |
-| `g g`           | Scroll to top                            |
-| `G`             | Scroll to bottom                         |
-| `c`             | Focus ChatGPT and click into input       |
-| `v`             | Open or focus VS Code                    |
-| `o`             | Open Arc and new tab → exit NAV MODE     |
-| `a`             | Open Arc (stay in NAV MODE)              |
-| `w / b`         | Browser tab next / previous              |
-| `⎋` or `⌃ + c`  | Exit NAV MODE                            |
+You can manually reload the config with:
+
+- `⌥ + r`  
+- Or click the menu bar → "Reload Config"
 
 ---
 
-## ⚙️ Customization (For You)
+## 👨‍💻 Customization
 
-You can change app names inside `init.lua`:
+Change default apps, text detection filters, or modifier keys by editing `~/.hammerspoon/init.lua`.
 
-```lua
--- Replace "Arc" with your browser
-hs.application.launchOrFocus("Arc")
--- or
-hs.application.launchOrFocus("Google Chrome")
-```
-
-Same with VS Code:
-
-```lua
-hs.application.launchOrFocus("Visual Studio Code")
--- Or:
-hs.application.launchOrFocus("Visual Studio Code - Insiders")
-```
-
-To find exact app names:
+To inspect any app name:
 
 ```lua
 hs.application.frontmostApplication():name()
 ```
 
-Paste the above in Hammerspoon's console (⌘ + 4 from menu icon).
+Paste in Hammerspoon's console (⌘ + 4).
 
 ---
 
-## 🧪 To Test It Works
+## 📁 File Structure
 
-1. Launch Hammerspoon (menu icon should be visible)
-2. Tap `⌥` → mouse should jump screen center  
-3. Tap `⌃` → mouse should click bottom of screen  
-4. Press `⌃⌥⌘ + space` or `f12` or `ctrl =`  
-   → "NAV MODE" should appear  
-5. Use Vim keys (`h/j/k/l`) to move window focus  
-6. Try `v`, `c`, `o`, `a` to test apps  
-
----
-
-## 📁 Project Structure
-
-vim-nav-hs/  
-├── README.md        # This file  
-└── init.lua         # Main Hammerspoon config
-
-Install with:
-
-```bash
-cp init.lua ~/.hammerspoon/init.lua
+```
+vim-nav-hs/
+├── README.md
+└── init.lua
 ```
 
----
-
-## 👨‍💻 Contributing
-
-Fork it. Hack it. Use it.  
-Open issues if you want help with extending or fixing behavior.
+Install by copying `init.lua` to `~/.hammerspoon/`.
 
 ---
 
 ## 📜 License
 
 MIT License  
-Created and maintained by **Artur Grochau**
-```
+Created & customized by **Artur Grochau**

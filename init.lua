@@ -1,11 +1,205 @@
--- === VIM-STYLE NAV SYSTEM FOR macOS ===
--- Author: Artur Grochau
--- Usage: Customize keybindings and apps below to fit your workflow
--- Hammerspoon: https://www.hammerspoon.org/
-
 local modal = hs.hotkey.modal.new()
+local heldTimers = {}
 
--- === TAP OPTION TO MOVE MOUSE TO CENTER OF NEXT SCREEN ===
+local ax = hs.axuielement
+local mouse = hs.mouse
+local screen = hs.screen
+local eventtap = hs.eventtap
+local scrollStep = 20
+local mouseStep = 30
+
+-- === OVERLAY INDICATOR ===
+local overlay = hs.canvas.new({
+  x = screen.mainScreen():frame().w - 160,
+  y = screen.mainScreen():frame().h - 40,
+  h = 30, w = 140
+}):appendElements({
+  type = "rectangle", action = "fill",
+  fillColor = { alpha = 0.4, red = 0, green = 0, blue = 0 },
+  roundedRectRadii = { xRadius = 8, yRadius = 8 }
+}, {
+  type = "text", text = "-- NORMAL --",
+  textSize = 14, textColor = { white = 1 },
+  frame = { x = 0, y = 5, h = 30, w = 140 },
+  textAlignment = "center"
+})
+
+function modal:entered() overlay:show() end
+function modal:exited() overlay:hide() end
+
+-- === HELD KEY FUNCTION ===
+local function bindHeldKey(mod, key, fn)
+  modal:bind(mod, key,
+    function()
+      fn()
+      heldTimers[key] = hs.timer.doEvery(0.05, fn)
+    end,
+    function()
+      if heldTimers[key] then
+        heldTimers[key]:stop()
+        heldTimers[key] = nil
+      end
+    end
+  )
+end
+
+-- === MOUSE MOVEMENT ===
+local function moveMouse(dx, dy)
+  local pos = mouse.absolutePosition()
+  mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+end
+
+bindHeldKey({}, "h", function() moveMouse(-mouseStep, 0) end)
+bindHeldKey({}, "l", function() moveMouse(mouseStep, 0) end)
+bindHeldKey({}, "j", function() moveMouse(0, mouseStep) end)
+bindHeldKey({}, "k", function() moveMouse(0, -mouseStep) end)
+bindHeldKey({"shift"}, "H", function() moveMouse(-mouseStep * 4, 0) end)
+bindHeldKey({"shift"}, "L", function() moveMouse(mouseStep * 4, 0) end)
+bindHeldKey({"shift"}, "J", function() moveMouse(0, mouseStep * 4) end)
+bindHeldKey({"shift"}, "K", function() moveMouse(0, -mouseStep * 4) end)
+
+-- === CLICKING ===
+modal:bind({}, "i", function() eventtap.leftClick(mouse.absolutePosition()) end)
+modal:bind({}, "a", function() eventtap.rightClick(mouse.absolutePosition()) end)
+
+-- === GET ELEMENTS ===
+local function getWindowElements(win)
+  if not win then return {} end
+  local axWin = ax.windowElement(win)
+  if not axWin then return {} end
+  local function flatten(el)
+    local results = {}
+    local children = el:attributeValue("AXChildren") or {}
+    for _, child in ipairs(children) do
+      table.insert(results, child)
+      for _, sub in ipairs(flatten(child)) do
+        table.insert(results, sub)
+      end
+    end
+    return results
+  end
+  return flatten(axWin)
+end
+
+-- === TEXTBOX SEARCH ===
+local function findTextboxInWindow(win, dir)
+  local pos = mouse.absolutePosition()
+  local candidates = {}
+  for _, el in ipairs(getWindowElements(win)) do
+    local role = el:attributeValue("AXRole")
+    if role == "AXTextField" or role == "AXTextArea" then
+      local f = el:attributeValue("AXFrame")
+      if f then
+        local cx = f.x + f.w / 2
+        local cy = f.y + f.h / 2
+        if math.abs(cy - pos.y) < 100 then
+          if (dir == "left" and cx < pos.x) or (dir == "right" and cx > pos.x) or dir == "rightmost" then
+            table.insert(candidates, { pt = { x = cx, y = cy }, dist = dir == "rightmost" and -cx or math.abs(cx - pos.x) })
+          end
+        end
+      end
+    end
+  end
+  table.sort(candidates, function(a, b) return a.dist < b.dist end)
+  return candidates[1] and candidates[1].pt or nil
+end
+
+local function tryTextboxWithFallback(dir)
+  local curWin = hs.window.focusedWindow()
+  local pt = findTextboxInWindow(curWin, dir)
+  if pt then
+    mouse.absolutePosition(pt)
+    eventtap.leftClick(pt)
+    modal:exit()
+    return
+  end
+
+  local fallbackWin = hs.window.orderedWindows()[2]
+  if fallbackWin and fallbackWin:id() ~= curWin:id() then
+    fallbackWin:focus()
+    hs.timer.doAfter(0.2, function()
+      local pt2 = findTextboxInWindow(fallbackWin, dir)
+      if pt2 then
+        mouse.absolutePosition(pt2)
+        eventtap.leftClick(pt2)
+        modal:exit()
+      else
+        hs.alert("No textbox found")
+      end
+    end)
+  else
+    hs.alert("No textbox found")
+  end
+end
+
+-- === LEFTMOST / RIGHTMOST ===
+local function moveToLeftmost()
+  local elements = getWindowElements(hs.window.focusedWindow())
+  local leftmost = nil
+  for _, el in ipairs(elements) do
+    local f = el:attributeValue("AXFrame")
+    if f and f.x then
+      local pt = { x = f.x, y = f.y + f.h / 2 }
+      if not leftmost or f.x < leftmost.x then
+        leftmost = pt
+      end
+    end
+  end
+  if leftmost then mouse.absolutePosition(leftmost) end
+end
+
+local function moveToRightmostTextbox()
+  local pt = findTextboxInWindow(hs.window.focusedWindow(), "rightmost")
+  if pt then mouse.absolutePosition(pt) end
+end
+
+-- === SCREEN EDGE JUMPS ===
+local function moveToDirectionEdge(dx, dy)
+  local frame = screen.mainScreen():frame()
+  local center = { x = frame.x + frame.w/2, y = frame.y + frame.h/2 }
+  mouse.absolutePosition({
+    x = center.x + (frame.w/2 * dx * 0.9),
+    y = center.y + (frame.h/2 * dy * 0.9)
+  })
+end
+
+-- === NAV BINDS ===
+modal:bind({"shift"}, "A", function() tryTextboxWithFallback("right") end)
+modal:bind({"shift"}, "I", function() tryTextboxWithFallback("left") end)
+modal:bind({"shift"}, "4", moveToRightmostTextbox) -- $
+modal:bind({}, "0", moveToLeftmost)
+modal:bind({"shift"}, "6", moveToLeftmost) -- ^
+modal:bind({"shift"}, "M", function()
+  local f = screen.mainScreen():frame()
+  mouse.absolutePosition({ x = f.x + f.w/2, y = f.y + f.h/2 })
+end)
+
+-- === SCROLLING (HOLDABLE) ===
+bindHeldKey({}, "d", function() eventtap.scrollWheel({0, -scrollStep}, {}, "pixel") end)
+bindHeldKey({}, "u", function() eventtap.scrollWheel({0, scrollStep}, {}, "pixel") end)
+bindHeldKey({}, "w", function() eventtap.scrollWheel({-scrollStep, 0}, {}, "pixel") end)
+bindHeldKey({}, "b", function() eventtap.scrollWheel({scrollStep, 0}, {}, "pixel") end)
+
+-- === EDGE JUMP KEYS ===
+modal:bind({"shift"}, "W", function() moveToDirectionEdge(1, 0) end)
+modal:bind({"shift"}, "B", function() moveToDirectionEdge(-1, 0) end)
+modal:bind({"shift"}, "U", function() moveToDirectionEdge(0, -1) end)
+modal:bind({"shift"}, "D", function() moveToDirectionEdge(0, 1) end)
+
+-- === NAV MODE TRIGGERS ===
+hs.hotkey.bind({"ctrl", "alt", "cmd"}, "space", function() modal:enter() end)
+hs.hotkey.bind({}, "f12", function() modal:enter() end)
+hs.hotkey.bind({"ctrl"}, "=", function() modal:enter() end)
+modal:bind({}, "escape", function() modal:exit() end)
+modal:bind({"ctrl"}, "c", function() modal:exit() end)
+
+-- === RELOAD HOTKEY ===
+hs.hotkey.bind({"alt"}, "r", function()
+  hs.reload()
+  hs.alert("Hammerspoon reloaded")
+end)
+
+-- === SCREEN NAV: OPTION TAP TO MOVE TO CENTER OF NEXT SCREEN ===
 local optionPressed, optionOtherKey = false, false
 local optionIndex = 1
 
@@ -19,163 +213,55 @@ local function getScreens()
 end
 
 local function centerMouseOn(index)
-  local screen = getScreens()[index]
-  if not screen then return end
-  local f = screen:frame()
-  hs.mouse.setAbsolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  local scr = getScreens()[index]
+  if not scr then return end
+  local f = scr:frame()
+  mouse.setAbsolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
 end
 
-hs.eventtap.new({hs.eventtap.event.types.flagsChanged}, function(e)
+hs.eventtap.new({eventtap.event.types.flagsChanged}, function(e)
   local f = e:getFlags()
   if f.alt and not optionPressed then
     optionPressed = true; optionOtherKey = false
   elseif not f.alt and optionPressed then
     optionPressed = false
     if not optionOtherKey then
-      local total = #getScreens()
-      optionIndex = (optionIndex % total) + 1
+      optionIndex = (optionIndex % #getScreens()) + 1
       centerMouseOn(optionIndex)
     end
   end
 end):start()
 
-hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(e)
+hs.eventtap.new({eventtap.event.types.keyDown}, function()
   if optionPressed then optionOtherKey = true end
 end):start()
 
--- === TAP CONTROL TO CLICK BOTTOM CENTER OF NEXT SCREEN ===
+-- === SCREEN NAV: CONTROL TAP TO CLICK NEAR BOTTOM OF NEXT SCREEN ===
 local ctrlPressed, ctrlOtherKey = false, false
 local ctrlIndex = 1
 
 local function clickBottom(index)
-  local screen = getScreens()[index]
-  if not screen then return end
-  local f = screen:frame()
+  local scr = getScreens()[index]
+  if not scr then return end
+  local f = scr:frame()
   local pos = { x = f.x + f.w / 2, y = f.y + f.h - 80 }
-  hs.mouse.setAbsolutePosition(pos)
-  hs.eventtap.leftClick(pos)
+  mouse.setAbsolutePosition(pos)
+  eventtap.leftClick(pos)
 end
 
-hs.eventtap.new({hs.eventtap.event.types.flagsChanged}, function(e)
+hs.eventtap.new({eventtap.event.types.flagsChanged}, function(e)
   local f = e:getFlags()
   if f.ctrl and not ctrlPressed then
     ctrlPressed = true; ctrlOtherKey = false
   elseif not f.ctrl and ctrlPressed then
     ctrlPressed = false
     if not ctrlOtherKey then
-      local total = #getScreens()
-      ctrlIndex = (ctrlIndex % total) + 1
+      ctrlIndex = (ctrlIndex % #getScreens()) + 1
       clickBottom(ctrlIndex)
     end
   end
 end):start()
 
-hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(e)
+hs.eventtap.new({eventtap.event.types.keyDown}, function()
   if ctrlPressed then ctrlOtherKey = true end
 end):start()
-
--- === TRIGGER NAV MODE ===
--- You can change or remove triggers below as desired
-hs.hotkey.bind({"ctrl", "alt", "cmd"}, "space", function() modal:enter() end)
-hs.hotkey.bind({}, "f12", function() modal:enter() end)
-hs.hotkey.bind({"ctrl"}, "=", function() modal:enter() end)
-
--- === NAV MODE OVERLAY INDICATOR ===
-local overlay = hs.canvas.new({
-  x = hs.screen.mainScreen():frame().w - 140,
-  y = hs.screen.mainScreen():frame().h - 40,
-  h = 30, w = 120
-}):appendElements({
-  action = "fill", fillColor = { alpha = 0.3 }, type = "rectangle",
-  roundedRectRadii = { xRadius = 8, yRadius = 8 }
-}, {
-  type = "text", text = "NAV MODE", textSize = 14,
-  textColor = { white = 1 }, frame = { x = 0, y = 5, h = 30, w = 120 },
-  textAlignment = "center"
-})
-
-function modal:entered() overlay:show() end
-function modal:exited() overlay:hide() end
-
--- === NAV MODE KEYS ===
-modal:bind({}, "h", function() hs.window.focusedWindow():focusWindowWest() end)
-modal:bind({}, "j", function() hs.window.focusedWindow():focusWindowSouth() end)
-modal:bind({}, "k", function() hs.window.focusedWindow():focusWindowNorth() end)
-modal:bind({}, "l", function() hs.window.focusedWindow():focusWindowEast() end)
-
--- Scroll (down/up)
-modal:bind({}, "d", function() hs.eventtap.scrollWheel({0, -20}, {}, "pixel") end)
-modal:bind({}, "u", function() hs.eventtap.scrollWheel({0, 20}, {}, "pixel") end)
-
--- Scroll to top/bottom (gg/G)
-local gPressedOnce = false
-modal:bind({}, "g", function()
-  if gPressedOnce then
-    hs.eventtap.scrollWheel({0, 99999}, {}, "pixel")
-    gPressedOnce = false
-  else
-    gPressedOnce = true
-    hs.timer.doAfter(0.4, function() gPressedOnce = false end)
-  end
-end)
-modal:bind({"shift"}, "g", function()
-  hs.eventtap.scrollWheel({0, -99999}, {}, "pixel")
-end)
-
--- c = Focus ChatGPT and click into input
-modal:bind({}, "c", function()
-  local win = hs.window.get("ChatGPT")
-  if win then
-    win:focus()
-    hs.timer.doAfter(0.4, function()
-      local f = win:frame()
-      local pt = { x = f.x + f.w / 2, y = f.y + f.h - 100 }
-      hs.mouse.setAbsolutePosition(pt)
-      hs.eventtap.leftClick(pt)
-    end)
-  else
-    hs.alert("ChatGPT window not found")
-  end
-  modal:exit()
-end)
-
--- o = Open Arc and new tab
-modal:bind({}, "o", function()
-  hs.application.launchOrFocus("Arc")
-  hs.timer.doAfter(0.4, function()
-    hs.eventtap.keyStroke({"cmd"}, "t")
-  end)
-  modal:exit()
-end)
-
--- a = Open/focus Arc browser (no exit)
-modal:bind({}, "a", function()
-  hs.application.launchOrFocus("Arc")
-end)
-
--- v = Focus or launch VS Code and center cursor
-modal:bind({}, "v", function()
-  hs.application.launchOrFocus("Visual Studio Code")
-  hs.timer.doAfter(0.4, function()
-    local win = hs.window.focusedWindow()
-    if win then
-      local f = win:frame()
-      hs.mouse.setAbsolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
-    end
-  end)
-  modal:exit()
-end)
-
--- w / b = next / previous browser tab
-modal:bind({}, "w", function() hs.eventtap.keyStroke({"cmd", "shift"}, "]") end)
-modal:bind({}, "b", function() hs.eventtap.keyStroke({"cmd", "shift"}, "[") end)
-
--- Exit NAV mode
-modal:bind({}, "escape", function() modal:exit() end)
-modal:bind({"ctrl"}, "c", function() modal:exit() end)
-
--- Manual reload
-hs.hotkey.bind({"alt"}, "r", function()
-  hs.reload()
-  hs.alert("Hammerspoon reloaded")
-end)
