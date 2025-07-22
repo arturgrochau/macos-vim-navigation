@@ -4,7 +4,7 @@ local mouse = hs.mouse
 local screen = hs.screen
 local eventtap = hs.eventtap
 local window = hs.window
-local scrollStep, mouseStep = 20, 30
+local scrollStep, mouseStep = 80, 30
 
 -- === OVERLAY ===
 local overlay = hs.canvas.new({
@@ -146,3 +146,29 @@ do
   end):start()
   hs.eventtap.new({eventtap.event.types.keyDown}, function() if ctrl then other = true end end):start()
 end
+
+-- === ChatGPT Shortcut (G) ===
+modal:bind({}, "g", function()
+  local function clickChatBox(window)
+    if window then
+      window:focus()
+      local f = window:frame()
+      hs.mouse.setAbsolutePosition({x = f.x + f.w/2, y = f.y + f.h - 72}) -- moved 2px higher
+      hs.timer.doAfter(0.1, function()
+        hs.eventtap.leftClick(hs.mouse.absolutePosition())
+      end)
+    end
+  end
+
+  local app = hs.application.get("ChatGPT")
+  if not app then
+    hs.application.launchOrFocus("ChatGPT")
+    hs.timer.doAfter(1.0, function()
+      local win = hs.window.get("ChatGPT")
+      if win then win:focus() end
+    end)
+  else
+    clickChatBox(hs.window.get("ChatGPT"))
+  end
+  modal:exit()
+end)
