@@ -42,13 +42,16 @@ This config includes:
 | `⌃⌥⌘ + space` / `F12` / `⌃ =` | Enter NAV MODE (overlay shows `-- NORMAL --`) |
 | `⎋` or `⌃ + c`                | Exit NAV MODE                                 |
 
-### 🧭 NAV MODE (Modal Vim-like)
+### 🧭 NAV MODE (Modal Vim-style Movement & Controls)
 
 | Key             | Action                                   |
 | --------------- | ---------------------------------------- |
 | `h / j / k / l` | Move mouse (← ↓ ↑ →) (1/8th screen step) |
 | `H / J / K / L` | Move mouse faster (1/2 screen step)      |
-| `d / u / w / b` | Scroll down / up / right / left          |
+| `d`             | Scroll down                              |
+| `u`             | Scroll up                                |
+| `w`             | Scroll right                             |
+| `b`             | Scroll left                              |
 | `i`             | Left click                               |
 | `a`             | Right click                              |
 | `Shift + A`     | Focus next app textbox to the right      |
