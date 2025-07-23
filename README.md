@@ -44,23 +44,24 @@ This config includes:
 
 ### 🧭 NAV MODE (Modal Vim-style Movement & Controls)
 
-| Key             | Action                                   |
-| --------------- | ---------------------------------------- |
-| `h / j / k / l` | Move mouse (← ↓ ↑ →) (1/8th screen step) |
-| `H / J / K / L` | Move mouse faster (1/2 screen step)      |
-| `d`             | Scroll down                              |
-| `u`             | Scroll up                                |
-| `w`             | Scroll right                             |
-| `b`             | Scroll left                              |
-| `i`             | Left click                               |
-| `a`             | Right click                              |
-| `Shift + A`     | Focus next app textbox to the right      |
-| `Shift + I`     | Focus previous app textbox to the left   |
-| `Shift + M`     | Move mouse to center of screen           |
-| `Shift + W`     | Move to screen edge (→)                  |
-| `Shift + B`     | Move to screen edge (←)                  |
-| `Shift + U`     | Move to screen edge (↑)                  |
-| `Shift + D`     | Move to screen edge (↓)                  |
+| Key             | Action                                     |
+| --------------- | ------------------------------------------ |
+| `h / j / k / l` | Move mouse (← ↓ ↑ →) (1/8th screen step)   |
+| `H / J / K / L` | Move mouse faster (1/2 screen step)        |
+| `d`             | Scroll down                                |
+| `g`             | Focus ChatGPT app and click into input box |
+| `u`             | Scroll up                                  |
+| `w`             | Scroll right                               |
+| `b`             | Scroll left                                |
+| `i`             | Left click                                 |
+| `a`             | Right click                                |
+| `Shift + A`     | Focus next app textbox to the right        |
+| `Shift + I`     | Focus previous app textbox to the left     |
+| `Shift + M`     | Move mouse to center of screen             |
+| `Shift + W`     | Move to screen edge (→)                    |
+| `Shift + B`     | Move to screen edge (←)                    |
+| `Shift + U`     | Move to screen edge (↑)                    |
+| `Shift + D`     | Move to screen edge (↓)                    |
 
 ---
 
