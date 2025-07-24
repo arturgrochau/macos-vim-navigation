@@ -1,23 +1,23 @@
-# 🟩 VIM-STYLE MAC NAVIGATION SYSTEM  
+# 🟩 VIM‑STYLE MAC NAVIGATION SYSTEM  
 ### Powered by Hammerspoon  
 #### Designed by **Artur Grochau** ([@arturpedrotti](https://github.com/arturpedrotti))
 
-[![Download](https://img.shields.io/badge/⬇️%20Download-v1.1.0-green?style=for-the-badge)](https://github.com/arturpedrotti/macos-vim-navigation/releases/latest/download/macos-vim-navigation.zip)
+[![Download](https://img.shields.io/badge/⬇️%20Download-v1.2.0-green?style=for-the-badge)](https://github.com/arturpedrotti/macos-vim-navigation/releases/latest/download/macos-vim-navigation.zip)
 
-A minimal, responsive, and Vim-inspired mouse/navigation controller for macOS.
+A minimal, responsive, and Vim‑inspired mouse/navigation controller for macOS.
 
 ---
 
 ## ✨ What is this?
 
-This is a **Vim-style keyboard navigation system for macOS**, powered by [Hammerspoon](https://www.hammerspoon.org).  
+This is a **Vim‑style keyboard navigation system for macOS**, powered by [Hammerspoon](https://www.hammerspoon.org).  
 It lets you **control your mouse, inputs, screens, and window focus** without ever reaching for your trackpad or mouse.
 
 This config includes:
 
-- 🖱️ One-tap screen switching with `⌥` (Option) or `⌃` (Control) – **outside nav mode**
-- 🧭 A full **NAV MODE** for mouse movement, input clicking, screen edge jumping, and app textbox navigation
-- 🖥️ Support for multi-monitor setups
+- 🖱️ One‑tap screen switching with `⌥` (Option) or `⌃` (Control) – **outside nav mode**
+- 🧭 A full **NAV MODE** for mouse movement, input clicking, scrolling, screen‑edge jumping, and app textbox navigation
+- 🖥️ Support for multi‑monitor setups
 - ⚡ Lightweight, pragmatic, and easy to edit
 - 🧠 Inspired by Vim and modal editors
 
@@ -32,7 +32,7 @@ This config includes:
 | Key     | Action                                            |
 | ------- | ------------------------------------------------- |
 | `⌥ tap` | Move mouse to center of next connected screen     |
-| `⌃ tap` | Click near bottom-middle of next connected screen |
+| `⌃ tap` | Click near bottom‑middle of next connected screen |
 | `⌥ + r` | Reload Hammerspoon config                         |
 
 ### 🚀 Entering and Exiting NAV MODE
@@ -42,26 +42,29 @@ This config includes:
 | `⌃⌥⌘ + space` / `F12` / `⌃ =` | Enter NAV MODE (overlay shows `-- NORMAL --`) |
 | `⎋` or `⌃ + c`                | Exit NAV MODE                                 |
 
-### 🧭 NAV MODE (Modal Vim-style Movement & Controls)
+### 🧭 NAV MODE (Modal Vim‑style Movement & Controls)
 
-| Key             | Action                                     |
-| --------------- | ------------------------------------------ |
-| `h / j / k / l` | Move mouse (← ↓ ↑ →) (1/8th screen step)   |
-| `H / J / K / L` | Move mouse faster (1/2 screen step)        |
-| `d`             | Scroll down                                |
-| `g`             | Focus ChatGPT app and click into input box |
-| `u`             | Scroll up                                  |
-| `w`             | Scroll right                               |
-| `b`             | Scroll left                                |
-| `i`             | Left click                                 |
-| `a`             | Right click                                |
-| `Shift + A`     | Focus next app textbox to the right        |
-| `Shift + I`     | Focus previous app textbox to the left     |
-| `Shift + M`     | Move mouse to center of screen             |
-| `Shift + W`     | Move to screen edge (→)                    |
-| `Shift + B`     | Move to screen edge (←)                    |
-| `Shift + U`     | Move to screen edge (↑)                    |
-| `Shift + D`     | Move to screen edge (↓)                    |
+| Key & combo       | Action                                                                              |
+| ----------------- | ----------------------------------------------------------------------------------- |
+| `h / j / k / l`   | Move mouse (← ↓ ↑ →) in small steps (1/8th of the screen)                           |
+| `H / J / K / L`   | Move mouse in large steps (1/2 of the screen)                                       |
+| `d`               | Scroll down; hold to scroll smoothly                                                |
+| `u`               | Scroll up; hold to scroll smoothly                                                  |
+| `w`               | Scroll left; hold to scroll smoothly                                                |
+| `b`               | Scroll right; hold to scroll smoothly                                               |
+| `i`               | Left click (single click)                                                           |
+| `a`               | Right click                                                                         |
+| `c`               | Open or focus the ChatGPT app and click the input box                               |
+| `g` then `g` (gg) | Scroll to the very top of the current scrollable content (double‑press `g` quickly) |
+| `Shift + g` (`G`) | Scroll to the very bottom of the current scrollable content                         |
+| `o`               | Open the first available browser (Arc, Chrome, Firefox, Safari, etc.)               |
+| `Shift + A`       | Focus the next visible window (cycle forward)                                       |
+| `Shift + I`       | Focus the previous visible window (cycle backward)                                  |
+| `Shift + M`       | Move mouse to the center of the screen                                              |
+| `Shift + W`       | Jump mouse to the right edge of the screen                                          |
+| `Shift + B`       | Jump mouse to the left edge of the screen                                           |
+| `Shift + U`       | Jump mouse to the top edge of the screen                                            |
+| `Shift + D`       | Jump mouse to the bottom edge of the screen                                         |
 
 ---
 
@@ -76,38 +79,3 @@ Unzip it and move into the directory:
 ```bash
 unzip macos-vim-navigation.zip
 cd macos-vim-navigation
-```
-
-### 2. 🔧 Install Hammerspoon
-
-Go to [https://www.hammerspoon.org](https://www.hammerspoon.org) and download the app.  
-After installation, open it and **grant Accessibility and Automation permissions** in System Settings.
-
-### 3. 🧠 Load the config
-
-Place `init.lua` inside `~/.hammerspoon/`. You can do this by:
-
-```bash
-cp init.lua ~/.hammerspoon/
-```
-
-Then either restart Hammerspoon or click its tray icon and select **"Reload Config"**.
-
-### 4. ✅ Try it out
-
-- Tap `⌥` to jump the mouse to the center of the next screen
-- Tap `⌃` to simulate a click near the bottom-middle of the next screen
-- Press `⌃⌥⌘ + space` to enter **NAV MODE** and use Vim-style mouse navigation
-
-That’s it!
-
----
-
-## ✏️ Customizing
-
-This config is highly tweakable. You can open `init.lua` in your favorite text editor and:
-
-- Adjust movement speeds (`mouseStep`)
-- Change screen index cycling behavior
-- Add new modal bindings using `modal:bind(...)`
-- Remove or change NAV MODE keys or triggers
