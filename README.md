@@ -1,6 +1,6 @@
 # 🟩 VIM‑STYLE MAC NAVIGATION SYSTEM  
 ### Powered by Hammerspoon  
-#### Designed by **Artur Grochau** ([@arturpedrotti](https://github.com/arturpedrotti))
+#### Designed by **Artur Grochau** [](https://github.com/arturpedrotti)
 
 [![Download](https://img.shields.io/badge/⬇️%20Download-v1.2.0-green?style=for-the-badge)](https://github.com/arturpedrotti/macos-vim-navigation/releases/latest/download/macos-vim-navigation.zip)
 
@@ -32,7 +32,7 @@ This config includes:
 | Key     | Action                                            |
 | ------- | ------------------------------------------------- |
 | `⌥ tap` | Move mouse to center of next connected screen     |
-| `⌃ tap` | Click near bottom‑middle of next connected screen |
+| `⌃ tap` | Click near bottom‑middle of current screen        |
 | `⌥ + r` | Reload Hammerspoon config                         |
 
 ### 🚀 Entering and Exiting NAV MODE
@@ -52,7 +52,7 @@ This config includes:
 | `u`               | Scroll up; hold to scroll smoothly                                                  |
 | `w`               | Scroll left; hold to scroll smoothly                                                |
 | `b`               | Scroll right; hold to scroll smoothly                                               |
-| `i`               | Left click (single click)                                                           |
+| `i`               | Double left click (e.g., to highlight words)                                        |
 | `a`               | Right click                                                                         |
 | `c`               | Open or focus the ChatGPT app and click the input box                               |
 | `g` then `g` (gg) | Scroll to the very top of the current scrollable content (double‑press `g` quickly) |

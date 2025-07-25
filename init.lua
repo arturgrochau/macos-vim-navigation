@@ -159,7 +159,19 @@ bindScrollKey("b", { scrollLargeStep, 0}, { scrollStep, 0},
   function() moveMouseByFraction( dragMoveFrac, 0) end)
 
 -- Click bindings
-modal:bind({}, "i", function() eventtap.leftClick(mouse.absolutePosition()) end)
+modal:bind({}, "i", function()
+  local pos = mouse.absolutePosition()
+  local down1 = hs.eventtap.event.newMouseEvent(hs.eventtap.event.types.leftMouseDown, pos)
+  down1:setProperty(hs.eventtap.event.properties.mouseEventClickState, 1)
+  down1:post()
+  local up1 = hs.eventtap.event.newMouseEvent(hs.eventtap.event.types.leftMouseUp, pos)
+  up1:post()
+  local down2 = hs.eventtap.event.newMouseEvent(hs.eventtap.event.types.leftMouseDown, pos)
+  down2:setProperty(hs.eventtap.event.properties.mouseEventClickState, 2)
+  down2:post()
+  local up2 = hs.eventtap.event.newMouseEvent(hs.eventtap.event.types.leftMouseUp, pos)
+  up2:post()
+end)
 modal:bind({}, "a", function() eventtap.rightClick(mouse.absolutePosition()) end)
 
 -- Focus cycle bindings
@@ -313,20 +325,16 @@ hs.hotkey.bind({"alt"}, "r", function()
 end)
 
 -- Option‑tap: cycle screens and centre pointer
-local optionPressed, optionOtherKey, optionIndex = false, false, 1
-local function centerMouseOn(index)
-  local scr = screen.allScreens()[index]
+local optionPressed, optionOtherKey = false, false
+local function centerMouseOn(scr)
   if not scr then return end
-  local f = scr:frame()
   if dragging then
     local win = window.focusedWindow()
     if win then win:moveToScreen(scr) end
-    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
-    hs.eventtap.event.newMouseEvent(hs.eventtap.event.types.leftMouseDragged, pos):post()
-    mouse.absolutePosition(pos)
-  else
-    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
   end
+  local f = scr:frame()
+  local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+  setMousePosition(pos)
 end
 -- Alt key flag watcher
 optionFlagsWatcher = hs.eventtap.new({ hs.eventtap.event.types.flagsChanged }, function(e)
@@ -337,8 +345,19 @@ optionFlagsWatcher = hs.eventtap.new({ hs.eventtap.event.types.flagsChanged }, f
   elseif not f.alt and optionPressed then
     optionPressed = false
     if not optionOtherKey then
-      optionIndex = (optionIndex % #screen.allScreens()) + 1
-      centerMouseOn(optionIndex)
+      local currentScr = mouse.getCurrentScreen()
+      local allScr = hs.screen.allScreens()
+      table.sort(allScr, function(a,b) return a:frame().x < b:frame().x end)
+      local currentIndex = 1
+      for i, s in ipairs(allScr) do
+        if s:id() == currentScr:id() then
+          currentIndex = i
+          break
+        end
+      end
+      local nextIndex = (currentIndex % #allScr) + 1
+      local nextScr = allScr[nextIndex]
+      centerMouseOn(nextScr)
     end
   end
 end)
@@ -353,19 +372,17 @@ end)
 optionKeyWatcher:start()
 
 -- Control‑tap: cycle screens and click near bottom
-local ctrlPressed, ctrlOtherKey, ctrlIndex = false, false, 1
-local function clickBottom(index)
-  local scr = screen.allScreens()[index]
+local ctrlPressed, ctrlOtherKey = false, false
+local function clickBottom(scr)
   if not scr then return end
-  local f = scr:frame()
-  local pos = { x = f.x + f.w / 2, y = f.y + f.h - 80 }
   if dragging then
     local win = window.focusedWindow()
     if win then win:moveToScreen(scr) end
-    hs.eventtap.event.newMouseEvent(hs.eventtap.event.types.leftMouseDragged, pos):post()
-    mouse.absolutePosition(pos)
-  else
-    setMousePosition(pos)
+  end
+  local f = scr:frame()
+  local pos = { x = f.x + f.w / 2, y = f.y + f.h - 80 }
+  setMousePosition(pos)
+  if not dragging then
     eventtap.leftClick(pos)
   end
 end
@@ -378,8 +395,8 @@ ctrlFlagsWatcher = hs.eventtap.new({ hs.eventtap.event.types.flagsChanged }, fun
   elseif not f.ctrl and ctrlPressed then
     ctrlPressed = false
     if not ctrlOtherKey then
-      ctrlIndex = (ctrlIndex % #screen.allScreens()) + 1
-      clickBottom(ctrlIndex)
+      local currentScr = mouse.getCurrentScreen()
+      clickBottom(currentScr)
     end
   end
 end)
