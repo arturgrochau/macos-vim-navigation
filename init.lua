@@ -13,7 +13,7 @@ local canvas  = hs.canvas
 local timer   = hs.timer
 
 -- Scroll configuration: tiny increments on tap, smooth slow scroll on hold
-local scrollStep = 1
+local scrollStep = 62
 local scrollLargeStep = scrollStep
 local scrollInitialDelay = 0.15
 local scrollRepeatInterval = 0.05
@@ -26,6 +26,15 @@ local directionRepeatInterval = 0.15
 local held = {}
 local holdTimers = {}
 local repeatInterval = scrollRepeatInterval
+
+-- Detect natural scrolling setting for consistent behavior
+local naturalScroll = hs.mouse.scrollDirection().natural
+
+-- Helper to normalize scroll deltas based on system setting
+local function norm(delta)
+  if not naturalScroll then return delta end
+  return { delta[1] * -1, delta[2] * -1 }
+end
 
 -- Dragging state reserved (dragging disabled)
 local dragging     = false
@@ -120,7 +129,7 @@ local function bindScrollKey(key, initialOffsets, repeatOffsets, initialDragFn, 
       if dragging then
         initialDragFn()
       else
-        eventtap.scrollWheel(initialOffsets, {}, "pixel")
+        eventtap.scrollWheel(norm(initialOffsets), {}, "pixel")
       end
       holdTimers[key] = {}
       holdTimers[key].delayTimer = timer.doAfter(scrollInitialDelay, function()
@@ -128,7 +137,7 @@ local function bindScrollKey(key, initialOffsets, repeatOffsets, initialDragFn, 
           if dragging then
             repeatDragFn()
           else
-            eventtap.scrollWheel(repeatOffsets, {}, "pixel")
+            eventtap.scrollWheel(norm(repeatOffsets), {}, "pixel")
           end
         end)
       end)
@@ -171,6 +180,11 @@ modal:bind({}, "i", function()
   down2:post()
   local up2 = hs.eventtap.event.newMouseEvent(hs.eventtap.event.types.leftMouseUp, pos)
   up2:post()
+  local down3 = hs.eventtap.event.newMouseEvent(hs.eventtap.event.types.leftMouseDown, pos)
+  down3:setProperty(hs.eventtap.event.properties.mouseEventClickState, 3)
+  down3:post()
+  local up3 = hs.eventtap.event.newMouseEvent(hs.eventtap.event.types.leftMouseUp, pos)
+  up3:post()
 end)
 modal:bind({}, "a", function() eventtap.rightClick(mouse.absolutePosition()) end)
 
@@ -189,16 +203,26 @@ end
 modal:bind({"shift"}, "A", function() focusAppOffset( 1) end)
 modal:bind({"shift"}, "I", function() focusAppOffset(-1) end)
 
--- Pointer edges and centre
-local function edge(dx, dy)
-  local f = screen.mainScreen():frame()
-  setMousePosition({ x = f.x + f.w/2 + dx * f.w * 0.45,
-                     y = f.y + f.h/2 + dy * f.h * 0.45 })
-end
-modal:bind({"shift"}, "W", function() edge( 1, 0) end)
-modal:bind({"shift"}, "B", function() edge(-1, 0) end)
-modal:bind({"shift"}, "U", function() edge( 0,-1) end)
-modal:bind({"shift"}, "D", function() edge( 0, 1) end)
+-- Scroll by a large fraction of screen height/width with hold-to-repeat
+local largeScrollStep = scrollStep * 8
+
+-- Large scroll key bindings with hold-to-repeat functionality
+bindHoldWithDelay({"shift"}, "U", function()
+  eventtap.scrollWheel(norm({0, largeScrollStep}), {}, "pixel")
+end, scrollInitialDelay, scrollRepeatInterval)
+
+bindHoldWithDelay({"shift"}, "D", function()
+  eventtap.scrollWheel(norm({0, -largeScrollStep}), {}, "pixel")
+end, scrollInitialDelay, scrollRepeatInterval)
+
+bindHoldWithDelay({"shift"}, "W", function()
+  eventtap.scrollWheel(norm({-largeScrollStep, 0}), {}, "pixel")
+end, scrollInitialDelay, scrollRepeatInterval)
+
+bindHoldWithDelay({"shift"}, "B", function()
+  eventtap.scrollWheel(norm({largeScrollStep, 0}), {}, "pixel")
+end, scrollInitialDelay, scrollRepeatInterval)
+
 modal:bind({"shift"}, "M", function()
   local f = screen.mainScreen():frame()
   setMousePosition({ x = f.x + f.w/2, y = f.y + f.h/2 })
@@ -259,16 +283,21 @@ modal:bind({}, "c", function()
   modal:exit()
 end)
 
--- Vim‑style scroll commands: gg (double g) and G (shift+g)
+-- Vim-style scroll commands: gg (double g) and G (shift+g)
+
 local gPending = false
 local gTimer   = nil
 local gDoubleDelay = 0.3
+
 local function scrollToTop()
-  hs.eventtap.event.newScrollEvent({0, -1000000}, {}, "pixel"):post()
+  hs.eventtap.event.newScrollEvent(norm({0, 1000000}), {}, "pixel"):post()
 end
+
 local function scrollToBottom()
-  hs.eventtap.event.newScrollEvent({0, 1000000}, {}, "pixel"):post()
+  hs.eventtap.event.newScrollEvent(norm({0, -1000000}), {}, "pixel"):post()
 end
+
+-- Double 'g' → gg → top
 modal:bind({}, "g", function()
   if gPending then
     if gTimer then gTimer:stop(); gTimer = nil end
@@ -282,14 +311,19 @@ modal:bind({}, "g", function()
     end)
   end
 end)
--- Shift+g scrolls to the bottom
-modal:bind({"shift"}, "g", function() scrollToBottom() end)
 
--- Event tap to reset gPending if any key other than 'g' is pressed
+-- Shift+g → G → bottom
+modal:bind({"shift"}, "g", function()
+  gPending = false
+  if gTimer then gTimer:stop(); gTimer = nil end
+  scrollToBottom()
+end)
+
+-- Cancel 'g' if any other key is pressed before double-tap
 local gResetTap = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(e)
   if gPending then
     local chars = e:getCharacters() or ""
-    if chars ~= 'g' then
+    if chars:lower() ~= "g" then
       gPending = false
       if gTimer then
         gTimer:stop()

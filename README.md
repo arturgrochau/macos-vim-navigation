@@ -29,11 +29,11 @@ This config includes:
 
 ### 📦 Global (Works Anytime)
 
-| Key     | Action                                            |
-| ------- | ------------------------------------------------- |
-| `⌥ tap` | Move mouse to center of next connected screen     |
-| `⌃ tap` | Click near bottom‑middle of current screen        |
-| `⌥ + r` | Reload Hammerspoon config                         |
+| Key     | Action                                        |
+| ------- | --------------------------------------------- |
+| `⌥ tap` | Move mouse to center of next connected screen |
+| `⌃ tap` | Click near bottom‑middle of current screen    |
+| `⌥ + r` | Reload Hammerspoon config                     |
 
 ### 🚀 Entering and Exiting NAV MODE
 
@@ -52,7 +52,7 @@ This config includes:
 | `u`               | Scroll up; hold to scroll smoothly                                                  |
 | `w`               | Scroll left; hold to scroll smoothly                                                |
 | `b`               | Scroll right; hold to scroll smoothly                                               |
-| `i`               | Double left click (e.g., to highlight words)                                        |
+| `i`               | Triple left click (e.g., to highlight the entire line)                              |
 | `a`               | Right click                                                                         |
 | `c`               | Open or focus the ChatGPT app and click the input box                               |
 | `g` then `g` (gg) | Scroll to the very top of the current scrollable content (double‑press `g` quickly) |
@@ -61,10 +61,10 @@ This config includes:
 | `Shift + A`       | Focus the next visible window (cycle forward)                                       |
 | `Shift + I`       | Focus the previous visible window (cycle backward)                                  |
 | `Shift + M`       | Move mouse to the center of the screen                                              |
-| `Shift + W`       | Jump mouse to the right edge of the screen                                          |
-| `Shift + B`       | Jump mouse to the left edge of the screen                                           |
-| `Shift + U`       | Jump mouse to the top edge of the screen                                            |
-| `Shift + D`       | Jump mouse to the bottom edge of the screen                                         |
+| `Shift + U`       | Scroll up significantly (8× scrollStep), repeatable while held                      |
+| `Shift + D`       | Scroll down significantly (8× scrollStep), repeatable while held                    |
+| `Shift + W`       | Scroll left significantly (8× scrollStep), repeatable while held                    |
+| `Shift + B`       | Scroll right significantly (8× scrollStep), repeatable while held                   |
 
 ---
 
