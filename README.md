@@ -2,7 +2,7 @@
 ### Powered by Hammerspoon  
 #### Designed by **Artur Grochau** [](https://github.com/arturpedrotti)
 
-[![Download](https://img.shields.io/badge/⬇️%20Download-v1.2.0-green?style=for-the-badge)](https://github.com/arturpedrotti/macos-vim-navigation/releases/latest/download/macos-vim-navigation.zip)
+[![Download](https://img.shields.io/badge/⬇️%20Download-v1.2.1-green?style=for-the-badge)](https://github.com/arturpedrotti/macos-vim-navigation/releases/latest/download/macos-vim-navigation.zip)
 
 A minimal, responsive, and Vim‑inspired mouse/navigation controller for macOS.
 
