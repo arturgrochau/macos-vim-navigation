@@ -68,6 +68,33 @@ This config includes:
 
 ---
 
+## 🖍️ Visual Mode (Selection Mode)
+
+| Key / Combo       | Action                                                          |
+| ----------------- | --------------------------------------------------------------- |
+| `v`               | Enter visual selection mode (shows `-- VISUAL MODE --` overlay) |
+| `Shift + v`       | Enter visual mode with triple-click block selection             |
+| `v` / `Shift + v` | Exit visual mode (finalizes selection with a click)             |
+| `y`               | Yank selected content (performs Cmd+C)                          |
+| `p` / `Shift + p` | Paste over selection or paste at mouse (performs Cmd+V)         |
+
+### 🔀 Moving and Selecting (while in Visual Mode)
+
+| Key / Combo     | Action                                      |
+| --------------- | ------------------------------------------- |
+| `h / j / k / l` | Move mouse left/down/up/right (small steps) |
+| `H / J / K / L` | Move mouse in large steps                   |
+| `u / d`         | Scroll up/down and extend selection         |
+| `w / b`         | Scroll left/right and extend selection      |
+
+### 📌 Notes
+
+- `-- VISUAL MODE --` overlay appears when active
+- Triple-click block selection starts with `Shift + v`
+- Exiting visual mode clicks to finalize the selection
+- Visual mode auto-exits when leaving nav mode
+- Works seamlessly with copy (`y`) and paste (`p`) operations
+
 ## 🛠 Setup Instructions
 
 ### 1. 📦 Download the latest version
