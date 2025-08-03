@@ -1,4 +1,4 @@
-<file name=0 path=/Users/elonbouvier/macos-vim-navigation/README.md># 🟩 VIM‑STYLE MAC NAVIGATION SYSTEM  
+# 🟩 VIM‑STYLE MAC NAVIGATION SYSTEM  
 ### Powered by Hammerspoon  
 #### Designed by **Artur Grochau** [](https://github.com/arturpedrotti)
 
