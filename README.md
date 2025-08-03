@@ -74,18 +74,21 @@ This config includes:
 | ----------------- | --------------------------------------------------------------- |
 | `v`               | Enter visual selection mode (shows `-- VISUAL MODE --` overlay) |
 | `Shift + v`       | Enter visual mode with triple-click block selection             |
-| `v` / `Shift + v` | Exit visual mode (finalizes selection with a click)             |
+| `V` / `SHIFT + V` | EXIT VISUAL MODE (FINALIZES SELECTION WITH A CLICK)             |
 | `y`               | Yank selected content (performs Cmd+C)                          |
 | `p` / `Shift + p` | Paste over selection or paste at mouse (performs Cmd+V)         |
 
 ### 🔀 Moving and Selecting (while in Visual Mode)
 
-| Key / Combo     | Action                                      |
-| --------------- | ------------------------------------------- |
-| `h / j / k / l` | Move mouse left/down/up/right (small steps) |
-| `H / J / K / L` | Move mouse in large steps                   |
-| `u / d`         | Scroll up/down and extend selection         |
-| `w / b`         | Scroll left/right and extend selection      |
+In visual mode, selection is extended as the mouse moves or scrolls. Keys behave with different granularities:
+
+| Key / Combo       | Action                                                        |
+| ----------------- | ------------------------------------------------------------- |
+| `h / j / k / l`   | Move mouse in small steps (1/8th of screen width/height)      |
+| `H / J / K / L`   | Move mouse in large steps (1/2 of screen width/height)        |
+| `u / d`           | Scroll up/down by moderate steps while extending selection    |
+| `w / b`           | Scroll left/right by moderate steps while extending selection |
+| `Shift + U/D/W/B` | Scroll significantly (8× step) in the corresponding direction |
 
 ### 📌 Notes
 
@@ -94,6 +97,7 @@ This config includes:
 - Exiting visual mode clicks to finalize the selection
 - Visual mode auto-exits when leaving nav mode
 - Works seamlessly with copy (`y`) and paste (`p`) operations
+- `Shift + U/D/W/B` extend selection while scrolling, but may not activate until the cursor has moved—use `h/j/k/l` once first to ensure highlighting starts
 
 ## 🛠 Setup Instructions
 
