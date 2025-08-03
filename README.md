@@ -1,4 +1,4 @@
-# 🟩 VIM‑STYLE MAC NAVIGATION SYSTEM  
+<file name=0 path=/Users/elonbouvier/macos-vim-navigation/README.md># 🟩 VIM‑STYLE MAC NAVIGATION SYSTEM  
 ### Powered by Hammerspoon  
 #### Designed by **Artur Grochau** [](https://github.com/arturpedrotti)
 
@@ -82,13 +82,13 @@ This config includes:
 
 In visual mode, selection is extended as the mouse moves or scrolls. Keys behave with different granularities:
 
-| Key / Combo       | Action                                                        |
-| ----------------- | ------------------------------------------------------------- |
-| `h / j / k / l`   | Move mouse in small steps (1/8th of screen width/height)      |
-| `H / J / K / L`   | Move mouse in large steps (1/2 of screen width/height)        |
-| `u / d`           | Scroll up/down by moderate steps while extending selection    |
-| `w / b`           | Scroll left/right by moderate steps while extending selection |
-| `Shift + U/D/W/B` | Scroll significantly (8× step) in the corresponding direction |
+| Key / Combo       | Action                                                                 |
+| ----------------- | ---------------------------------------------------------------------- |
+| `h / j / k / l`   | Move mouse in small steps (1/8th of screen width/height)               |
+| `H / J / K / L`   | Move mouse in large steps (1/2 of screen width/height)                 |
+| `u / d`           | Move cursor vertically in moderate steps (while extending selection)   |
+| `w / b`           | Move cursor horizontally in moderate steps (while extending selection) |
+| `Shift + U/D/W/B` | Scroll significantly (8× step) in the corresponding direction          |
 
 ### 📌 Notes
 
@@ -109,4 +109,4 @@ Unzip it and move into the directory:
 
 ```bash
 unzip macos-vim-navigation.zip
-cd macos-vim-navigation
+cd macos-vim-navigation</file>
