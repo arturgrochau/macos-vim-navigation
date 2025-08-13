@@ -51,7 +51,7 @@ end
 -- Overlay
 local overlay = canvas.new({
   x = screen.mainScreen():frame().x + screen.mainScreen():frame().w - 200,
-  y = screen.mainScreen():frame().y + screen.mainScreen():frame().h - 40,
+  y = screen.mainScreen():frame().y + screen.mainScreen():frame().h - 80,
   h = 30, w = 200
 }):appendElements({
   type = "rectangle", action = "fill",
@@ -396,6 +396,65 @@ modal:bind({}, "c", function()
   modal:exit()
 end)
 
+-- VSCode shortcut (uppercase C) - Replace "Visual Studio Code" with your preferred text editor/IDE
+modal:bind({"shift"}, "c", function()
+  if mode == "visual" then
+    local pos = mouse.absolutePosition()
+    if dragging then
+      eventtap.event.newMouseEvent(eventtap.event.types.leftMouseUp, pos):post()
+      dragging = false
+    end
+    timer.doAfter(0.05, function() eventtap.leftClick(pos) end)
+    mode = "normal"
+    hideVisualIndicator()
+  end
+  
+  local vscodeBundleID = "com.microsoft.VSCode"
+  local vscodeAppName = "Visual Studio Code"  -- Change this to your preferred editor (e.g., "Code", "Cursor", "Sublime Text")
+  
+  local runningApp = app.get(vscodeAppName)
+  if runningApp then
+    runningApp:unhide()
+    local win = runningApp:mainWindow()
+    if win then
+      if win:isMinimized() then win:unminimize() end
+      win:raise()
+      win:focus()
+    else
+      local openedApp = hs.application.launchOrFocusByBundleID(vscodeBundleID) or hs.application.open(vscodeAppName)
+      if openedApp then
+        timer.doAfter(1.0, function()
+          local newWin = openedApp:mainWindow()
+          if newWin then 
+            newWin:raise()
+            newWin:focus()
+          else 
+            hs.alert.show("VSCode window could not be opened")
+          end
+        end)
+      else
+        hs.alert.show("VSCode could not be launched")
+      end
+    end
+  else
+    local openedApp = hs.application.launchOrFocusByBundleID(vscodeBundleID) or hs.application.open(vscodeAppName)
+    if openedApp then
+      timer.doAfter(1.0, function()
+        local win = openedApp:mainWindow()
+        if win then 
+          win:raise()
+          win:focus()
+        else 
+          hs.alert.show("VSCode window did not appear")
+        end
+      end)
+    else
+      hs.alert.show("VSCode could not be launched")
+    end
+  end
+  modal:exit()
+end)
+
 -- Vim-style scroll
 local gPending = false
 local gTimer = nil
@@ -537,4 +596,4 @@ ctrlKeyWatcher:start()
 
 -- End of configuration.
 
--- Credit: Artur Grochau – github.com/arturpedrotti
+-- Credit: Artur Grochau – github.com/arturgrochau

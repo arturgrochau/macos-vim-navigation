@@ -55,6 +55,7 @@ This config includes:
 | `i`               | Triple left click (e.g., to highlight the entire line)                              |
 | `a`               | Right click                                                                         |
 | `c`               | Open or focus the ChatGPT app and click the input box                               |
+| `C` (Shift + c)   | Open or focus VSCode/your IDE (customizable in config)                              |
 | `g` then `g` (gg) | Scroll to the very top of the current scrollable content (double‑press `g` quickly) |
 | `Shift + g` (`G`) | Scroll to the very bottom of the current scrollable content                         |
 | `o`               | Open the first available browser (Arc, Chrome, Firefox, Safari, etc.)               |
