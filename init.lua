@@ -226,6 +226,18 @@ for _, sc in ipairs(largeScrolls) do
   end, scrollInitialDelay, scrollRepeatInterval)
 end
 
+-- Medium scroll bindings (Ctrl+U/D) - between normal and large scroll
+local mediumScrollStep = scrollStep * 3
+local mediumScrolls = {
+  {mod = {"ctrl"}, key = "u", delta = {0, mediumScrollStep}},
+  {mod = {"ctrl"}, key = "d", delta = {0, -mediumScrollStep}},
+}
+for _, sc in ipairs(mediumScrolls) do
+  bindHoldWithDelay(sc.mod, sc.key, function()
+    eventtap.scrollWheel(norm(sc.delta), {}, "pixel")
+  end, scrollInitialDelay, scrollRepeatInterval)
+end
+
 local function performClicks(count, keepLastDown)
   local pos = mouse.absolutePosition()
   for i = 1, count do

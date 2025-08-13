@@ -50,6 +50,8 @@ This config includes:
 | `H / J / K / L`   | Move mouse in large steps (1/2 of the screen)                                       |
 | `d`               | Scroll down; hold to scroll smoothly                                                |
 | `u`               | Scroll up; hold to scroll smoothly                                                  |
+| `⌃ + d`           | Scroll down medium amount (3× normal), repeatable while held                        |
+| `⌃ + u`           | Scroll up medium amount (3× normal), repeatable while held                          |
 | `w`               | Scroll left; hold to scroll smoothly                                                |
 | `b`               | Scroll right; hold to scroll smoothly                                               |
 | `i`               | Triple left click (e.g., to highlight the entire line)                              |
