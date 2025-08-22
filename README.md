@@ -1,16 +1,5 @@
 # 🟩 VIM‑STYLE MAC NAVIGATION SYSTEM  
-| ### Pow             | Key & combo                                                                         | Action        | Key / Combo | Action |
-| ------------------- | ----------------------------------------------------------------------------------- |
-| `h / j / k / l`     | Move mouse in small steps (1/8th of screen width/height)                            |
-| `↑ / ↓`             | Arrow keys: scroll up/down (extend selection while scrolling)                       |
-| `← / →`             | Arrow keys: move cursor left/right (extend selection while moving)                  |
-| `H / J / K / L`     | Move mouse in large steps (1/2 of screen width/height)                              |               |
-| ------------------- | ----------------------------------------------------------------------------------- |
-| `h / j / k / l`     | Move mouse (← ↓ ↑ →) in small steps (1/8th of the screen)                           |
-| `H / J / K / L`     | Move mouse in large steps (1/2 of the screen)                                       |
-| `↑ / ↓`             | Arrow keys: scroll up/down (same as `u / d`)                                        |
-| `← / →`             | Arrow keys: move cursor left/right (same as `h / l`)                                |
-| `d`                 | Scroll down; hold to scroll smoothly                                                | y Hammerspoon |
+### Powered by Hammerspoon  
 #### Designed by **Artur Grochau** [](https://github.com/arturpedrotti)
 
 [![Download](https://img.shields.io/badge/⬇️%20Download-v1.3.1-green?style=for-the-badge)](https://github.com/arturpedrotti/macos-vim-navigation/releases/latest/download/macos-vim-navigation.zip)
@@ -55,13 +44,13 @@ This config includes:
 
 ### 🧭 NAV MODE (Modal Vim‑style Movement & Controls)
 
-| Key & combo         | Action                                                                              |
-| ------------------- | ----------------------------------------------------------------------------------- |
-| `h / j / k / l`     | Move mouse (← ↓ ↑ →) in small steps (1/8th of the screen)                           |
-| `H / J / K / L`     | Move mouse in large steps (1/2 of the screen)                                       |
-| `↑ / ↓`             | Arrow keys: scroll up/down (same as `u / d`)                                        |
-| `← / →`             | Arrow keys: move cursor left/right (same as `h / l`)                                |
-| `d`                 | Scroll down; hold to scroll smoothly                                                |
+| Key & combo       | Action                                                                              |
+| ----------------- | ----------------------------------------------------------------------------------- |
+| `h / j / k / l`   | Move mouse (← ↓ ↑ →) in small steps (1/8th of the screen)                           |
+| `H / J / K / L`   | Move mouse in large steps (1/2 of the screen)                                       |
+| `↑ / ↓`           | Arrow keys: scroll up/down (same as `u / d`)                                        |
+| `← / →`           | Arrow keys: move cursor left/right (same as `h / l`)                                |
+| `d`               | Scroll down; hold to scroll smoothly                                                |
 | `u`               | Scroll up; hold to scroll smoothly                                                  |
 | `⌃ + d`           | Scroll down medium amount (3× normal), repeatable while held                        |
 | `⌃ + u`           | Scroll up medium amount (3× normal), repeatable while held                          |
@@ -99,13 +88,13 @@ This config includes:
 
 In visual mode, selection is extended as the mouse moves or scrolls. Keys behave with different granularities:
 
-| Key / Combo         | Action                                                                 |
-| ------------------- | ---------------------------------------------------------------------- |
-| `h / j / k / l`     | Move mouse in small steps (1/8th of screen width/height)               |
-| `H / J / K / L`     | Move mouse in large steps (1/2 of screen width/height)                 |
-| `↑ / ↓`             | Arrow keys: scroll up/down (extend selection while scrolling)          |
-| `← / →`             | Arrow keys: move cursor left/right (extend selection while moving)     |
-| `u / d`             | Move cursor vertically in moderate steps (while extending selection)   |
+| Key / Combo       | Action                                                                 |
+| ----------------- | ---------------------------------------------------------------------- |
+| `h / j / k / l`   | Move mouse in small steps (1/8th of screen width/height)               |
+| `H / J / K / L`   | Move mouse in large steps (1/2 of screen width/height)                 |
+| `↑ / ↓`           | Arrow keys: scroll up/down (extend selection while scrolling)          |
+| `← / →`           | Arrow keys: move cursor left/right (extend selection while moving)     |
+| `u / d`           | Move cursor vertically in moderate steps (while extending selection)   |
 | `w / b`           | Move cursor horizontally in moderate steps (while extending selection) |
 | `Shift + U/D/W/B` | Scroll significantly (8× step) in the corresponding direction          |
 
