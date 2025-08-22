@@ -1,4 +1,19 @@
-# 🟩 VIM‑STYLE MAC NAVIGATION SYSTEM  
+# 🟩 VIM‑STYLE MAC NAVI**Tip:** `⌥` and `⌃` actions are triggered on **key release**, so they don't interfere with regular macOS shortcuts.
+
+---
+
+## 📺 Visual Mode Indicators
+
+When navigation mode is active, you'll see helpful overlays in the bottom-right corner of your screen:
+
+![Mode Indicators](indicators.png)
+
+The overlays provide instant feedback about your current navigation state:
+- **-- NORMAL --** appears when you enter navigation mode
+- **-- VISUAL MODE --** appears below when you activate visual selection mode
+- Both overlays automatically disappear when you exit navigation mode
+
+---ION SYSTEM  
 ### Powered by Hammerspoon  
 #### Designed by **Artur Grochau** [](https://github.com/arturpedrotti)
 
