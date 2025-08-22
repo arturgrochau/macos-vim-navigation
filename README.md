@@ -1,5 +1,16 @@
 # 🟩 VIM‑STYLE MAC NAVIGATION SYSTEM  
-### Powered by Hammerspoon  
+| ### Pow             | Key & combo                                                                         | Action        | Key / Combo | Action |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| `h / j / k / l`     | Move mouse in small steps (1/8th of screen width/height)                            |
+| `↑ / ↓`             | Arrow keys: scroll up/down (extend selection while scrolling)                       |
+| `← / →`             | Arrow keys: move cursor left/right (extend selection while moving)                  |
+| `H / J / K / L`     | Move mouse in large steps (1/2 of screen width/height)                              |               |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| `h / j / k / l`     | Move mouse (← ↓ ↑ →) in small steps (1/8th of the screen)                           |
+| `H / J / K / L`     | Move mouse in large steps (1/2 of the screen)                                       |
+| `↑ / ↓`             | Arrow keys: scroll up/down (same as `u / d`)                                        |
+| `← / →`             | Arrow keys: move cursor left/right (same as `h / l`)                                |
+| `d`                 | Scroll down; hold to scroll smoothly                                                | y Hammerspoon |
 #### Designed by **Artur Grochau** [](https://github.com/arturpedrotti)
 
 [![Download](https://img.shields.io/badge/⬇️%20Download-v1.3.1-green?style=for-the-badge)](https://github.com/arturpedrotti/macos-vim-navigation/releases/latest/download/macos-vim-navigation.zip)

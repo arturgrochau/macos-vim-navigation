@@ -213,19 +213,23 @@ bindScrollKey("b", { scrollLargeStep, 0}, { scrollStep, 0},
   function() moveMouseByFraction(mode == "visual" and -dragMoveLargeFrac or dragMoveLargeFrac, 0) end,
   function() moveMouseByFraction(mode == "visual" and -dragMoveFrac or dragMoveFrac, 0) end)
 
--- Arrow key scroll bindings (same behavior as u/d/w/b)
+-- Arrow key bindings: up/down for scrolling (like u/d), left/right for cursor movement (like h/l)
 bindScrollKey("down", {0, -scrollLargeStep}, {0, -scrollStep},
   function() moveMouseByFraction(0, dragMoveLargeFrac) end,
   function() moveMouseByFraction(0, dragMoveFrac) end)
 bindScrollKey("up", {0, scrollLargeStep}, {0, scrollStep},
   function() moveMouseByFraction(0, -dragMoveLargeFrac) end,
   function() moveMouseByFraction(0, -dragMoveFrac) end)
-bindScrollKey("left", {scrollLargeStep, 0}, {scrollStep, 0},
-  function() moveMouseByFraction(mode == "visual" and -dragMoveLargeFrac or dragMoveLargeFrac, 0) end,
-  function() moveMouseByFraction(mode == "visual" and -dragMoveFrac or dragMoveFrac, 0) end)
-bindScrollKey("right", {-scrollLargeStep, 0}, {-scrollStep, 0},
-  function() moveMouseByFraction(mode == "visual" and dragMoveLargeFrac or -dragMoveLargeFrac, 0) end,
-  function() moveMouseByFraction(mode == "visual" and dragMoveFrac or -dragMoveFrac, 0) end)
+
+-- Left/right arrows: move cursor horizontally (same as h/l keys)
+local arrowDirections = {
+  {key = "left", frac = 1/8, dx = -1, dy = 0},
+  {key = "right", frac = 1/8, dx = 1, dy = 0},
+}
+for _, dir in ipairs(arrowDirections) do
+  local xFrac, yFrac = dir.dx * dir.frac, dir.dy * dir.frac
+  bindHoldWithDelay({}, dir.key, function() moveMouseByFraction(xFrac, yFrac) end, directionInitialDelay, directionRepeatInterval)
+end
 
 local largeScrollStep = scrollStep * 8
 local largeScrolls = {
