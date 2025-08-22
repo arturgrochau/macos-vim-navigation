@@ -29,7 +29,7 @@ This config includes:
 
 When navigation mode is active, you'll see helpful overlays in the bottom-right corner of your screen:
 
-![Mode Indicators](indicators.png)
+![Mode Indicators](indicator.png)
 
 The overlays provide instant feedback about your current navigation state:
 - **-- NORMAL --** appears when you enter navigation mode
