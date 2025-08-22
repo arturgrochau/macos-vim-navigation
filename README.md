@@ -1,4 +1,27 @@
-# 🟩 VIM‑STYLE MAC NAVI**Tip:** `⌥` and `⌃` actions are triggered on **key release**, so they don't interfere with regular macOS shortcuts.
+# 🟩 VIM‑STYLE MAC NAVIGATION SYSTEM  
+### Powered by Hammerspoon  
+#### Designed by **Artur Grochau** [](https://github.com/arturpedrotti)
+
+[![Download](https://img.shields.io/badge/⬇️%20Download-v1.3.1-green?style=for-the-badge)](https://github.com/arturpedrotti/macos-vim-navigation/releases/latest/download/macos-vim-navigation.zip)
+
+A minimal, responsive, and Vim‑inspired mouse/navigation controller for macOS.
+
+---
+
+## ✨ What is this?
+
+This is a **Vim‑style keyboard navigation system for macOS**, powered by [Hammerspoon](https://www.hammerspoon.org).  
+It lets you **control your mouse, inputs, screens, and window focus** without ever reaching for your trackpad or mouse.
+
+This config includes:
+
+- 🖱️ One‑tap screen switching with `⌥` (Option) or `⌃` (Control) – **outside nav mode**
+- 🧭 A full **NAV MODE** for mouse movement, input clicking, scrolling, screen‑edge jumping, and app textbox navigation
+- 🖥️ Support for multi‑monitor setups
+- ⚡ Lightweight, pragmatic, and easy to edit
+- 🧠 Inspired by Vim and modal editors
+
+**Tip:** `⌥` and `⌃` actions are triggered on **key release**, so they don't interfere with regular macOS shortcuts.
 
 ---
 
@@ -13,20 +36,7 @@ The overlays provide instant feedback about your current navigation state:
 - **-- VISUAL MODE --** appears below when you activate visual selection mode
 - Both overlays automatically disappear when you exit navigation mode
 
----ION SYSTEM  
-### Powered by Hammerspoon  
-#### Designed by **Artur Grochau** [](https://github.com/arturpedrotti)
-
-[![Download](https://img.shields.io/badge/⬇️%20Download-v1.3.1-green?style=for-the-badge)](https://github.com/arturpedrotti/macos-vim-navigation/releases/latest/download/macos-vim-navigation.zip)
-
-A minimal, responsive, and Vim‑inspired mouse/navigation controller for macOS.
-
 ---
-
-## ✨ What is this?
-
-This is a **Vim‑style keyboard navigation system for macOS**, powered by [Hammerspoon](https://www.hammerspoon.org).  
-It lets you **control your mouse, inputs, screens, and window focus** without ever reaching for your trackpad or mouse.
 
 This config includes:
 
