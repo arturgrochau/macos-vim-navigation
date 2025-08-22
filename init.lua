@@ -49,29 +49,36 @@ local function setMousePosition(pos)
 end
 
 -- Overlay
-local overlay = canvas.new({
-  x = screen.mainScreen():frame().x + screen.mainScreen():frame().w - 210,
-  y = screen.mainScreen():frame().y + screen.mainScreen():frame().h - 130,
-  h = 30, w = 200
-}):appendElements({
-  type = "rectangle", action = "fill",
-  fillColor = { alpha = 0.4, red = 0, green = 0, blue = 0 },
-  roundedRectRadii = { xRadius = 8, yRadius = 8 }
-}, {
-  id = "modeText",
-  type = "text", text = "-- NORMAL --",
-  textSize = 14, textColor = { white = 1 },
-  frame = { x = 0, y = 5, h = 30, w = 200 },
-  textAlignment = "center"
-})
+local overlay = nil
+
+local function createOverlay()
+  if overlay then overlay:delete() end
+  local currentScr = mouse.getCurrentScreen():frame()
+  overlay = canvas.new({
+    x = currentScr.x + currentScr.w - 210,
+    y = currentScr.y + currentScr.h - 130,
+    h = 30, w = 200
+  }):appendElements({
+    type = "rectangle", action = "fill",
+    fillColor = { alpha = 0.4, red = 0, green = 0, blue = 0 },
+    roundedRectRadii = { xRadius = 8, yRadius = 8 }
+  }, {
+    id = "modeText",
+    type = "text", text = "-- NORMAL --",
+    textSize = 14, textColor = { white = 1 },
+    frame = { x = 0, y = 5, h = 30, w = 200 },
+    textAlignment = "center"
+  })
+end
 
 local visualIndicator = nil
 
 local function showVisualIndicator()
   if visualIndicator then return end
+  local currentScr = mouse.getCurrentScreen():frame()
   visualIndicator = canvas.new({
-    x = screen.mainScreen():frame().x + screen.mainScreen():frame().w - 210,
-    y = screen.mainScreen():frame().y + screen.mainScreen():frame().h - 90,
+    x = currentScr.x + currentScr.w - 210,
+    y = currentScr.y + currentScr.h - 90,
     w = 200, h = 30
   }):appendElements({
     type = "rectangle", action = "fill",
@@ -94,11 +101,12 @@ local function hideVisualIndicator()
 end
 
 function modal:entered()
+  createOverlay()
   overlay:show()
 end
 
 function modal:exited()
-  overlay:hide()
+  if overlay then overlay:hide() end
   if mode == "visual" then
     local pos = mouse.absolutePosition()
     if dragging then
