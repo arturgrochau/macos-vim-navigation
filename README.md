@@ -25,7 +25,7 @@ This config includes:
 
 ---
 
-## 📺 Visual Mode Indicators
+## 📺 Visual Mode Indicators 
 
 When navigation mode is active, you'll see helpful overlays in the bottom-right corner of your screen:
 
