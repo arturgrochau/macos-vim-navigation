@@ -50,8 +50,8 @@ end
 
 -- Overlay
 local overlay = canvas.new({
-  x = screen.mainScreen():frame().x + screen.mainScreen():frame().w - 200,
-  y = screen.mainScreen():frame().y + screen.mainScreen():frame().h - 80,
+  x = screen.mainScreen():frame().x + screen.mainScreen():frame().w - 210,
+  y = screen.mainScreen():frame().y + screen.mainScreen():frame().h - 130,
   h = 30, w = 200
 }):appendElements({
   type = "rectangle", action = "fill",
@@ -213,6 +213,20 @@ bindScrollKey("b", { scrollLargeStep, 0}, { scrollStep, 0},
   function() moveMouseByFraction(mode == "visual" and -dragMoveLargeFrac or dragMoveLargeFrac, 0) end,
   function() moveMouseByFraction(mode == "visual" and -dragMoveFrac or dragMoveFrac, 0) end)
 
+-- Arrow key scroll bindings (same behavior as u/d/w/b)
+bindScrollKey("down", {0, -scrollLargeStep}, {0, -scrollStep},
+  function() moveMouseByFraction(0, dragMoveLargeFrac) end,
+  function() moveMouseByFraction(0, dragMoveFrac) end)
+bindScrollKey("up", {0, scrollLargeStep}, {0, scrollStep},
+  function() moveMouseByFraction(0, -dragMoveLargeFrac) end,
+  function() moveMouseByFraction(0, -dragMoveFrac) end)
+bindScrollKey("left", {scrollLargeStep, 0}, {scrollStep, 0},
+  function() moveMouseByFraction(mode == "visual" and -dragMoveLargeFrac or dragMoveLargeFrac, 0) end,
+  function() moveMouseByFraction(mode == "visual" and -dragMoveFrac or dragMoveFrac, 0) end)
+bindScrollKey("right", {-scrollLargeStep, 0}, {-scrollStep, 0},
+  function() moveMouseByFraction(mode == "visual" and dragMoveLargeFrac or -dragMoveLargeFrac, 0) end,
+  function() moveMouseByFraction(mode == "visual" and dragMoveFrac or -dragMoveFrac, 0) end)
+
 local largeScrollStep = scrollStep * 8
 local largeScrolls = {
   {mod = {"shift"}, key = "u", delta = {0, largeScrollStep}},
@@ -306,6 +320,9 @@ modal:bind({}, "y", function()
     endDragAndClick(mouse.absolutePosition(), "c")
     mode = "normal"
     hideVisualIndicator()
+  else
+    -- Copy selected text or current line when not in visual mode
+    hs.eventtap.keyStroke({"cmd"}, "c")
   end
 end)
 
@@ -574,16 +591,54 @@ optionKeyWatcher = eventtap.new({ eventtap.event.types.keyDown }, function(e)
 end)
 optionKeyWatcher:start()
 
--- Control-tap: click bottom
+-- Control-tap: click bottom-right of VSCode's screen (Copilot area), or bottom-middle if VSCode not found
 local ctrlPressed, ctrlOtherKey = false, false
-local function clickBottom(scr)
-  if not scr then return end
+local function clickNextScreenBottomRight()
+  local currentScr = mouse.getCurrentScreen()
+  local targetScr = nil
+  local isVSCodeActive = false
+  
+  -- Try to find VSCode and check if it's actually visible/active
+  local vscodeApp = app.find("Visual Studio Code") or app.find("Code")
+  if vscodeApp then
+    local vscodeWindow = vscodeApp:mainWindow()
+    if vscodeWindow and not vscodeWindow:isMinimized() and vscodeWindow:isVisible() then
+      targetScr = vscodeWindow:screen()
+      isVSCodeActive = true
+    end
+  end
+  
+  -- If no active VSCode found, use next screen
+  if not targetScr then
+    local allScr = hs.screen.allScreens()
+    if #allScr > 1 then
+      table.sort(allScr, function(a,b) return a:frame().x < b:frame().x end)
+      local currentIndex = 1
+      for i, s in ipairs(allScr) do
+        if s:id() == currentScr:id() then currentIndex = i; break end
+      end
+      local nextIndex = (currentIndex % #allScr) + 1
+      targetScr = allScr[nextIndex]
+    else
+      targetScr = currentScr
+    end
+  end
+  
   if dragging then
     local win = window.focusedWindow()
-    if win then win:moveToScreen(scr) end
+    if win then win:moveToScreen(targetScr) end
   end
-  local f = scr:frame()
-  local pos = { x = f.x + f.w / 2, y = f.y + f.h - 80 }
+  
+  local f = targetScr:frame()
+  local pos
+  if isVSCodeActive then
+    -- VSCode active and visible: click bottom-right (Copilot chat area)
+    pos = { x = f.x + f.w - 250, y = f.y + f.h - 100 }
+  else
+    -- VSCode not active/visible: click bottom-middle
+    pos = { x = f.x + f.w / 2, y = f.y + f.h - 100 }
+  end
+  
   setMousePosition(pos)
   if not dragging then eventtap.leftClick(pos) end
 end
@@ -595,7 +650,7 @@ ctrlFlagsWatcher = eventtap.new({ eventtap.event.types.flagsChanged }, function(
     ctrlOtherKey = false
   elseif not f.ctrl and ctrlPressed then
     ctrlPressed = false
-    if not ctrlOtherKey then clickBottom(mouse.getCurrentScreen()) end
+    if not ctrlOtherKey then clickNextScreenBottomRight() end
   end
 end)
 ctrlFlagsWatcher:start()

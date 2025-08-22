@@ -29,11 +29,11 @@ This config includes:
 
 ### 📦 Global (Works Anytime)
 
-| Key     | Action                                        |
-| ------- | --------------------------------------------- |
-| `⌥ tap` | Move mouse to center of next connected screen |
-| `⌃ tap` | Click near bottom‑middle of current screen    |
-| `⌥ + r` | Reload Hammerspoon config                     |
+| Key     | Action                                                                   |
+| ------- | ------------------------------------------------------------------------ |
+| `⌥ tap` | Move mouse to center of next connected screen                            |
+| `⌃ tap` | Smart click: VSCode Copilot chat area if VSCode open, else bottom-middle |
+| `⌥ + r` | Reload Hammerspoon config                                                |
 
 ### 🚀 Entering and Exiting NAV MODE
 
@@ -48,6 +48,7 @@ This config includes:
 | ----------------- | ----------------------------------------------------------------------------------- |
 | `h / j / k / l`   | Move mouse (← ↓ ↑ →) in small steps (1/8th of the screen)                           |
 | `H / J / K / L`   | Move mouse in large steps (1/2 of the screen)                                       |
+| `↑ / ↓ / ← / →`   | Arrow keys: same as `k / j / h / l` (alternative input method)                      |
 | `d`               | Scroll down; hold to scroll smoothly                                                |
 | `u`               | Scroll up; hold to scroll smoothly                                                  |
 | `⌃ + d`           | Scroll down medium amount (3× normal), repeatable while held                        |
@@ -68,6 +69,7 @@ This config includes:
 | `Shift + D`       | Scroll down significantly (8× scrollStep), repeatable while held                    |
 | `Shift + W`       | Scroll left significantly (8× scrollStep), repeatable while held                    |
 | `Shift + B`       | Scroll right significantly (8× scrollStep), repeatable while held                   |
+| `y`               | Yank: copy selected text (Cmd+C) in any mode                                        |
 
 ---
 
@@ -88,6 +90,7 @@ In visual mode, selection is extended as the mouse moves or scrolls. Keys behave
 | Key / Combo       | Action                                                                 |
 | ----------------- | ---------------------------------------------------------------------- |
 | `h / j / k / l`   | Move mouse in small steps (1/8th of screen width/height)               |
+| `↑ / ↓ / ← / →`   | Arrow keys: same as `k / j / h / l` (extend selection while moving)    |
 | `H / J / K / L`   | Move mouse in large steps (1/2 of screen width/height)                 |
 | `u / d`           | Move cursor vertically in moderate steps (while extending selection)   |
 | `w / b`           | Move cursor horizontally in moderate steps (while extending selection) |
