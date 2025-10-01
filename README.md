@@ -69,33 +69,36 @@ This config includes:
 
 ### 🧭 NAV MODE (Modal Vim‑style Movement & Controls)
 
-| Key & combo       | Action                                                                              |
-| ----------------- | ----------------------------------------------------------------------------------- |
-| `h / j / k / l`   | Move mouse (← ↓ ↑ →) in small steps (1/8th of the screen)                           |
-| `H / J / K / L`   | Move mouse in large steps (1/2 of the screen)                                       |
-| `↑ / ↓`           | Arrow keys: scroll up/down (same as `u / d`)                                        |
-| `← / →`           | Arrow keys: move cursor left/right (same as `h / l`)                                |
-| `d`               | Scroll down; hold to scroll smoothly                                                |
-| `u`               | Scroll up; hold to scroll smoothly                                                  |
-| `⌃ + d`           | Scroll down medium amount (3× normal), repeatable while held                        |
-| `⌃ + u`           | Scroll up medium amount (3× normal), repeatable while held                          |
-| `w`               | Scroll left; hold to scroll smoothly                                                |
-| `b`               | Scroll right; hold to scroll smoothly                                               |
-| `i`               | Triple left click (e.g., to highlight the entire line)                              |
-| `a`               | Right click                                                                         |
-| `c`               | Open or focus the ChatGPT app and click the input box                               |
-| `C` (Shift + c)   | Open or focus VSCode/your IDE (customizable in config)                              |
-| `g` then `g` (gg) | Scroll to the very top of the current scrollable content (double‑press `g` quickly) |
-| `Shift + g` (`G`) | Scroll to the very bottom of the current scrollable content                         |
-| `o`               | Open the first available browser (Arc, Chrome, Firefox, Safari, etc.)               |
-| `Shift + A`       | Focus the next visible window (cycle forward)                                       |
-| `Shift + I`       | Focus the previous visible window (cycle backward)                                  |
-| `Shift + M`       | Move mouse to the center of the screen                                              |
-| `Shift + U`       | Scroll up significantly (8× scrollStep), repeatable while held                      |
-| `Shift + D`       | Scroll down significantly (8× scrollStep), repeatable while held                    |
-| `Shift + W`       | Scroll left significantly (8× scrollStep), repeatable while held                    |
-| `Shift + B`       | Scroll right significantly (8× scrollStep), repeatable while held                   |
-| `y`               | Yank: copy selected text (Cmd+C) in any mode                                        |
+| Key & combo           | Action                                                                              |
+| --------------------- | ----------------------------------------------------------------------------------- |
+| `h / j / k / l`       | Move mouse (← ↓ ↑ →) in small steps (1/8th of the screen)                           |
+| `H / J / K / L`       | Move mouse in large steps (1/2 of the screen)                                       |
+| `↑` / `↓`             | Arrow keys: scroll up/down (same as `u / d`)                                        |
+| `↑ ↑` / `↓ ↓`         | Double-tap arrows: medium scroll (same as `Ctrl+U / Ctrl+D`)                        |
+| `↑ ↑ ↑` / `↓ ↓ ↓`     | Triple-tap arrows: large scroll (same as `Shift+U / Shift+D`)                       |
+| `↑ ↑ ↑ ↑` / `↓ ↓ ↓ ↓` | Quad-tap arrows: scroll to top/bottom (same as `gg / G`)                            |
+| `← / →`               | Arrow keys: move cursor left/right (same as `h / l`)                                |
+| `d`                   | Scroll down; hold to scroll smoothly                                                |
+| `u`                   | Scroll up; hold to scroll smoothly                                                  |
+| `⌃ + d`               | Scroll down medium amount (3× normal), repeatable while held                        |
+| `⌃ + u`               | Scroll up medium amount (3× normal), repeatable while held                          |
+| `w`                   | Scroll left; hold to scroll smoothly                                                |
+| `b`                   | Scroll right; hold to scroll smoothly                                               |
+| `i`                   | Triple left click (e.g., to highlight the entire line)                              |
+| `a`                   | Right click                                                                         |
+| `c`                   | Open or focus the ChatGPT app and click the input box                               |
+| `C` (Shift + c)       | Open or focus VSCode/your IDE (customizable in config)                              |
+| `g` then `g` (gg)     | Scroll to the very top of the current scrollable content (double‑press `g` quickly) |
+| `Shift + g` (`G`)     | Scroll to the very bottom of the current scrollable content                         |
+| `o`                   | Open the first available browser (Arc, Chrome, Firefox, Safari, etc.)               |
+| `Shift + A`           | Focus the next visible window (cycle forward)                                       |
+| `Shift + I`           | Focus the previous visible window (cycle backward)                                  |
+| `Shift + M`           | Move mouse to the center of the screen                                              |
+| `Shift + U`           | Scroll up significantly (8× scrollStep), repeatable while held                      |
+| `Shift + D`           | Scroll down significantly (8× scrollStep), repeatable while held                    |
+| `Shift + W`           | Scroll left significantly (8× scrollStep), repeatable while held                    |
+| `Shift + B`           | Scroll right significantly (8× scrollStep), repeatable while held                   |
+| `y`                   | Yank: copy selected text (Cmd+C) in any mode                                        |
 
 ---
 

@@ -346,7 +346,10 @@ modal:bind({}, "p", function()
   else
     local pos = mouse.absolutePosition()
     eventtap.leftClick(pos)
-    timer.doAfter(0.05, function() eventtap.keyStroke({"cmd"}, "v") end)
+    timer.doAfter(0.05, function() 
+      eventtap.keyStroke({"cmd"}, "v") 
+      timer.doAfter(0.05, function() modal:exit() end)
+    end)
   end
 end)
 
@@ -358,7 +361,10 @@ modal:bind({"shift"}, "p", function()
   else
     local pos = mouse.absolutePosition()
     eventtap.leftClick(pos)
-    timer.doAfter(0.05, function() eventtap.keyStroke({"cmd"}, "v") end)
+    timer.doAfter(0.05, function() 
+      eventtap.keyStroke({"cmd"}, "v") 
+      timer.doAfter(0.05, function() modal:exit() end)
+    end)
   end
 end)
 
@@ -545,9 +551,13 @@ gResetTap:start()
 modal:bind({}, "o", function()
   local browsers = { "Arc", "Arc Browser", "Google Chrome", "Firefox", "Safari" }
   for _, name in ipairs(browsers) do
-    if app.launchOrFocus(name) then return end
+    if app.launchOrFocus(name) then
+      modal:exit()
+      return
+    end
   end
   hs.alert.show("No known browsers found to open")
+  modal:exit()
 end)
 
 -- Modal entry/exit
