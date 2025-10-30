@@ -567,6 +567,62 @@ modal:bind({}, "o", function()
   end
   modal:exit()
 end)
+
+-- ChatGPT Atlas browser shortcut (Shift + O)
+modal:bind({"shift"}, "o", function()
+  local atlasBundleID = "com.chatgpt.atlas"
+  local atlasAppName = "ChatGPT Atlas"
+
+  local function clickCenter(win)
+    if win then
+      win:raise()
+      win:focus()
+      local f = win:frame()
+      mouse.absolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+      timer.doAfter(0.2, function() eventtap.leftClick(mouse.absolutePosition()) end)
+    end
+  end
+
+  local runningApp = app.get(atlasAppName)
+  if runningApp then
+    runningApp:unhide()
+    local win = runningApp:mainWindow()
+    if win then
+      if win:isMinimized() then win:unminimize() end
+      clickCenter(win)
+    else
+      local openedApp = hs.application.launchOrFocusByBundleID(atlasBundleID) or hs.application.open(atlasAppName)
+      if openedApp then
+        timer.doAfter(2.0, function()
+          local newWin = openedApp:mainWindow()
+          if newWin then
+            clickCenter(newWin)
+          else
+            hs.alert.show("ChatGPT Atlas window could not be opened")
+          end
+        end)
+      else
+        hs.alert.show("ChatGPT Atlas could not be launched")
+      end
+    end
+  else
+    local openedApp = hs.application.launchOrFocusByBundleID(atlasBundleID) or hs.application.open(atlasAppName)
+    if openedApp then
+      timer.doAfter(2.0, function()
+        local win = openedApp:mainWindow()
+        if win then
+          clickCenter(win)
+        else
+          hs.alert.show("ChatGPT Atlas window did not appear")
+        end
+      end)
+    else
+      hs.alert.show("ChatGPT Atlas could not be launched")
+    end
+  end
+  modal:exit()
+end)
+
 -- Modal entry/exit
 hs.hotkey.bind({"ctrl","alt","cmd"}, "space", function() modal:enter() end)
 hs.hotkey.bind({}, "f12", function() modal:enter() end)
