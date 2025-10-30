@@ -589,7 +589,7 @@ modal:bind({"shift"}, "o", function()
     local win = runningApp:mainWindow()
     if win then
       if win:isMinimized() then win:unminimize() end
-      clickCenter(win)
+      timer.doAfter(0.1, function() clickCenter(win) end)
     else
       local openedApp = hs.application.launchOrFocusByBundleID(atlasBundleID) or hs.application.open(atlasAppName)
       if openedApp then
@@ -618,6 +618,61 @@ modal:bind({"shift"}, "o", function()
       end)
     else
       hs.alert.show("ChatGPT Atlas could not be launched")
+    end
+  end
+  modal:exit()
+end)
+
+-- Microsoft Teams shortcut
+modal:bind({}, "t", function()
+  local teamsBundleID = "com.microsoft.teams2"
+  local teamsAppName = "Microsoft Teams"
+
+  local function clickCenter(win)
+    if win then
+      win:raise()
+      win:focus()
+      local f = win:frame()
+      mouse.absolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+      timer.doAfter(0.2, function() eventtap.leftClick(mouse.absolutePosition()) end)
+    end
+  end
+
+  local runningApp = app.get(teamsAppName)
+  if runningApp then
+    runningApp:unhide()
+    local win = runningApp:mainWindow()
+    if win then
+      if win:isMinimized() then win:unminimize() end
+      clickCenter(win)
+    else
+      local openedApp = hs.application.launchOrFocusByBundleID(teamsBundleID) or hs.application.open(teamsAppName)
+      if openedApp then
+        timer.doAfter(2.0, function()
+          local newWin = openedApp:mainWindow()
+          if newWin then
+            clickCenter(newWin)
+          else
+            hs.alert.show("Teams window could not be opened")
+          end
+        end)
+      else
+        hs.alert.show("Teams could not be launched")
+      end
+    end
+  else
+    local openedApp = hs.application.launchOrFocusByBundleID(teamsBundleID) or hs.application.open(teamsAppName)
+    if openedApp then
+      timer.doAfter(2.0, function()
+        local win = openedApp:mainWindow()
+        if win then
+          clickCenter(win)
+        else
+          hs.alert.show("Teams window did not appear")
+        end
+      end)
+    else
+      hs.alert.show("Teams could not be launched")
     end
   end
   modal:exit()
