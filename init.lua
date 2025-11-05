@@ -950,7 +950,10 @@ ctrlFlagsWatcher = eventtap.new({ eventtap.event.types.flagsChanged }, function(
     ctrlOtherKey = false
   elseif not f.ctrl and ctrlPressed then
     ctrlPressed = false
-    if not ctrlOtherKey then clickNextScreenBottomRight() end
+    if not ctrlOtherKey then 
+      clickNextScreenBottomRight()
+      modal:exit()  -- Exit nav mode after performing the action
+    end
   end
 end)
 ctrlFlagsWatcher:start()
