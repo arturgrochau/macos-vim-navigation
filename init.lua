@@ -678,17 +678,149 @@ modal:bind({}, "t", function()
   modal:exit()
 end)
 
+
 -- Modal entry/exit
 hs.hotkey.bind({"ctrl","alt","cmd"}, "space", function() modal:enter() end)
 hs.hotkey.bind({}, "f12", function() modal:enter() end)
 hs.hotkey.bind({"ctrl"}, "=", function() modal:enter() end)
 modal:bind({}, "escape", function() modal:exit() end)
 modal:bind({"ctrl"}, "c", function() modal:exit() end)
+
+---------------------------------------------------------------------------
+-- Seamless Window Minimize / Restore (Cmd+Shift+M / Cmd+Shift+R)
+---------------------------------------------------------------------------
+local minimizeStack = {}
+
+-- Push unique windows (avoid duplicates)
+local function pushUnique(stack, win)
+  if not win then return end
+  for i = #stack, 1, -1 do
+    if stack[i]:id() == win:id() then
+      table.remove(stack, i)
+      break
+    end
+  end
+  table.insert(stack, win)
+end
+
+-- Minimize and focus next available window
+local function minimizeFocused()
+  local win = hs.window.focusedWindow()
+  if not win then
+    hs.alert.show("No active window to minimize")
+    return
+  end
+
+  local appName = win:application():name() or "Unknown"
+  pushUnique(minimizeStack, win)
+  win:minimize()
+
+  -- Try to focus the next window (from the same app first, then any)
+  local allWins = hs.window.orderedWindows()
+  for _, w in ipairs(allWins) do
+    if w:id() ~= win:id() and not w:isMinimized() then
+      w:focus()
+      hs.alert.show("Minimized: " .. appName)
+      return
+    end
+  end
+  hs.alert.show("Minimized: " .. appName .. " (no other window to focus)")
+end
+
+-- Try restoring the last minimized, or fallback to any minimized
+local function findAnyMinimized()
+  local all = hs.window.allWindows()
+  for i = #all, 1, -1 do
+    if all[i]:isMinimized() then return all[i] end
+  end
+  return nil
+end
+
+local function restoreLast()
+  local win = table.remove(minimizeStack)
+  if not (win and win:isMinimized()) then
+    win = findAnyMinimized()
+  end
+  if win then
+    win:unminimize()
+    win:focus()
+    hs.alert.show("Restored: " .. (win:application():name() or "Unknown"))
+  else
+    hs.alert.show("No minimized windows to restore")
+  end
+end
+
+-- Cmd + Shift + M: Minimize the focused window
+hs.hotkey.bind({"cmd", "shift"}, "m", minimizeFocused)
+
+-- Cmd + Shift + R: Restore the most recently minimized window
+hs.hotkey.bind({"cmd", "shift"}, "r", restoreLast)
+
+---------------------------------------------------------------------------
+-- Window Focus Navigation (Cmd+Shift+H/J/K/L or Arrow Keys)
+-- Prioritizes monitor switching, falls back to same-screen navigation
+---------------------------------------------------------------------------
+
+local function focusInDirection(dir)
+  local win = hs.window.focusedWindow()
+  if not win then return end
+
+  local currentScreen = win:screen()
+  local allScreens = hs.screen.allScreens()
+  
+  -- First priority: try to switch to adjacent monitor
+  local nextScreen = nil
+  if dir == "west" then nextScreen = currentScreen:toWest() end
+  if dir == "east" then nextScreen = currentScreen:toEast() end
+  if dir == "north" then nextScreen = currentScreen:toNorth() end
+  if dir == "south" then nextScreen = currentScreen:toSouth() end
+
+  if nextScreen and nextScreen ~= currentScreen then
+    -- Found an adjacent monitor, focus any window on it
+    local wins = hs.window.orderedWindows()
+    for _, w in ipairs(wins) do
+      if w:screen():id() == nextScreen:id() and not w:isMinimized() then
+        w:focus()
+        return
+      end
+    end
+    -- No window on that screen, just move mouse to center
+    local f = nextScreen:frame()
+    hs.mouse.absolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+    return
+  end
+
+  -- Second priority (single monitor): find window in that direction on same screen
+  if #allScreens == 1 then
+    local nextWin = nil
+    if dir == "west" then nextWin = win:windowsToWest()[1] end
+    if dir == "east" then nextWin = win:windowsToEast()[1] end
+    if dir == "north" then nextWin = win:windowsToNorth()[1] end
+    if dir == "south" then nextWin = win:windowsToSouth()[1] end
+
+    if nextWin then
+      nextWin:focus()
+    end
+  end
+end
+
+-- Keybindings: Cmd+Shift+H/J/K/L (Vim-style) and Arrow keys
+local mods = {"cmd", "shift"}
+hs.hotkey.bind(mods, "h", function() focusInDirection("west") end)
+hs.hotkey.bind(mods, "l", function() focusInDirection("east") end)
+hs.hotkey.bind(mods, "j", function() focusInDirection("south") end)
+hs.hotkey.bind(mods, "k", function() focusInDirection("north") end)
+hs.hotkey.bind(mods, "left", function() focusInDirection("west") end)
+hs.hotkey.bind(mods, "right", function() focusInDirection("east") end)
+hs.hotkey.bind(mods, "down", function() focusInDirection("south") end)
+hs.hotkey.bind(mods, "up", function() focusInDirection("north") end)
+
 -- Reload config
 hs.hotkey.bind({"alt"}, "r", function()
   hs.reload()
   hs.alert("Reloaded")
 end)
+
 -- Option-tap: cycle screens
 local optionPressed, optionOtherKey = false, false
 local function centerMouseOn(scr)
