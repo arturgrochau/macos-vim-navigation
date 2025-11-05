@@ -722,12 +722,43 @@ optionFlagsWatcher = eventtap.new({ eventtap.event.types.flagsChanged }, functio
 end)
 optionFlagsWatcher:start()
 optionKeyWatcher = eventtap.new({ eventtap.event.types.keyDown }, function(e)
-  if optionPressed then optionOtherKey = true end
+  if optionPressed then 
+    local f = e:getFlags()
+    if f.alt and not (f.cmd or f.ctrl or f.shift) then
+      local kc = e:getKeyCode()
+      if kc == hs.keycodes.map.d then
+        optionOtherKey = true
+        eventtap.scrollWheel({0, -400}, {}, "pixel")
+        return true
+      elseif kc == hs.keycodes.map.u then
+        optionOtherKey = true
+        eventtap.scrollWheel({0, 400}, {}, "pixel")
+        return true
+      end
+    end
+    optionOtherKey = true
+  end
   return false
 end)
 optionKeyWatcher:start()
 -- Control-tap: click bottom-right of VSCode's screen (Copilot area), or bottom-middle if VSCode not found
+-- Only works in normal mode (unlike Option-tap which works globally)
 local ctrlPressed, ctrlOtherKey = false, false
+local modalActive = false
+
+-- Track modal state
+local originalEntered = modal.entered
+modal.entered = function(self)
+  modalActive = true
+  originalEntered(self)
+end
+
+local originalExited = modal.exited
+modal.exited = function(self)
+  modalActive = false
+  originalExited(self)
+end
+
 local function clickNextScreenBottomRight()
   local currentScr = mouse.getCurrentScreen()
   local targetScr = nil
@@ -778,6 +809,9 @@ local function clickNextScreenBottomRight()
   if not dragging then eventtap.leftClick(pos) end
 end
 ctrlFlagsWatcher = eventtap.new({ eventtap.event.types.flagsChanged }, function(e)
+  -- Only work when modal is active (in normal mode)
+  if not modalActive then return false end
+  
   local f = e:getFlags()
   if f.ctrl and not ctrlPressed then
     ctrlPressed = true

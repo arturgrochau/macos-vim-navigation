@@ -57,6 +57,8 @@ This config includes:
 | Key     | Action                                                                   |
 | ------- | ------------------------------------------------------------------------ |
 | `⌥ tap` | Move mouse to center of next connected screen                            |
+| `⌥ + d` | Scroll down (half page) - works globally without entering NAV MODE       |
+| `⌥ + u` | Scroll up (half page) - works globally without entering NAV MODE         |
 | `⌃ tap` | Smart click: VSCode Copilot chat area if VSCode open, else bottom-middle |
 | `⌥ + r` | Reload Hammerspoon config                                                |
 
@@ -145,4 +147,5 @@ Unzip it and move into the directory:
 
 ```bash
 unzip macos-vim-navigation.zip
-cd macos-vim-navigation</file>
+cd macos-vim-navigation
+```
