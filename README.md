@@ -54,13 +54,19 @@ This config includes:
 
 ### 📦 Global (Works Anytime)
 
-| Key     | Action                                                                   |
-| ------- | ------------------------------------------------------------------------ |
-| `⌥ tap` | Move mouse to center of next connected screen                            |
-| `⌥ + d` | Scroll down (half page) - works globally without entering NAV MODE       |
-| `⌥ + u` | Scroll up (half page) - works globally without entering NAV MODE         |
-| `⌃ tap` | Smart click: VSCode Copilot chat area if VSCode open, else bottom-middle |
-| `⌥ + r` | Reload Hammerspoon config                                                |
+| Key            | Action                                                                                      |
+| -------------- | ------------------------------------------------------------------------------------------- |
+| `⌥ tap`        | Move mouse to center of next connected screen                                               |
+| `⌥ + d`        | Scroll down (half page) - works globally without entering NAV MODE                          |
+| `⌥ + u`        | Scroll up (half page) - works globally without entering NAV MODE                            |
+| `⌃ tap`        | Smart click: VSCode Copilot chat area if VSCode open, else bottom-middle (only in NAV MODE) |
+| `⌥ + r`        | Reload Hammerspoon config                                                                   |
+| `⌘⇧M`          | Minimize focused window (auto-focuses next window)                                          |
+| `⌘⇧R`          | Restore most recently minimized window                                                      |
+| `⌘⇧H` or `⌘⇧←` | Focus window on left monitor (or window to the left on single monitor)                      |
+| `⌘⇧L` or `⌘⇧→` | Focus window on right monitor (or window to the right on single monitor)                    |
+| `⌘⇧J` or `⌘⇧↓` | Focus window on monitor below (or window below on single monitor)                           |
+| `⌘⇧K` or `⌘⇧↑` | Focus window on monitor above (or window above on single monitor)                           |
 
 ### 🚀 Entering and Exiting NAV MODE
 
@@ -88,11 +94,13 @@ This config includes:
 | `b`                   | Scroll right; hold to scroll smoothly                                               |
 | `i`                   | Triple left click (e.g., to highlight the entire line)                              |
 | `a`                   | Right click                                                                         |
-| `c`                   | Open or focus the ChatGPT app and click the input box                               |
-| `C` (Shift + c)       | Open or focus VSCode/your IDE (customizable in config)                              |
+| `c`                   | Open or focus the ChatGPT app and click the input box, then exit NAV MODE           |
+| `C` (Shift + c)       | Open or focus VSCode/your IDE (customizable in config), then exit NAV MODE          |
+| `o`                   | Open Arc browser and exit NAV MODE                                                  |
+| `O` (Shift + o)       | Open ChatGPT Atlas browser and exit NAV MODE                                        |
+| `t`                   | Open Microsoft Teams and exit NAV MODE                                              |
 | `g` then `g` (gg)     | Scroll to the very top of the current scrollable content (double‑press `g` quickly) |
 | `Shift + g` (`G`)     | Scroll to the very bottom of the current scrollable content                         |
-| `o`                   | Open the first available browser (Arc, Chrome, Firefox, Safari, etc.)               |
 | `Shift + A`           | Focus the next visible window (cycle forward)                                       |
 | `Shift + I`           | Focus the previous visible window (cycle backward)                                  |
 | `Shift + M`           | Move mouse to the center of the screen                                              |
@@ -101,6 +109,7 @@ This config includes:
 | `Shift + W`           | Scroll left significantly (8× scrollStep), repeatable while held                    |
 | `Shift + B`           | Scroll right significantly (8× scrollStep), repeatable while held                   |
 | `y`                   | Yank: copy selected text (Cmd+C) in any mode                                        |
+| `p` / `Shift + p`     | Paste at mouse position and exit NAV MODE (allows immediate typing)                 |
 
 ---
 
@@ -112,7 +121,7 @@ This config includes:
 | `Shift + v`       | Enter visual mode with triple-click block selection             |
 | `V` / `SHIFT + V` | EXIT VISUAL MODE (FINALIZES SELECTION WITH A CLICK)             |
 | `y`               | Yank selected content (performs Cmd+C)                          |
-| `p` / `Shift + p` | Paste over selection or paste at mouse (performs Cmd+V)         |
+| `p` / `Shift + p` | Paste over selection (performs Cmd+V)                           |
 
 ### 🔀 Moving and Selecting (while in Visual Mode)
 
