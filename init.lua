@@ -757,63 +757,145 @@ hs.hotkey.bind({"cmd", "shift"}, "m", minimizeFocused)
 hs.hotkey.bind({"cmd", "shift"}, "r", restoreLast)
 
 ---------------------------------------------------------------------------
--- Window Focus Navigation (Cmd+Shift+H/J/K/L or Arrow Keys)
--- Prioritizes monitor switching, falls back to same-screen navigation
+-- Window Focus Navigation (Ctrl+Shift+- / Ctrl+Shift+=)
+-- Switches focus between visible windows on different monitors or cycles on same screen
 ---------------------------------------------------------------------------
 
-local function focusInDirection(dir)
-  local win = hs.window.focusedWindow()
-  if not win then return end
-
-  local currentScreen = win:screen()
-  local allScreens = hs.screen.allScreens()
-  
-  -- First priority: try to switch to adjacent monitor
-  local nextScreen = nil
-  if dir == "west" then nextScreen = currentScreen:toWest() end
-  if dir == "east" then nextScreen = currentScreen:toEast() end
-  if dir == "north" then nextScreen = currentScreen:toNorth() end
-  if dir == "south" then nextScreen = currentScreen:toSouth() end
-
-  if nextScreen and nextScreen ~= currentScreen then
-    -- Found an adjacent monitor, focus any window on it
-    local wins = hs.window.orderedWindows()
-    for _, w in ipairs(wins) do
-      if w:screen():id() == nextScreen:id() and not w:isMinimized() then
-        w:focus()
-        return
-      end
-    end
-    -- No window on that screen, just move mouse to center
-    local f = nextScreen:frame()
-    hs.mouse.absolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+local function focusWindowInDirection(direction)
+  local currentWin = hs.window.focusedWindow()
+  if not currentWin then
+    hs.alert.show("No window focused")
     return
   end
 
-  -- Second priority (single monitor): find window in that direction on same screen
-  if #allScreens == 1 then
-    local nextWin = nil
-    if dir == "west" then nextWin = win:windowsToWest()[1] end
-    if dir == "east" then nextWin = win:windowsToEast()[1] end
-    if dir == "north" then nextWin = win:windowsToNorth()[1] end
-    if dir == "south" then nextWin = win:windowsToSouth()[1] end
+  local currentScreen = currentWin:screen()
+  local allScreens = hs.screen.allScreens()
+  
+  -- Get all visible, non-minimized windows
+  local visibleWindows = hs.fnutils.filter(hs.window.orderedWindows(), function(w)
+    return not w:isMinimized() and w:isVisible() and w:isStandard()
+  end)
+  
+  if #visibleWindows <= 1 then
+    hs.alert.show("No other visible windows")
+    return
+  end
 
-    if nextWin then
-      nextWin:focus()
+  -- Multi-monitor setup: switch between screens
+  if #allScreens > 1 then
+    -- Sort screens by position (left to right)
+    table.sort(allScreens, function(a, b) return a:frame().x < b:frame().x end)
+    
+    -- Find current screen index
+    local currentScreenIndex = 1
+    for i, scr in ipairs(allScreens) do
+      if scr:id() == currentScreen:id() then
+        currentScreenIndex = i
+        break
+      end
+    end
+    
+    local targetScreen = nil
+    
+    if direction == "left" then
+      -- Move to screen on the left
+      if currentScreenIndex > 1 then
+        targetScreen = allScreens[currentScreenIndex - 1]
+      else
+        -- Wrap around to rightmost screen
+        targetScreen = allScreens[#allScreens]
+      end
+    elseif direction == "right" then
+      -- Move to screen on the right
+      if currentScreenIndex < #allScreens then
+        targetScreen = allScreens[currentScreenIndex + 1]
+      else
+        -- Wrap around to leftmost screen
+        targetScreen = allScreens[1]
+      end
+    end
+    
+    -- Find the most recently used visible window on the target screen
+    local targetWindow = nil
+    for _, w in ipairs(visibleWindows) do
+      if w:screen():id() == targetScreen:id() and w:id() ~= currentWin:id() then
+        targetWindow = w
+        break  -- orderedWindows() gives us most recent first
+      end
+    end
+    
+    if targetWindow then
+      targetWindow:focus()
+      hs.alert.show("Focused: " .. (targetWindow:application():name() or "Window"))
+    else
+      -- No window on target screen, just move mouse there
+      local f = targetScreen:frame()
+      hs.mouse.absolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+      hs.alert.show("No window on " .. (direction == "left" and "left" or "right") .. " screen")
+    end
+  else
+    -- Single monitor: cycle through windows by horizontal position
+    local currentFrame = currentWin:frame()
+    local currentX = currentFrame.x + currentFrame.w / 2
+    
+    -- Get windows on current screen sorted by position
+    local screenWindows = {}
+    for _, w in ipairs(visibleWindows) do
+      if w:screen():id() == currentScreen:id() and w:id() ~= currentWin:id() then
+        local f = w:frame()
+        table.insert(screenWindows, {
+          window = w,
+          x = f.x + f.w / 2
+        })
+      end
+    end
+    
+    if #screenWindows == 0 then
+      hs.alert.show("No other windows on screen")
+      return
+    end
+    
+    -- Sort by x position
+    table.sort(screenWindows, function(a, b) return a.x < b.x end)
+    
+    local targetWindow = nil
+    
+    if direction == "left" then
+      -- Find closest window to the left
+      for i = #screenWindows, 1, -1 do
+        if screenWindows[i].x < currentX then
+          targetWindow = screenWindows[i].window
+          break
+        end
+      end
+      -- If none found, wrap to rightmost
+      if not targetWindow then
+        targetWindow = screenWindows[#screenWindows].window
+      end
+    elseif direction == "right" then
+      -- Find closest window to the right
+      for i = 1, #screenWindows do
+        if screenWindows[i].x > currentX then
+          targetWindow = screenWindows[i].window
+          break
+        end
+      end
+      -- If none found, wrap to leftmost
+      if not targetWindow then
+        targetWindow = screenWindows[1].window
+      end
+    end
+    
+    if targetWindow then
+      targetWindow:focus()
+      hs.alert.show("Focused: " .. (targetWindow:application():name() or "Window"))
     end
   end
 end
 
--- Keybindings: Cmd+Shift+H/J/K/L (Vim-style) and Arrow keys
-local mods = {"cmd", "shift"}
-hs.hotkey.bind(mods, "h", function() focusInDirection("west") end)
-hs.hotkey.bind(mods, "l", function() focusInDirection("east") end)
-hs.hotkey.bind(mods, "j", function() focusInDirection("south") end)
-hs.hotkey.bind(mods, "k", function() focusInDirection("north") end)
-hs.hotkey.bind(mods, "left", function() focusInDirection("west") end)
-hs.hotkey.bind(mods, "right", function() focusInDirection("east") end)
-hs.hotkey.bind(mods, "down", function() focusInDirection("south") end)
-hs.hotkey.bind(mods, "up", function() focusInDirection("north") end)
+-- Keybindings: Ctrl+Shift+- (left) and Ctrl+Shift+= (right)
+hs.hotkey.bind({"ctrl", "shift"}, "-", function() focusWindowInDirection("left") end)
+hs.hotkey.bind({"ctrl", "shift"}, "=", function() focusWindowInDirection("right") end)
 
 -- Reload config
 hs.hotkey.bind({"alt"}, "r", function()
