@@ -927,6 +927,7 @@ optionFlagsWatcher = eventtap.new({ eventtap.event.types.flagsChanged }, functio
       pendingReleaseTimer = nil
     end
   elseif not f.alt and optionHoldActive then
+    optionHoldActive = false
     if not optionOtherKey then
       pendingReleaseTimer = timer.doAfter(0.05, function()
         pendingReleaseTimer = nil
@@ -942,8 +943,13 @@ optionFlagsWatcher = eventtap.new({ eventtap.event.types.flagsChanged }, functio
           centerMouseOn(allScr[nextIndex])
         end
       end)
+    else
+      -- Cancel any pending timer if optionOtherKey was set
+      if pendingReleaseTimer then
+        pendingReleaseTimer:stop()
+        pendingReleaseTimer = nil
+      end
     end
-    optionHoldActive = false
   end
 end)
 optionFlagsWatcher:start()
