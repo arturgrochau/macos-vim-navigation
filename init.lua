@@ -757,7 +757,7 @@ hs.hotkey.bind({"cmd", "shift"}, "m", minimizeFocused)
 hs.hotkey.bind({"cmd", "shift"}, "r", restoreLast)
 
 ---------------------------------------------------------------------------
--- Window Focus Navigation (Ctrl+Shift+- / Ctrl+Shift+=)
+-- Window Focus Navigation (Cmd+- / Cmd+=)
 -- Switches focus between visible windows on different monitors or cycles on same screen
 ---------------------------------------------------------------------------
 
@@ -893,9 +893,9 @@ local function focusWindowInDirection(direction)
   end
 end
 
--- Keybindings: Ctrl+Shift+- (left) and Ctrl+Shift+= (right)
-hs.hotkey.bind({"ctrl", "shift"}, "-", function() focusWindowInDirection("left") end)
-hs.hotkey.bind({"ctrl", "shift"}, "=", function() focusWindowInDirection("right") end)
+-- Keybindings: Cmd+- (left) and Cmd+= (right)
+hs.hotkey.bind({"cmd"}, "-", function() focusWindowInDirection("left") end)
+hs.hotkey.bind({"cmd"}, "=", function() focusWindowInDirection("right") end)
 
 -- Reload config
 hs.hotkey.bind({"alt"}, "r", function()
