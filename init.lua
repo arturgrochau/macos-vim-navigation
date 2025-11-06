@@ -904,7 +904,10 @@ hs.hotkey.bind({"alt"}, "r", function()
 end)
 
 -- Option-tap: cycle screens
-local optionPressed, optionOtherKey = false, false
+local optionPressed = false
+local optionOtherKey = false
+local optionHoldActive = false
+local pendingReleaseTimer = nil
 local function centerMouseOn(scr)
   if not scr then return end
   if dragging then
@@ -916,27 +919,36 @@ local function centerMouseOn(scr)
 end
 optionFlagsWatcher = eventtap.new({ eventtap.event.types.flagsChanged }, function(e)
   local f = e:getFlags()
-  if f.alt and not optionPressed then
-    optionPressed = true
+  if f.alt and not optionHoldActive then
+    optionHoldActive = true
     optionOtherKey = false
-  elseif not f.alt and optionPressed then
-    optionPressed = false
-    if not optionOtherKey then
-      local currentScr = mouse.getCurrentScreen()
-      local allScr = hs.screen.allScreens()
-      table.sort(allScr, function(a,b) return a:frame().x < b:frame().x end)
-      local currentIndex = 1
-      for i, s in ipairs(allScr) do
-        if s:id() == currentScr:id() then currentIndex = i; break end
-      end
-      local nextIndex = (currentIndex % #allScr) + 1
-      centerMouseOn(allScr[nextIndex])
+    if pendingReleaseTimer then
+      pendingReleaseTimer:stop()
+      pendingReleaseTimer = nil
     end
+  elseif not f.alt and optionHoldActive then
+    if not optionOtherKey then
+      pendingReleaseTimer = timer.doAfter(0.05, function()
+        pendingReleaseTimer = nil
+        if not optionHoldActive then
+          local currentScr = mouse.getCurrentScreen()
+          local allScr = hs.screen.allScreens()
+          table.sort(allScr, function(a,b) return a:frame().x < b:frame().x end)
+          local currentIndex = 1
+          for i, s in ipairs(allScr) do
+            if s:id() == currentScr:id() then currentIndex = i; break end
+          end
+          local nextIndex = (currentIndex % #allScr) + 1
+          centerMouseOn(allScr[nextIndex])
+        end
+      end)
+    end
+    optionHoldActive = false
   end
 end)
 optionFlagsWatcher:start()
 optionKeyWatcher = eventtap.new({ eventtap.event.types.keyDown }, function(e)
-  if optionPressed then 
+  if optionHoldActive or pendingReleaseTimer then
     local f = e:getFlags()
     if f.alt and not (f.cmd or f.ctrl or f.shift) then
       local kc = e:getKeyCode()
@@ -951,6 +963,10 @@ optionKeyWatcher = eventtap.new({ eventtap.event.types.keyDown }, function(e)
       end
     end
     optionOtherKey = true
+    if pendingReleaseTimer then
+      pendingReleaseTimer:stop()
+      pendingReleaseTimer = nil
+    end
   end
   return false
 end)
