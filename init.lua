@@ -690,6 +690,7 @@ modal:bind({"ctrl"}, "c", function() modal:exit() end)
 -- Seamless Window Minimize / Restore (Cmd+Shift+M / Cmd+Shift+R)
 ---------------------------------------------------------------------------
 local minimizeStack = {}
+local lastMinimizeScreen = nil
 
 -- Push unique windows (avoid duplicates)
 local function pushUnique(stack, win)
@@ -703,7 +704,7 @@ local function pushUnique(stack, win)
   table.insert(stack, win)
 end
 
--- Minimize and focus next available window
+-- Minimize and focus next available window on the same screen
 local function minimizeFocused()
   local win = hs.window.focusedWindow()
   if not win then
@@ -712,11 +713,23 @@ local function minimizeFocused()
   end
 
   local appName = win:application():name() or "Unknown"
+  local currentScreen = win:screen()
+  lastMinimizeScreen = currentScreen
+  
   pushUnique(minimizeStack, win)
   win:minimize()
 
-  -- Try to focus the next window (from the same app first, then any)
+  -- Try to focus the next window on the same screen first
   local allWins = hs.window.orderedWindows()
+  for _, w in ipairs(allWins) do
+    if w:id() ~= win:id() and not w:isMinimized() and w:screen():id() == currentScreen:id() then
+      w:focus()
+      hs.alert.show("Minimized: " .. appName)
+      return
+    end
+  end
+  
+  -- If no window on same screen, try any other window
   for _, w in ipairs(allWins) do
     if w:id() ~= win:id() and not w:isMinimized() then
       w:focus()
@@ -724,10 +737,22 @@ local function minimizeFocused()
       return
     end
   end
+  
   hs.alert.show("Minimized: " .. appName .. " (no other window to focus)")
 end
 
--- Try restoring the last minimized, or fallback to any minimized
+-- Try restoring the last minimized on the same screen, or fallback to any minimized
+local function findMinimizedOnScreen(scr)
+  if not scr then return nil end
+  local all = hs.window.allWindows()
+  for i = #all, 1, -1 do
+    if all[i]:isMinimized() and all[i]:screen():id() == scr:id() then
+      return all[i]
+    end
+  end
+  return nil
+end
+
 local function findAnyMinimized()
   local all = hs.window.allWindows()
   for i = #all, 1, -1 do
@@ -738,12 +763,33 @@ end
 
 local function restoreLast()
   local win = table.remove(minimizeStack)
-  if not (win and win:isMinimized()) then
-    win = findAnyMinimized()
+  
+  -- If the last minimized window is still minimized, restore it
+  if win and win:isMinimized() then
+    win:unminimize()
+    win:focus()
+    lastMinimizeScreen = win:screen()
+    hs.alert.show("Restored: " .. (win:application():name() or "Unknown"))
+    return
   end
+  
+  -- Otherwise, try to find a minimized window on the last minimize screen
+  if lastMinimizeScreen then
+    win = findMinimizedOnScreen(lastMinimizeScreen)
+    if win then
+      win:unminimize()
+      win:focus()
+      hs.alert.show("Restored: " .. (win:application():name() or "Unknown"))
+      return
+    end
+  end
+  
+  -- Fallback: restore any minimized window
+  win = findAnyMinimized()
   if win then
     win:unminimize()
     win:focus()
+    lastMinimizeScreen = win:screen()
     hs.alert.show("Restored: " .. (win:application():name() or "Unknown"))
   else
     hs.alert.show("No minimized windows to restore")
