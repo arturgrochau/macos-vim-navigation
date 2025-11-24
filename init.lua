@@ -954,6 +954,7 @@ local optionPressed = false
 local optionOtherKey = false
 local optionHoldActive = false
 local pendingReleaseTimer = nil
+local lastOptionKeyTime = 0
 local function centerMouseOn(scr)
   if not scr then return end
   if dragging then
@@ -974,7 +975,9 @@ optionFlagsWatcher = eventtap.new({ eventtap.event.types.flagsChanged }, functio
     end
   elseif not f.alt and optionHoldActive then
     optionHoldActive = false
-    if not optionOtherKey then
+    -- Block tap if any key was pressed in the last 2 seconds
+    local timeSinceLastKey = timer.secondsSinceEpoch() - lastOptionKeyTime
+    if not optionOtherKey and timeSinceLastKey > 2.0 then
       pendingReleaseTimer = timer.doAfter(0.05, function()
         pendingReleaseTimer = nil
         if not optionHoldActive then
@@ -1001,16 +1004,17 @@ end)
 optionFlagsWatcher:start()
 optionKeyWatcher = eventtap.new({ eventtap.event.types.keyDown }, function(e)
   if optionHoldActive or pendingReleaseTimer then
+    lastOptionKeyTime = timer.secondsSinceEpoch()
     local f = e:getFlags()
     if f.alt and not (f.cmd or f.ctrl or f.shift) then
       local kc = e:getKeyCode()
       if kc == hs.keycodes.map.d then
         optionOtherKey = true
-        eventtap.scrollWheel({0, -400}, {}, "pixel")
+        eventtap.scrollWheel({0, -113}, {}, "pixel")
         return true
       elseif kc == hs.keycodes.map.u then
         optionOtherKey = true
-        eventtap.scrollWheel({0, 400}, {}, "pixel")
+        eventtap.scrollWheel({0, 113}, {}, "pixel")
         return true
       end
     end
@@ -1023,6 +1027,35 @@ optionKeyWatcher = eventtap.new({ eventtap.event.types.keyDown }, function(e)
   return false
 end)
 optionKeyWatcher:start()
+
+-- Option+1/2/3: jump to middle of monitor 1/2/3
+hs.hotkey.bind({"alt"}, "1", function()
+  local allScr = hs.screen.allScreens()
+  table.sort(allScr, function(a,b) return a:frame().x < b:frame().x end)
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "2", function()
+  local allScr = hs.screen.allScreens()
+  table.sort(allScr, function(a,b) return a:frame().x < b:frame().x end)
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "3", function()
+  local allScr = hs.screen.allScreens()
+  table.sort(allScr, function(a,b) return a:frame().x < b:frame().x end)
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
 -- Control-tap: click bottom-right of VSCode's screen (Copilot area), or bottom-middle if VSCode not found
 -- Only works in normal mode (unlike Option-tap which works globally)
 local ctrlPressed, ctrlOtherKey = false, false
