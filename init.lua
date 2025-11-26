@@ -513,8 +513,63 @@ local gResetTap = eventtap.new({ eventtap.event.types.keyDown }, function(e)
   return false
 end)
 gResetTap:start()
--- Browser shortcut (specific to Arc)
+-- Browser shortcut (Orion)
 modal:bind({}, "o", function()
+  local orionBundleID = "com.kagi.kagimacOS"
+  local orionAppName = "Orion"
+
+  local function clickCenter(win)
+    if win then
+      win:raise()
+      win:focus()
+      local f = win:frame()
+      mouse.absolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+      timer.doAfter(0.2, function() eventtap.leftClick(mouse.absolutePosition()) end)
+    end
+  end
+
+  local runningApp = app.get(orionAppName)
+  if runningApp then
+    runningApp:unhide()
+    local win = runningApp:mainWindow()
+    if win then
+      if win:isMinimized() then win:unminimize() end
+      clickCenter(win)
+    else
+      local openedApp = hs.application.launchOrFocusByBundleID(orionBundleID) or hs.application.open(orionBundleID)
+      if openedApp then
+        timer.doAfter(2.0, function()
+          local newWin = openedApp:mainWindow()
+          if newWin then
+            clickCenter(newWin)
+          else
+            hs.alert.show("Orion window could not be opened")
+          end
+        end)
+      else
+        hs.alert.show("Orion could not be launched")
+      end
+    end
+  else
+    local openedApp = hs.application.launchOrFocusByBundleID(orionBundleID) or hs.application.open(orionBundleID)
+    if openedApp then
+      timer.doAfter(2.0, function()
+        local win = openedApp:mainWindow()
+        if win then
+          clickCenter(win)
+        else
+          hs.alert.show("Orion window did not appear")
+        end
+      end)
+    else
+      hs.alert.show("Orion could not be launched")
+    end
+  end
+  modal:exit()
+end)
+
+-- Arc browser shortcut (Shift + O)
+modal:bind({"shift"}, "o", function()
   local arcBundleID = "company.thebrowser.Browser"
   local arcAppName = "Arc"
 
@@ -534,9 +589,9 @@ modal:bind({}, "o", function()
     local win = runningApp:mainWindow()
     if win then
       if win:isMinimized() then win:unminimize() end
-      clickCenter(win)
+      timer.doAfter(0.1, function() clickCenter(win) end)
     else
-      local openedApp = hs.application.launchOrFocusByBundleID(arcBundleID) or hs.application.open(arcBundleID)
+      local openedApp = hs.application.launchOrFocusByBundleID(arcBundleID) or hs.application.open(arcAppName)
       if openedApp then
         timer.doAfter(2.0, function()
           local newWin = openedApp:mainWindow()
@@ -551,7 +606,7 @@ modal:bind({}, "o", function()
       end
     end
   else
-    local openedApp = hs.application.launchOrFocusByBundleID(arcBundleID) or hs.application.open(arcBundleID)
+    local openedApp = hs.application.launchOrFocusByBundleID(arcBundleID) or hs.application.open(arcAppName)
     if openedApp then
       timer.doAfter(2.0, function()
         local win = openedApp:mainWindow()
@@ -563,61 +618,6 @@ modal:bind({}, "o", function()
       end)
     else
       hs.alert.show("Arc could not be launched")
-    end
-  end
-  modal:exit()
-end)
-
--- ChatGPT Atlas browser shortcut (Shift + O)
-modal:bind({"shift"}, "o", function()
-  local atlasBundleID = "com.chatgpt.atlas"
-  local atlasAppName = "ChatGPT Atlas"
-
-  local function clickCenter(win)
-    if win then
-      win:raise()
-      win:focus()
-      local f = win:frame()
-      mouse.absolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
-      timer.doAfter(0.2, function() eventtap.leftClick(mouse.absolutePosition()) end)
-    end
-  end
-
-  local runningApp = app.get(atlasAppName)
-  if runningApp then
-    runningApp:unhide()
-    local win = runningApp:mainWindow()
-    if win then
-      if win:isMinimized() then win:unminimize() end
-      timer.doAfter(0.1, function() clickCenter(win) end)
-    else
-      local openedApp = hs.application.launchOrFocusByBundleID(atlasBundleID) or hs.application.open(atlasAppName)
-      if openedApp then
-        timer.doAfter(2.0, function()
-          local newWin = openedApp:mainWindow()
-          if newWin then
-            clickCenter(newWin)
-          else
-            hs.alert.show("ChatGPT Atlas window could not be opened")
-          end
-        end)
-      else
-        hs.alert.show("ChatGPT Atlas could not be launched")
-      end
-    end
-  else
-    local openedApp = hs.application.launchOrFocusByBundleID(atlasBundleID) or hs.application.open(atlasAppName)
-    if openedApp then
-      timer.doAfter(2.0, function()
-        local win = openedApp:mainWindow()
-        if win then
-          clickCenter(win)
-        else
-          hs.alert.show("ChatGPT Atlas window did not appear")
-        end
-      end)
-    else
-      hs.alert.show("ChatGPT Atlas could not be launched")
     end
   end
   modal:exit()
