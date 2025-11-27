@@ -1069,6 +1069,28 @@ hs.hotkey.bind({"alt"}, "3", function()
   end
 end)
 
+-- Option+Cmd+H: hide frontmost window's app
+hs.hotkey.bind({"alt", "cmd"}, "h", function()
+  local app = hs.application.frontmostApplication()
+  if app then
+    app:hide()
+  end
+end)
+
+-- Option+Cmd+R: restore (unhide) all hidden and minimized windows
+hs.hotkey.bind({"alt", "cmd"}, "r", function()
+  for _, app in ipairs(hs.application.runningApplications()) do
+    if app:isHidden() then
+      app:unhide()
+    end
+    for _, win in ipairs(app:allWindows()) do
+      if win:isMinimized() then
+        win:unminimize()
+      end
+    end
+  end
+end)
+
 -- Control-tap: click bottom-right of VSCode's screen (Copilot area), or bottom-middle if VSCode not found
 -- Only works in normal mode (unlike Option-tap which works globally)
 local ctrlPressed, ctrlOtherKey = false, false

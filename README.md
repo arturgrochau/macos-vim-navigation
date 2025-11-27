@@ -54,19 +54,22 @@ This config includes:
 
 ### 📦 Global (Works Anytime)
 
-| Key            | Action                                                                                      |
-| -------------- | ------------------------------------------------------------------------------------------- |
-| `⌥ tap`        | Move mouse to center of next connected screen                                               |
-| `⌥ + d`        | Scroll down (half page) - works globally without entering NAV MODE                          |
-| `⌥ + u`        | Scroll up (half page) - works globally without entering NAV MODE                            |
-| `⌃ tap`        | Smart click: VSCode Copilot chat area if VSCode open, else bottom-middle (only in NAV MODE) |
-| `⌥ + r`        | Reload Hammerspoon config                                                                   |
-| `⌘⇧M`          | Minimize focused window (auto-focuses next window)                                          |
-| `⌘⇧R`          | Restore most recently minimized window                                                      |
-| `⌘⇧H` or `⌘⇧←` | Focus window on left monitor (or window to the left on single monitor)                      |
-| `⌘⇧L` or `⌘⇧→` | Focus window on right monitor (or window to the right on single monitor)                    |
-| `⌘⇧J` or `⌘⇧↓` | Focus window on monitor below (or window below on single monitor)                           |
-| `⌘⇧K` or `⌘⇧↑` | Focus window on monitor above (or window above on single monitor)                           |
+| Key     | Action                                                                                      |
+| ------- | ------------------------------------------------------------------------------------------- |
+| `⌥ tap` | Move mouse to center of next physical screen (ignores virtual displays)                     |
+| `⌥ + 1` | Jump mouse to center of monitor 1 (leftmost physical screen)                                |
+| `⌥ + 2` | Jump mouse to center of monitor 2                                                           |
+| `⌥ + 3` | Jump mouse to center of monitor 3 (rightmost physical screen)                               |
+| `⌥ + d` | Scroll down (half page) - works globally without entering NAV MODE                          |
+| `⌥ + u` | Scroll up (half page) - works globally without entering NAV MODE                            |
+| `⌥⌘H`   | Hide frontmost application                                                                  |
+| `⌥⌘R`   | Restore all hidden and minimized windows                                                    |
+| `⌃ tap` | Smart click: VSCode Copilot chat area if VSCode open, else bottom-middle (only in NAV MODE) |
+| `⌥ + r` | Reload Hammerspoon config                                                                   |
+| `⌘⇧M`   | Minimize focused window (auto-focuses next window on same screen)                           |
+| `⌘⇧R`   | Restore most recently minimized window (prefers same screen)                                |
+| `⌘⇧-`   | Focus window on left monitor (or cycle windows left on single monitor)                      |
+| `⌘⇧=`   | Focus window on right monitor (or cycle windows right on single monitor)                    |
 
 ### 🚀 Entering and Exiting NAV MODE
 
@@ -96,8 +99,8 @@ This config includes:
 | `a`                   | Right click                                                                         |
 | `c`                   | Open or focus the ChatGPT app and click the input box, then exit NAV MODE           |
 | `C` (Shift + c)       | Open or focus VSCode/your IDE (customizable in config), then exit NAV MODE          |
-| `o`                   | Open Arc browser and exit NAV MODE                                                  |
-| `O` (Shift + o)       | Open ChatGPT Atlas browser and exit NAV MODE                                        |
+| `o`                   | Open Orion browser and exit NAV MODE                                                |
+| `O` (Shift + o)       | Open Arc browser and exit NAV MODE                                                  |
 | `t`                   | Open Microsoft Teams and exit NAV MODE                                              |
 | `g` then `g` (gg)     | Scroll to the very top of the current scrollable content (double‑press `g` quickly) |
 | `Shift + g` (`G`)     | Scroll to the very bottom of the current scrollable content                         |
