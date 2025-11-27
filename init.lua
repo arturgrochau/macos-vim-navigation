@@ -955,6 +955,23 @@ local optionOtherKey = false
 local optionHoldActive = false
 local pendingReleaseTimer = nil
 local lastOptionKeyTime = 0
+
+-- Helper to get only physical (non-virtual) screens
+-- Excludes BetterDisplay virtual screens (they have patterns like "16:9", "HiDPI" in their names)
+local function getPhysicalScreens()
+  local all = hs.screen.allScreens()
+  local physical = {}
+  for _, scr in ipairs(all) do
+    local name = scr:name() or ""
+    local isVirtual = name:find("16:9") or name:find("HiDPI") or name:find("Virtual")
+    if not isVirtual then
+      table.insert(physical, scr)
+    end
+  end
+  table.sort(physical, function(a,b) return a:frame().x < b:frame().x end)
+  return physical
+end
+
 local function centerMouseOn(scr)
   if not scr then return end
   if dragging then
@@ -982,8 +999,7 @@ optionFlagsWatcher = eventtap.new({ eventtap.event.types.flagsChanged }, functio
         pendingReleaseTimer = nil
         if not optionHoldActive then
           local currentScr = mouse.getCurrentScreen()
-          local allScr = hs.screen.allScreens()
-          table.sort(allScr, function(a,b) return a:frame().x < b:frame().x end)
+          local allScr = getPhysicalScreens()
           local currentIndex = 1
           for i, s in ipairs(allScr) do
             if s:id() == currentScr:id() then currentIndex = i; break end
@@ -1030,8 +1046,7 @@ optionKeyWatcher:start()
 
 -- Option+1/2/3: jump to middle of monitor 1/2/3
 hs.hotkey.bind({"alt"}, "1", function()
-  local allScr = hs.screen.allScreens()
-  table.sort(allScr, function(a,b) return a:frame().x < b:frame().x end)
+  local allScr = getPhysicalScreens()
   if allScr[1] then
     local f = allScr[1]:frame()
     setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
@@ -1039,8 +1054,7 @@ hs.hotkey.bind({"alt"}, "1", function()
 end)
 
 hs.hotkey.bind({"alt"}, "2", function()
-  local allScr = hs.screen.allScreens()
-  table.sort(allScr, function(a,b) return a:frame().x < b:frame().x end)
+  local allScr = getPhysicalScreens()
   if allScr[2] then
     local f = allScr[2]:frame()
     setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
@@ -1048,8 +1062,7 @@ hs.hotkey.bind({"alt"}, "2", function()
 end)
 
 hs.hotkey.bind({"alt"}, "3", function()
-  local allScr = hs.screen.allScreens()
-  table.sort(allScr, function(a,b) return a:frame().x < b:frame().x end)
+  local allScr = getPhysicalScreens()
   if allScr[3] then
     local f = allScr[3]:frame()
     setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
