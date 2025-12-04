@@ -143,18 +143,27 @@ local function moveMouseByFraction(xFrac, yFrac)
 end
 -- Directional movements
 local directions = {
-  {mod = {}, key = "h", frac = 1/8, dx = -1, dy = 0},
-  {mod = {}, key = "l", frac = 1/8, dx = 1, dy = 0},
-  {mod = {}, key = "j", frac = 1/8, dx = 0, dy = 1},
-  {mod = {}, key = "k", frac = 1/8, dx = 0, dy = -1},
-  {mod = {"shift"}, key = "h", frac = 1/2, dx = -1, dy = 0},
-  {mod = {"shift"}, key = "l", frac = 1/2, dx = 1, dy = 0},
-  {mod = {"shift"}, key = "j", frac = 1/2, dx = 0, dy = 1},
-  {mod = {"shift"}, key = "k", frac = 1/2, dx = 0, dy = -1},
+  {mod = {}, key = "h", frac = 1/8, dx = -1, dy = 0, exitAfter = false},
+  {mod = {}, key = "l", frac = 1/8, dx = 1, dy = 0, exitAfter = false},
+  {mod = {}, key = "j", frac = 1/8, dx = 0, dy = 1, exitAfter = false},
+  {mod = {}, key = "k", frac = 1/8, dx = 0, dy = -1, exitAfter = false},
+  {mod = {"shift"}, key = "h", frac = 1/2, dx = -1, dy = 0, exitAfter = true},
+  {mod = {"shift"}, key = "l", frac = 1/2, dx = 1, dy = 0, exitAfter = true},
+  {mod = {"shift"}, key = "j", frac = 1/2, dx = 0, dy = 1, exitAfter = true},
+  {mod = {"shift"}, key = "k", frac = 1/2, dx = 0, dy = -1, exitAfter = true},
 }
 for _, dir in ipairs(directions) do
   local xFrac, yFrac = dir.dx * dir.frac, dir.dy * dir.frac
-  bindHoldWithDelay(dir.mod, dir.key, function() moveMouseByFraction(xFrac, yFrac) end, directionInitialDelay, directionRepeatInterval)
+  if dir.exitAfter then
+    -- Shift variants: move once and exit nav mode (no repeat)
+    modal:bind(dir.mod, dir.key, function()
+      moveMouseByFraction(xFrac, yFrac)
+      modal:exit()
+    end)
+  else
+    -- Normal variants: hold to repeat
+    bindHoldWithDelay(dir.mod, dir.key, function() moveMouseByFraction(xFrac, yFrac) end, directionInitialDelay, directionRepeatInterval)
+  end
 end
 local function bindScrollKey(key, initialOffsets, repeatOffsets, initialDragFn, repeatDragFn)
   modal:bind({}, key,
@@ -687,122 +696,6 @@ modal:bind({}, "escape", function() modal:exit() end)
 modal:bind({"ctrl"}, "c", function() modal:exit() end)
 
 ---------------------------------------------------------------------------
--- Seamless Window Minimize / Restore (Cmd+Shift+M / Cmd+Shift+R)
----------------------------------------------------------------------------
-local minimizeStack = {}
-local lastMinimizeScreen = nil
-
--- Push unique windows (avoid duplicates)
-local function pushUnique(stack, win)
-  if not win then return end
-  for i = #stack, 1, -1 do
-    if stack[i]:id() == win:id() then
-      table.remove(stack, i)
-      break
-    end
-  end
-  table.insert(stack, win)
-end
-
--- Minimize and focus next available window on the same screen
-local function minimizeFocused()
-  local win = hs.window.focusedWindow()
-  if not win then
-    hs.alert.show("No active window to minimize")
-    return
-  end
-
-  local appName = win:application():name() or "Unknown"
-  local currentScreen = win:screen()
-  lastMinimizeScreen = currentScreen
-  
-  pushUnique(minimizeStack, win)
-  win:minimize()
-
-  -- Try to focus the next window on the same screen first
-  local allWins = hs.window.orderedWindows()
-  for _, w in ipairs(allWins) do
-    if w:id() ~= win:id() and not w:isMinimized() and w:screen():id() == currentScreen:id() then
-      w:focus()
-      hs.alert.show("Minimized: " .. appName)
-      return
-    end
-  end
-  
-  -- If no window on same screen, try any other window
-  for _, w in ipairs(allWins) do
-    if w:id() ~= win:id() and not w:isMinimized() then
-      w:focus()
-      hs.alert.show("Minimized: " .. appName)
-      return
-    end
-  end
-  
-  hs.alert.show("Minimized: " .. appName .. " (no other window to focus)")
-end
-
--- Try restoring the last minimized on the same screen, or fallback to any minimized
-local function findMinimizedOnScreen(scr)
-  if not scr then return nil end
-  local all = hs.window.allWindows()
-  for i = #all, 1, -1 do
-    if all[i]:isMinimized() and all[i]:screen():id() == scr:id() then
-      return all[i]
-    end
-  end
-  return nil
-end
-
-local function findAnyMinimized()
-  local all = hs.window.allWindows()
-  for i = #all, 1, -1 do
-    if all[i]:isMinimized() then return all[i] end
-  end
-  return nil
-end
-
-local function restoreLast()
-  local win = table.remove(minimizeStack)
-  
-  -- If the last minimized window is still minimized, restore it
-  if win and win:isMinimized() then
-    win:unminimize()
-    win:focus()
-    lastMinimizeScreen = win:screen()
-    hs.alert.show("Restored: " .. (win:application():name() or "Unknown"))
-    return
-  end
-  
-  -- Otherwise, try to find a minimized window on the last minimize screen
-  if lastMinimizeScreen then
-    win = findMinimizedOnScreen(lastMinimizeScreen)
-    if win then
-      win:unminimize()
-      win:focus()
-      hs.alert.show("Restored: " .. (win:application():name() or "Unknown"))
-      return
-    end
-  end
-  
-  -- Fallback: restore any minimized window
-  win = findAnyMinimized()
-  if win then
-    win:unminimize()
-    win:focus()
-    lastMinimizeScreen = win:screen()
-    hs.alert.show("Restored: " .. (win:application():name() or "Unknown"))
-  else
-    hs.alert.show("No minimized windows to restore")
-  end
-end
-
--- Cmd + Shift + M: Minimize the focused window
-hs.hotkey.bind({"cmd", "shift"}, "m", minimizeFocused)
-
--- Cmd + Shift + R: Restore the most recently minimized window
-hs.hotkey.bind({"cmd", "shift"}, "r", restoreLast)
-
----------------------------------------------------------------------------
 -- Window Focus Navigation (Cmd+Shift+- / Cmd+Shift+=)
 -- Switches focus between visible windows on different monitors or cycles on same screen
 ---------------------------------------------------------------------------
@@ -1069,6 +962,37 @@ hs.hotkey.bind({"alt"}, "3", function()
   end
 end)
 
+-- Option+0/9/8: jump to monitor 1/2/3 and click to focus
+hs.hotkey.bind({"alt"}, "0", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "9", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "8", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
 -- Option+Cmd+H: hide frontmost window's app
 hs.hotkey.bind({"alt", "cmd"}, "h", function()
   local app = hs.application.frontmostApplication()
@@ -1077,17 +1001,41 @@ hs.hotkey.bind({"alt", "cmd"}, "h", function()
   end
 end)
 
--- Option+Cmd+R: restore (unhide) all hidden and minimized windows
+-- Option+Cmd+R: restore all hidden/minimized windows and bring to front
 hs.hotkey.bind({"alt", "cmd"}, "r", function()
+  local windowsRestored = 0
+  
+  -- First, unhide all hidden apps
   for _, app in ipairs(hs.application.runningApplications()) do
     if app:isHidden() then
       app:unhide()
+      windowsRestored = windowsRestored + 1
     end
+  end
+  
+  -- Then, unminimize all minimized windows and raise them
+  for _, app in ipairs(hs.application.runningApplications()) do
     for _, win in ipairs(app:allWindows()) do
       if win:isMinimized() then
         win:unminimize()
+        windowsRestored = windowsRestored + 1
       end
     end
+  end
+  
+  -- Raise all visible windows to bring them to front
+  local allWins = hs.window.orderedWindows()
+  for i = #allWins, 1, -1 do
+    allWins[i]:raise()
+  end
+  
+  -- Focus the most recently used window
+  if allWins[1] then
+    allWins[1]:focus()
+  end
+  
+  if windowsRestored > 0 then
+    hs.alert.show("Restored " .. windowsRestored .. " window(s)")
   end
 end)
 

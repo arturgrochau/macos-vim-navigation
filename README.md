@@ -60,14 +60,15 @@ This config includes:
 | `⌥ + 1` | Jump mouse to center of monitor 1 (leftmost physical screen)                                |
 | `⌥ + 2` | Jump mouse to center of monitor 2                                                           |
 | `⌥ + 3` | Jump mouse to center of monitor 3 (rightmost physical screen)                               |
+| `⌥ + 0` | Jump mouse to monitor 1 and click to focus                                                  |
+| `⌥ + 9` | Jump mouse to monitor 2 and click to focus                                                  |
+| `⌥ + 8` | Jump mouse to monitor 3 and click to focus                                                  |
 | `⌥ + d` | Scroll down (half page) - works globally without entering NAV MODE                          |
 | `⌥ + u` | Scroll up (half page) - works globally without entering NAV MODE                            |
 | `⌥⌘H`   | Hide frontmost application                                                                  |
-| `⌥⌘R`   | Restore all hidden and minimized windows                                                    |
+| `⌥⌘R`   | Restore all hidden/minimized windows and bring to front                                     |
 | `⌃ tap` | Smart click: VSCode Copilot chat area if VSCode open, else bottom-middle (only in NAV MODE) |
 | `⌥ + r` | Reload Hammerspoon config                                                                   |
-| `⌘⇧M`   | Minimize focused window (auto-focuses next window on same screen)                           |
-| `⌘⇧R`   | Restore most recently minimized window (prefers same screen)                                |
 | `⌘⇧-`   | Focus window on left monitor (or cycle windows left on single monitor)                      |
 | `⌘⇧=`   | Focus window on right monitor (or cycle windows right on single monitor)                    |
 
@@ -82,8 +83,8 @@ This config includes:
 
 | Key & combo           | Action                                                                              |
 | --------------------- | ----------------------------------------------------------------------------------- |
-| `h / j / k / l`       | Move mouse (← ↓ ↑ →) in small steps (1/8th of the screen)                           |
-| `H / J / K / L`       | Move mouse in large steps (1/2 of the screen)                                       |
+| `h / j / k / l`       | Move mouse (← ↓ ↑ →) in small steps (1/8th of the screen); hold to repeat           |
+| `H / J / K / L`       | Move mouse in large steps (1/2 of the screen) and exit NAV MODE                     |
 | `↑` / `↓`             | Arrow keys: scroll up/down (same as `u / d`)                                        |
 | `↑ ↑` / `↓ ↓`         | Double-tap arrows: medium scroll (same as `Ctrl+U / Ctrl+D`)                        |
 | `↑ ↑ ↑` / `↓ ↓ ↓`     | Triple-tap arrows: large scroll (same as `Shift+U / Shift+D`)                       |
