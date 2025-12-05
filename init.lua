@@ -937,6 +937,56 @@ optionKeyWatcher = eventtap.new({ eventtap.event.types.keyDown }, function(e)
 end)
 optionKeyWatcher:start()
 
+-- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
+-- Move cursor in small increments, hold to repeat
+local globalCursorStep = 120  -- pixels per single tap
+local globalCursorHoldStep = 45  -- pixels per movement when holding
+local globalCursorRepeatDelay = 0.05  -- almost instant delay before repeat starts
+local globalCursorRepeatInterval = 0.02  -- interval between repeats (fast)
+local globalCursorTimers = {}
+
+local function globalMoveCursor(dx, dy)
+  local pos = hs.mouse.absolutePosition()
+  hs.mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+end
+
+local function bindGlobalCursor(mods, key, dx, dy)
+  local tapDx = dx > 0 and globalCursorStep or (dx < 0 and -globalCursorStep or 0)
+  local tapDy = dy > 0 and globalCursorStep or (dy < 0 and -globalCursorStep or 0)
+  local holdDx = dx > 0 and globalCursorHoldStep or (dx < 0 and -globalCursorHoldStep or 0)
+  local holdDy = dy > 0 and globalCursorHoldStep or (dy < 0 and -globalCursorHoldStep or 0)
+  
+  hs.hotkey.bind(mods, key,
+    function()
+      globalMoveCursor(tapDx, tapDy)
+      globalCursorTimers[key] = {}
+      globalCursorTimers[key].delayTimer = hs.timer.doAfter(globalCursorRepeatDelay, function()
+        globalCursorTimers[key].repeatTimer = hs.timer.doEvery(globalCursorRepeatInterval, function()
+          globalMoveCursor(holdDx, holdDy)
+        end)
+      end)
+    end,
+    function()
+      local t = globalCursorTimers[key]
+      if t then
+        if t.delayTimer then t.delayTimer:stop() end
+        if t.repeatTimer then t.repeatTimer:stop() end
+        globalCursorTimers[key] = nil
+      end
+    end
+  )
+end
+
+bindGlobalCursor({"alt", "cmd", "shift"}, "h", -1, 0)  -- left
+bindGlobalCursor({"alt", "cmd", "shift"}, "l", 1, 0)   -- right
+bindGlobalCursor({"alt", "cmd", "shift"}, "k", 0, -1)  -- up
+bindGlobalCursor({"alt", "cmd", "shift"}, "j", 0, 1)   -- down
+
+-- Option+Cmd+Shift+I: single click at current cursor position
+hs.hotkey.bind({"alt", "cmd", "shift"}, "i", function()
+  hs.eventtap.leftClick(hs.mouse.absolutePosition())
+end)
+
 -- Option+1/2/3: jump to middle of monitor 1/2/3
 hs.hotkey.bind({"alt"}, "1", function()
   local allScr = getPhysicalScreens()
