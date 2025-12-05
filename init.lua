@@ -1001,8 +1001,8 @@ hs.hotkey.bind({"alt", "cmd"}, "h", function()
   end
 end)
 
--- Option+Cmd+R: restore all hidden/minimized windows and bring to front
-hs.hotkey.bind({"alt", "cmd"}, "r", function()
+-- Option+Shift+R: restore all hidden/minimized windows and bring to front
+hs.hotkey.bind({"alt", "shift"}, "r", function()
   local windowsRestored = 0
   
   -- First, unhide all hidden apps

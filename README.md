@@ -66,7 +66,7 @@ This config includes:
 | `⌥ + d` | Scroll down (half page) - works globally without entering NAV MODE                          |
 | `⌥ + u` | Scroll up (half page) - works globally without entering NAV MODE                            |
 | `⌥⌘H`   | Hide frontmost application                                                                  |
-| `⌥⌘R`   | Restore all hidden/minimized windows and bring to front                                     |
+| `⌥⇧R`   | Restore all hidden/minimized windows and bring to front                                     |
 | `⌃ tap` | Smart click: VSCode Copilot chat area if VSCode open, else bottom-middle (only in NAV MODE) |
 | `⌥ + r` | Reload Hammerspoon config                                                                   |
 | `⌘⇧-`   | Focus window on left monitor (or cycle windows left on single monitor)                      |
