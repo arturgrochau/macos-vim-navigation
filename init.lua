@@ -939,8 +939,8 @@ optionKeyWatcher:start()
 
 -- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
 -- Move cursor in small increments, hold to repeat
-local globalCursorStep = 120  -- pixels per single tap
-local globalCursorHoldStep = 45  -- pixels per movement when holding
+local globalCursorStep = 180  -- pixels per single tap
+local globalCursorHoldStep = 68  -- pixels per movement when holding
 local globalCursorRepeatDelay = 0.05  -- almost instant delay before repeat starts
 local globalCursorRepeatInterval = 0.02  -- interval between repeats (fast)
 local globalCursorTimers = {}
