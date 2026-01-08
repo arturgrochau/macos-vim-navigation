@@ -360,76 +360,12 @@ modal:bind({"shift"}, "m", function()
   local f = screen.mainScreen():frame()
   setMousePosition({ x = f.x + f.w/2, y = f.y + f.h/2 })
 end)
--- ChatGPT shortcut
+-- VSCode shortcut
 modal:bind({}, "c", function()
-  if mode == "visual" then
-    local pos = mouse.absolutePosition()
-    if dragging then
-      eventtap.event.newMouseEvent(eventtap.event.types.leftMouseUp, pos):post()
-      dragging = false
-    end
-    timer.doAfter(0.05, function() eventtap.leftClick(pos) end)
-    mode = "normal"
-    hideVisualIndicator()
-  end
-  local function clickChatBox(win)
-    if win then
-      win:raise()
-      win:focus()
-      local f = win:frame()
-      mouse.absolutePosition({ x = f.x + f.w / 2, y = f.y + f.h - 72 })
-      timer.doAfter(0.2, function() eventtap.leftClick(mouse.absolutePosition()) end)
-    end
-  end
-  local chatBundleID = "com.openai.chat"
-  local runningApp = app.get("ChatGPT")
-  if runningApp then
-    runningApp:unhide()
-    local win = runningApp:mainWindow() or window.get("ChatGPT")
-    if win then
-      if win:isMinimized() then win:unminimize() end
-      clickChatBox(win)
-    else
-      local openedApp = hs.application.launchOrFocusByBundleID(chatBundleID) or hs.application.open(chatBundleID)
-      if openedApp then
-        timer.doAfter(2.0, function()
-          local newWin = openedApp:mainWindow() or window.get("ChatGPT")
-          if newWin then clickChatBox(newWin) else hs.alert.show("ChatGPT window could not be opened") end
-        end)
-      else
-        hs.alert.show("ChatGPT app could not be launched")
-      end
-    end
-  else
-    local openedApp = hs.application.launchOrFocusByBundleID(chatBundleID) or hs.application.open(chatBundleID)
-    if openedApp then
-      timer.doAfter(2.0, function()
-        local win = openedApp:mainWindow() or window.get("ChatGPT")
-        if win then clickChatBox(win) else hs.alert.show("ChatGPT window did not appear") end
-      end)
-    else
-      hs.alert.show("ChatGPT app could not be launched")
-    end
-  end
-  modal:exit()
-end)
--- VSCode shortcut (uppercase C)
-modal:bind({"shift"}, "c", function()
-  if mode == "visual" then
-    local pos = mouse.absolutePosition()
-    if dragging then
-      eventtap.event.newMouseEvent(eventtap.event.types.leftMouseUp, pos):post()
-      dragging = false
-    end
-    timer.doAfter(0.05, function() eventtap.leftClick(pos) end)
-    mode = "normal"
-    hideVisualIndicator()
-  end
- 
   local vscodeBundleID = "com.microsoft.VSCode"
-  local vscodeAppNames = {"Visual Studio Code", "Code"}  -- Support standard VSCode and possible alternatives like Insiders
- 
-  local function clickEditorArea(win)
+  local vscodeAppName = "Visual Studio Code"
+
+  local function clickCenter(win)
     if win then
       win:raise()
       win:focus()
@@ -438,26 +374,21 @@ modal:bind({"shift"}, "c", function()
       timer.doAfter(0.2, function() eventtap.leftClick(mouse.absolutePosition()) end)
     end
   end
- 
-  local runningApp = nil
-  for _, name in ipairs(vscodeAppNames) do
-    runningApp = app.get(name)
-    if runningApp then break end
-  end
- 
+
+  local runningApp = app.get(vscodeAppName)
   if runningApp then
     runningApp:unhide()
     local win = runningApp:mainWindow()
     if win then
       if win:isMinimized() then win:unminimize() end
-      clickEditorArea(win)
+      clickCenter(win)
     else
       local openedApp = hs.application.launchOrFocusByBundleID(vscodeBundleID) or hs.application.open(vscodeBundleID)
       if openedApp then
         timer.doAfter(2.0, function()
           local newWin = openedApp:mainWindow()
           if newWin then
-            clickEditorArea(newWin)
+            clickCenter(newWin)
           else
             hs.alert.show("VSCode window could not be opened")
           end
@@ -472,7 +403,7 @@ modal:bind({"shift"}, "c", function()
       timer.doAfter(2.0, function()
         local win = openedApp:mainWindow()
         if win then
-          clickEditorArea(win)
+          clickCenter(win)
         else
           hs.alert.show("VSCode window did not appear")
         end
