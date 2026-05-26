@@ -360,10 +360,10 @@ modal:bind({"shift"}, "m", function()
   local f = screen.mainScreen():frame()
   setMousePosition({ x = f.x + f.w/2, y = f.y + f.h/2 })
 end)
--- VSCode shortcut
+-- ChatGPT shortcut
 modal:bind({}, "c", function()
-  local vscodeBundleID = "com.microsoft.VSCode"
-  local vscodeAppName = "Visual Studio Code"
+  local chatgptBundleID = "com.openai.chat"
+  local chatgptAppName = "ChatGPT"
 
   local function clickCenter(win)
     if win then
@@ -375,7 +375,7 @@ modal:bind({}, "c", function()
     end
   end
 
-  local runningApp = app.get(vscodeAppName)
+  local runningApp = app.get(chatgptAppName)
   if runningApp then
     runningApp:unhide()
     local win = runningApp:mainWindow()
@@ -383,76 +383,157 @@ modal:bind({}, "c", function()
       if win:isMinimized() then win:unminimize() end
       clickCenter(win)
     else
-      local openedApp = hs.application.launchOrFocusByBundleID(vscodeBundleID) or hs.application.open(vscodeBundleID)
+      local openedApp = hs.application.launchOrFocusByBundleID(chatgptBundleID) or hs.application.open(chatgptBundleID)
       if openedApp then
         timer.doAfter(2.0, function()
           local newWin = openedApp:mainWindow()
           if newWin then
             clickCenter(newWin)
           else
-            hs.alert.show("VSCode window could not be opened")
+            hs.alert.show("ChatGPT window could not be opened")
           end
         end)
       else
-        hs.alert.show("VSCode could not be launched")
+        hs.alert.show("ChatGPT could not be launched")
       end
     end
   else
-    local openedApp = hs.application.launchOrFocusByBundleID(vscodeBundleID) or hs.application.open(vscodeBundleID)
+    local openedApp = hs.application.launchOrFocusByBundleID(chatgptBundleID) or hs.application.open(chatgptBundleID)
     if openedApp then
       timer.doAfter(2.0, function()
         local win = openedApp:mainWindow()
         if win then
           clickCenter(win)
         else
-          hs.alert.show("VSCode window did not appear")
+          hs.alert.show("ChatGPT window did not appear")
         end
       end)
     else
-      hs.alert.show("VSCode could not be launched")
+      hs.alert.show("ChatGPT could not be launched")
     end
   end
   modal:exit()
 end)
--- Vim-style scroll
-local gPending = false
-local gTimer = nil
-local gDoubleDelay = 0.3
-local function scrollToTop()
-  eventtap.event.newScrollEvent(norm({0, 1000000}), {}, "pixel"):post()
-end
+-- Claude shortcut (Shift + C)
+modal:bind({"shift"}, "c", function()
+  local claudeBundleID = "com.anthropic.claude"
+  local claudeAppName = "Claude"
+
+  local function getClaudeApp()
+    return app.get(claudeBundleID) or app.get(claudeAppName)
+  end
+
+  local function clickCenter(win)
+    if win then
+      win:raise()
+      win:focus()
+      local f = win:frame()
+      mouse.absolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+      timer.doAfter(0.2, function() eventtap.leftClick(mouse.absolutePosition()) end)
+    end
+  end
+
+  local runningApp = getClaudeApp()
+  if runningApp then
+    runningApp:unhide()
+    local win = runningApp:mainWindow()
+    if win then
+      if win:isMinimized() then win:unminimize() end
+      clickCenter(win)
+    else
+      hs.application.launchOrFocusByBundleID(claudeBundleID)
+      hs.application.launchOrFocus(claudeAppName)
+      timer.doAfter(2.0, function()
+        local newApp = getClaudeApp()
+        local newWin = newApp and newApp:mainWindow() or nil
+        if newWin then
+          clickCenter(newWin)
+        else
+          hs.alert.show("Claude app not found")
+        end
+      end)
+    end
+  else
+    hs.application.launchOrFocusByBundleID(claudeBundleID)
+    hs.application.launchOrFocus(claudeAppName)
+    timer.doAfter(2.0, function()
+      local newApp = getClaudeApp()
+      local win = newApp and newApp:mainWindow() or nil
+      if win then
+        clickCenter(win)
+      else
+        hs.alert.show("Claude app not found")
+      end
+    end)
+  end
+  modal:exit()
+end)
+-- Finder shortcut
+modal:bind({}, "f", function()
+  hs.application.launchOrFocus("Finder")
+  modal:exit()
+end)
+-- Gemini shortcut
+modal:bind({}, "g", function()
+  local geminiBundleID = "com.google.Gemini"
+  local geminiAppName = "Gemini"
+
+  local function getGeminiApp()
+    return app.get(geminiBundleID) or app.get(geminiAppName)
+  end
+
+  local function clickCenter(win)
+    if win then
+      win:raise()
+      win:focus()
+      local f = win:frame()
+      mouse.absolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+      timer.doAfter(0.2, function() eventtap.leftClick(mouse.absolutePosition()) end)
+    end
+  end
+
+  local runningApp = getGeminiApp()
+  if runningApp then
+    runningApp:unhide()
+    local win = runningApp:mainWindow()
+    if win then
+      if win:isMinimized() then win:unminimize() end
+      clickCenter(win)
+    else
+      hs.application.launchOrFocusByBundleID(geminiBundleID)
+      hs.application.launchOrFocus(geminiAppName)
+      timer.doAfter(2.0, function()
+        local newApp = getGeminiApp()
+        local newWin = newApp and newApp:mainWindow() or nil
+        if newWin then
+          clickCenter(newWin)
+        else
+          hs.alert.show("Gemini app not found")
+        end
+      end)
+    end
+  else
+    hs.application.launchOrFocusByBundleID(geminiBundleID)
+    hs.application.launchOrFocus(geminiAppName)
+    timer.doAfter(2.0, function()
+      local newApp = getGeminiApp()
+      local win = newApp and newApp:mainWindow() or nil
+      if win then
+        clickCenter(win)
+      else
+        hs.alert.show("Gemini app not found")
+      end
+    end)
+  end
+  modal:exit()
+end)
+-- Scroll to bottom (Shift + G)
 local function scrollToBottom()
   eventtap.event.newScrollEvent(norm({0, -1000000}), {}, "pixel"):post()
 end
-modal:bind({}, "g", function()
-  if gPending then
-    if gTimer then gTimer:stop(); gTimer = nil end
-    gPending = false
-    scrollToTop()
-  else
-    gPending = true
-    gTimer = timer.doAfter(gDoubleDelay, function()
-      gPending = false
-      gTimer = nil
-    end)
-  end
-end)
 modal:bind({"shift"}, "g", function()
-  gPending = false
-  if gTimer then gTimer:stop(); gTimer = nil end
   scrollToBottom()
 end)
-local gResetTap = eventtap.new({ eventtap.event.types.keyDown }, function(e)
-  if gPending then
-    local chars = e:getCharacters() or ""
-    if chars:lower() ~= "g" then
-      gPending = false
-      if gTimer then gTimer:stop(); gTimer = nil end
-    end
-  end
-  return false
-end)
-gResetTap:start()
 -- Browser shortcut (Orion)
 modal:bind({}, "o", function()
   local orionBundleID = "com.kagi.kagimacOS"
@@ -618,6 +699,11 @@ modal:bind({}, "t", function()
   modal:exit()
 end)
 
+-- Minimize window
+modal:bind({}, "m", function()
+  hs.eventtap.keyStroke({"cmd"}, "m")
+  modal:exit()
+end)
 
 -- Modal entry/exit
 hs.hotkey.bind({"ctrl","alt","cmd"}, "space", function() modal:enter() end)
@@ -850,11 +936,11 @@ optionKeyWatcher = eventtap.new({ eventtap.event.types.keyDown }, function(e)
       local kc = e:getKeyCode()
       if kc == hs.keycodes.map.d then
         optionOtherKey = true
-        eventtap.scrollWheel({0, -113}, {}, "pixel")
+        eventtap.scrollWheel({0, -260}, {}, "pixel")
         return true
       elseif kc == hs.keycodes.map.u then
         optionOtherKey = true
-        eventtap.scrollWheel({0, 113}, {}, "pixel")
+        eventtap.scrollWheel({0, 260}, {}, "pixel")
         return true
       end
     end
@@ -867,6 +953,134 @@ optionKeyWatcher = eventtap.new({ eventtap.event.types.keyDown }, function(e)
   return false
 end)
 optionKeyWatcher:start()
+
+-- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
+-- Move cursor in small increments, hold to repeat
+local globalCursorStep = 180  -- pixels per single tap
+local globalCursorHoldStep = 68  -- pixels per movement when holding
+local globalCursorRepeatDelay = 0.05  -- almost instant delay before repeat starts
+local globalCursorRepeatInterval = 0.02  -- interval between repeats (fast)
+local globalCursorTimers = {}
+
+local function globalMoveCursor(dx, dy)
+  local pos = hs.mouse.absolutePosition()
+  hs.mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+end
+
+local function bindGlobalCursor(mods, key, dx, dy)
+  local tapDx = dx > 0 and globalCursorStep or (dx < 0 and -globalCursorStep or 0)
+  local tapDy = dy > 0 and globalCursorStep or (dy < 0 and -globalCursorStep or 0)
+  local holdDx = dx > 0 and globalCursorHoldStep or (dx < 0 and -globalCursorHoldStep or 0)
+  local holdDy = dy > 0 and globalCursorHoldStep or (dy < 0 and -globalCursorHoldStep or 0)
+  
+  hs.hotkey.bind(mods, key,
+    function()
+      globalMoveCursor(tapDx, tapDy)
+      globalCursorTimers[key] = {}
+      globalCursorTimers[key].delayTimer = hs.timer.doAfter(globalCursorRepeatDelay, function()
+        globalCursorTimers[key].repeatTimer = hs.timer.doEvery(globalCursorRepeatInterval, function()
+          globalMoveCursor(holdDx, holdDy)
+        end)
+      end)
+    end,
+    function()
+      local t = globalCursorTimers[key]
+      if t then
+        if t.delayTimer then t.delayTimer:stop() end
+        if t.repeatTimer then t.repeatTimer:stop() end
+        globalCursorTimers[key] = nil
+      end
+    end
+  )
+end
+
+bindGlobalCursor({"alt", "cmd", "shift"}, "h", -1, 0)  -- left
+bindGlobalCursor({"alt", "cmd", "shift"}, "l", 1, 0)   -- right
+bindGlobalCursor({"alt", "cmd", "shift"}, "k", 0, -1)  -- up
+bindGlobalCursor({"alt", "cmd", "shift"}, "j", 0, 1)   -- down
+
+-- Option+Cmd+Shift+I: single click at current cursor position
+hs.hotkey.bind({"alt", "cmd", "shift"}, "i", function()
+  hs.eventtap.leftClick(hs.mouse.absolutePosition())
+end)
+
+-- Option+1/2/3: jump to middle of monitor 1/2/3
+hs.hotkey.bind({"alt"}, "1", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "2", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "3", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+-- Option+4/5/6: park cursor near bottom-right of monitor 1/2/3
+local function moveMouseToBottomRight(screenIndex, padding)
+  local allScr = getPhysicalScreens()
+  local scr = allScr[screenIndex]
+  if not scr then return end
+  local f = scr:frame()
+  local p = padding or 30
+  setMousePosition({ x = f.x + f.w - p, y = f.y + f.h - p })
+end
+
+hs.hotkey.bind({"alt"}, "4", function()
+  moveMouseToBottomRight(1, 30)
+end)
+
+hs.hotkey.bind({"alt"}, "5", function()
+  moveMouseToBottomRight(2, 30)
+end)
+
+hs.hotkey.bind({"alt"}, "6", function()
+  moveMouseToBottomRight(3, 30)
+end)
+
+-- Option+0/9/8: jump to monitor 1/2/3 and click to focus
+hs.hotkey.bind({"alt"}, "0", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "9", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "8", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
 
 -- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
 -- Move cursor in small increments, hold to repeat
@@ -974,140 +1188,1488 @@ hs.hotkey.bind({"alt"}, "8", function()
   end
 end)
 
--- Option+Cmd+H: hide frontmost window's app
-hs.hotkey.bind({"alt", "cmd"}, "h", function()
-  local app = hs.application.frontmostApplication()
-  if app then
-    app:hide()
-  end
-end)
+-- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
+-- Move cursor in small increments, hold to repeat
+local globalCursorStep = 180  -- pixels per single tap
+local globalCursorHoldStep = 68  -- pixels per movement when holding
+local globalCursorRepeatDelay = 0.05  -- almost instant delay before repeat starts
+local globalCursorRepeatInterval = 0.02  -- interval between repeats (fast)
+local globalCursorTimers = {}
 
--- Option+Shift+R: restore all hidden/minimized windows and bring to front
-hs.hotkey.bind({"alt", "shift"}, "r", function()
-  local windowsRestored = 0
+local function globalMoveCursor(dx, dy)
+  local pos = hs.mouse.absolutePosition()
+  hs.mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+end
+
+local function bindGlobalCursor(mods, key, dx, dy)
+  local tapDx = dx > 0 and globalCursorStep or (dx < 0 and -globalCursorStep or 0)
+  local tapDy = dy > 0 and globalCursorStep or (dy < 0 and -globalCursorStep or 0)
+  local holdDx = dx > 0 and globalCursorHoldStep or (dx < 0 and -globalCursorHoldStep or 0)
+  local holdDy = dy > 0 and globalCursorHoldStep or (dy < 0 and -globalCursorHoldStep or 0)
   
-  -- First, unhide all hidden apps
-  for _, app in ipairs(hs.application.runningApplications()) do
-    if app:isHidden() then
-      app:unhide()
-      windowsRestored = windowsRestored + 1
-    end
-  end
-  
-  -- Then, unminimize all minimized windows and raise them
-  for _, app in ipairs(hs.application.runningApplications()) do
-    for _, win in ipairs(app:allWindows()) do
-      if win:isMinimized() then
-        win:unminimize()
-        windowsRestored = windowsRestored + 1
+  hs.hotkey.bind(mods, key,
+    function()
+      globalMoveCursor(tapDx, tapDy)
+      globalCursorTimers[key] = {}
+      globalCursorTimers[key].delayTimer = hs.timer.doAfter(globalCursorRepeatDelay, function()
+        globalCursorTimers[key].repeatTimer = hs.timer.doEvery(globalCursorRepeatInterval, function()
+          globalMoveCursor(holdDx, holdDy)
+        end)
+      end)
+    end,
+    function()
+      local t = globalCursorTimers[key]
+      if t then
+        if t.delayTimer then t.delayTimer:stop() end
+        if t.repeatTimer then t.repeatTimer:stop() end
+        globalCursorTimers[key] = nil
       end
     end
-  end
-  
-  -- Raise all visible windows to bring them to front
-  local allWins = hs.window.orderedWindows()
-  for i = #allWins, 1, -1 do
-    allWins[i]:raise()
-  end
-  
-  -- Focus the most recently used window
-  if allWins[1] then
-    allWins[1]:focus()
-  end
-  
-  if windowsRestored > 0 then
-    hs.alert.show("Restored " .. windowsRestored .. " window(s)")
+  )
+end
+
+bindGlobalCursor({"alt", "cmd", "shift"}, "h", -1, 0)  -- left
+bindGlobalCursor({"alt", "cmd", "shift"}, "l", 1, 0)   -- right
+bindGlobalCursor({"alt", "cmd", "shift"}, "k", 0, -1)  -- up
+bindGlobalCursor({"alt", "cmd", "shift"}, "j", 0, 1)   -- down
+
+-- Option+Cmd+Shift+I: single click at current cursor position
+hs.hotkey.bind({"alt", "cmd", "shift"}, "i", function()
+  hs.eventtap.leftClick(hs.mouse.absolutePosition())
+end)
+
+-- Option+1/2/3: jump to middle of monitor 1/2/3
+hs.hotkey.bind({"alt"}, "1", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
   end
 end)
 
--- Control-tap: click bottom-right of VSCode's screen (Copilot area), or bottom-middle if VSCode not found
--- Only works in normal mode (unlike Option-tap which works globally)
-local ctrlPressed, ctrlOtherKey = false, false
-local modalActive = false
-
--- Track modal state
-local originalEntered = modal.entered
-modal.entered = function(self)
-  modalActive = true
-  originalEntered(self)
-end
-
-local originalExited = modal.exited
-modal.exited = function(self)
-  modalActive = false
-  originalExited(self)
-end
-
-local function clickNextScreenBottomRight()
-  local currentScr = mouse.getCurrentScreen()
-  local targetScr = nil
-  local isVSCodeActive = false
- 
-  -- Try to find VSCode and check if it's actually visible/active
-  local vscodeApp = app.find("Visual Studio Code") or app.find("Code")
-  if vscodeApp then
-    local vscodeWindow = vscodeApp:mainWindow()
-    if vscodeWindow and not vscodeWindow:isMinimized() and vscodeWindow:isVisible() then
-      targetScr = vscodeWindow:screen()
-      isVSCodeActive = true
-    end
+hs.hotkey.bind({"alt"}, "2", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
   end
- 
-  -- If no active VSCode found, use next screen
-  if not targetScr then
-    local allScr = hs.screen.allScreens()
-    if #allScr > 1 then
-      table.sort(allScr, function(a,b) return a:frame().x < b:frame().x end)
-      local currentIndex = 1
-      for i, s in ipairs(allScr) do
-        if s:id() == currentScr:id() then currentIndex = i; break end
+end)
+
+hs.hotkey.bind({"alt"}, "3", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+-- Option+0/9/8: jump to monitor 1/2/3 and click to focus
+hs.hotkey.bind({"alt"}, "0", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "9", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "8", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+-- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
+-- Move cursor in small increments, hold to repeat
+local globalCursorStep = 180  -- pixels per single tap
+local globalCursorHoldStep = 68  -- pixels per movement when holding
+local globalCursorRepeatDelay = 0.05  -- almost instant delay before repeat starts
+local globalCursorRepeatInterval = 0.02  -- interval between repeats (fast)
+local globalCursorTimers = {}
+
+local function globalMoveCursor(dx, dy)
+  local pos = hs.mouse.absolutePosition()
+  hs.mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+end
+
+local function bindGlobalCursor(mods, key, dx, dy)
+  local tapDx = dx > 0 and globalCursorStep or (dx < 0 and -globalCursorStep or 0)
+  local tapDy = dy > 0 and globalCursorStep or (dy < 0 and -globalCursorStep or 0)
+  local holdDx = dx > 0 and globalCursorHoldStep or (dx < 0 and -globalCursorHoldStep or 0)
+  local holdDy = dy > 0 and globalCursorHoldStep or (dy < 0 and -globalCursorHoldStep or 0)
+  
+  hs.hotkey.bind(mods, key,
+    function()
+      globalMoveCursor(tapDx, tapDy)
+      globalCursorTimers[key] = {}
+      globalCursorTimers[key].delayTimer = hs.timer.doAfter(globalCursorRepeatDelay, function()
+        globalCursorTimers[key].repeatTimer = hs.timer.doEvery(globalCursorRepeatInterval, function()
+          globalMoveCursor(holdDx, holdDy)
+        end)
+      end)
+    end,
+    function()
+      local t = globalCursorTimers[key]
+      if t then
+        if t.delayTimer then t.delayTimer:stop() end
+        if t.repeatTimer then t.repeatTimer:stop() end
+        globalCursorTimers[key] = nil
       end
-      local nextIndex = (currentIndex % #allScr) + 1
-      targetScr = allScr[nextIndex]
-    else
-      targetScr = currentScr
     end
-  end
- 
-  if dragging then
-    local win = window.focusedWindow()
-    if win then win:moveToScreen(targetScr) end
-  end
- 
-  local f = targetScr:frame()
-  local pos
-  if isVSCodeActive then
-    -- VSCode active and visible: click bottom-right (Copilot chat area)
-    pos = { x = f.x + f.w - 250, y = f.y + f.h - 100 }
-  else
-    -- VSCode not active/visible: click bottom-middle
-    pos = { x = f.x + f.w / 2, y = f.y + f.h - 100 }
-  end
- 
-  setMousePosition(pos)
-  if not dragging then eventtap.leftClick(pos) end
+  )
 end
-ctrlFlagsWatcher = eventtap.new({ eventtap.event.types.flagsChanged }, function(e)
-  -- Only work when modal is active (in normal mode)
-  if not modalActive then return false end
-  
-  local f = e:getFlags()
-  if f.ctrl and not ctrlPressed then
-    ctrlPressed = true
-    ctrlOtherKey = false
-  elseif not f.ctrl and ctrlPressed then
-    ctrlPressed = false
-    if not ctrlOtherKey then 
-      clickNextScreenBottomRight()
-      modal:exit()  -- Exit nav mode after performing the action
-    end
+
+bindGlobalCursor({"alt", "cmd", "shift"}, "h", -1, 0)  -- left
+bindGlobalCursor({"alt", "cmd", "shift"}, "l", 1, 0)   -- right
+bindGlobalCursor({"alt", "cmd", "shift"}, "k", 0, -1)  -- up
+bindGlobalCursor({"alt", "cmd", "shift"}, "j", 0, 1)   -- down
+
+-- Option+Cmd+Shift+I: single click at current cursor position
+hs.hotkey.bind({"alt", "cmd", "shift"}, "i", function()
+  hs.eventtap.leftClick(hs.mouse.absolutePosition())
+end)
+
+-- Option+1/2/3: jump to middle of monitor 1/2/3
+hs.hotkey.bind({"alt"}, "1", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
   end
 end)
-ctrlFlagsWatcher:start()
-ctrlKeyWatcher = eventtap.new({ eventtap.event.types.keyDown }, function(e)
-  if ctrlPressed then ctrlOtherKey = true end
-  return false
+
+hs.hotkey.bind({"alt"}, "2", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
 end)
-ctrlKeyWatcher:start()
--- End of configuration.
--- Credit: Artur Grochau – github.com/arturgrochau
+
+hs.hotkey.bind({"alt"}, "3", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+-- Option+0/9/8: jump to monitor 1/2/3 and click to focus
+hs.hotkey.bind({"alt"}, "0", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "9", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "8", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+-- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
+-- Move cursor in small increments, hold to repeat
+local globalCursorStep = 180  -- pixels per single tap
+local globalCursorHoldStep = 68  -- pixels per movement when holding
+local globalCursorRepeatDelay = 0.05  -- almost instant delay before repeat starts
+local globalCursorRepeatInterval = 0.02  -- interval between repeats (fast)
+local globalCursorTimers = {}
+
+local function globalMoveCursor(dx, dy)
+  local pos = hs.mouse.absolutePosition()
+  hs.mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+end
+
+local function bindGlobalCursor(mods, key, dx, dy)
+  local tapDx = dx > 0 and globalCursorStep or (dx < 0 and -globalCursorStep or 0)
+  local tapDy = dy > 0 and globalCursorStep or (dy < 0 and -globalCursorStep or 0)
+  local holdDx = dx > 0 and globalCursorHoldStep or (dx < 0 and -globalCursorHoldStep or 0)
+  local holdDy = dy > 0 and globalCursorHoldStep or (dy < 0 and -globalCursorHoldStep or 0)
+  
+  hs.hotkey.bind(mods, key,
+    function()
+      globalMoveCursor(tapDx, tapDy)
+      globalCursorTimers[key] = {}
+      globalCursorTimers[key].delayTimer = hs.timer.doAfter(globalCursorRepeatDelay, function()
+        globalCursorTimers[key].repeatTimer = hs.timer.doEvery(globalCursorRepeatInterval, function()
+          globalMoveCursor(holdDx, holdDy)
+        end)
+      end)
+    end,
+    function()
+      local t = globalCursorTimers[key]
+      if t then
+        if t.delayTimer then t.delayTimer:stop() end
+        if t.repeatTimer then t.repeatTimer:stop() end
+        globalCursorTimers[key] = nil
+      end
+    end
+  )
+end
+
+bindGlobalCursor({"alt", "cmd", "shift"}, "h", -1, 0)  -- left
+bindGlobalCursor({"alt", "cmd", "shift"}, "l", 1, 0)   -- right
+bindGlobalCursor({"alt", "cmd", "shift"}, "k", 0, -1)  -- up
+bindGlobalCursor({"alt", "cmd", "shift"}, "j", 0, 1)   -- down
+
+-- Option+Cmd+Shift+I: single click at current cursor position
+hs.hotkey.bind({"alt", "cmd", "shift"}, "i", function()
+  hs.eventtap.leftClick(hs.mouse.absolutePosition())
+end)
+
+-- Option+1/2/3: jump to middle of monitor 1/2/3
+hs.hotkey.bind({"alt"}, "1", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "2", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "3", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+-- Option+0/9/8: jump to monitor 1/2/3 and click to focus
+hs.hotkey.bind({"alt"}, "0", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "9", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "8", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+-- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
+-- Move cursor in small increments, hold to repeat
+local globalCursorStep = 180  -- pixels per single tap
+local globalCursorHoldStep = 68  -- pixels per movement when holding
+local globalCursorRepeatDelay = 0.05  -- almost instant delay before repeat starts
+local globalCursorRepeatInterval = 0.02  -- interval between repeats (fast)
+local globalCursorTimers = {}
+
+local function globalMoveCursor(dx, dy)
+  local pos = hs.mouse.absolutePosition()
+  hs.mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+end
+
+local function bindGlobalCursor(mods, key, dx, dy)
+  local tapDx = dx > 0 and globalCursorStep or (dx < 0 and -globalCursorStep or 0)
+  local tapDy = dy > 0 and globalCursorStep or (dy < 0 and -globalCursorStep or 0)
+  local holdDx = dx > 0 and globalCursorHoldStep or (dx < 0 and -globalCursorHoldStep or 0)
+  local holdDy = dy > 0 and globalCursorHoldStep or (dy < 0 and -globalCursorHoldStep or 0)
+  
+  hs.hotkey.bind(mods, key,
+    function()
+      globalMoveCursor(tapDx, tapDy)
+      globalCursorTimers[key] = {}
+      globalCursorTimers[key].delayTimer = hs.timer.doAfter(globalCursorRepeatDelay, function()
+        globalCursorTimers[key].repeatTimer = hs.timer.doEvery(globalCursorRepeatInterval, function()
+          globalMoveCursor(holdDx, holdDy)
+        end)
+      end)
+    end,
+    function()
+      local t = globalCursorTimers[key]
+      if t then
+        if t.delayTimer then t.delayTimer:stop() end
+        if t.repeatTimer then t.repeatTimer:stop() end
+        globalCursorTimers[key] = nil
+      end
+    end
+  )
+end
+
+bindGlobalCursor({"alt", "cmd", "shift"}, "h", -1, 0)  -- left
+bindGlobalCursor({"alt", "cmd", "shift"}, "l", 1, 0)   -- right
+bindGlobalCursor({"alt", "cmd", "shift"}, "k", 0, -1)  -- up
+bindGlobalCursor({"alt", "cmd", "shift"}, "j", 0, 1)   -- down
+
+-- Option+Cmd+Shift+I: single click at current cursor position
+hs.hotkey.bind({"alt", "cmd", "shift"}, "i", function()
+  hs.eventtap.leftClick(hs.mouse.absolutePosition())
+end)
+
+-- Option+1/2/3: jump to middle of monitor 1/2/3
+hs.hotkey.bind({"alt"}, "1", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "2", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "3", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+-- Option+0/9/8: jump to monitor 1/2/3 and click to focus
+hs.hotkey.bind({"alt"}, "0", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "9", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "8", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+-- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
+-- Move cursor in small increments, hold to repeat
+local globalCursorStep = 180  -- pixels per single tap
+local globalCursorHoldStep = 68  -- pixels per movement when holding
+local globalCursorRepeatDelay = 0.05  -- almost instant delay before repeat starts
+local globalCursorRepeatInterval = 0.02  -- interval between repeats (fast)
+local globalCursorTimers = {}
+
+local function globalMoveCursor(dx, dy)
+  local pos = hs.mouse.absolutePosition()
+  hs.mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+end
+
+local function bindGlobalCursor(mods, key, dx, dy)
+  local tapDx = dx > 0 and globalCursorStep or (dx < 0 and -globalCursorStep or 0)
+  local tapDy = dy > 0 and globalCursorStep or (dy < 0 and -globalCursorStep or 0)
+  local holdDx = dx > 0 and globalCursorHoldStep or (dx < 0 and -globalCursorHoldStep or 0)
+  local holdDy = dy > 0 and globalCursorHoldStep or (dy < 0 and -globalCursorHoldStep or 0)
+  
+  hs.hotkey.bind(mods, key,
+    function()
+      globalMoveCursor(tapDx, tapDy)
+      globalCursorTimers[key] = {}
+      globalCursorTimers[key].delayTimer = hs.timer.doAfter(globalCursorRepeatDelay, function()
+        globalCursorTimers[key].repeatTimer = hs.timer.doEvery(globalCursorRepeatInterval, function()
+          globalMoveCursor(holdDx, holdDy)
+        end)
+      end)
+    end,
+    function()
+      local t = globalCursorTimers[key]
+      if t then
+        if t.delayTimer then t.delayTimer:stop() end
+        if t.repeatTimer then t.repeatTimer:stop() end
+        globalCursorTimers[key] = nil
+      end
+    end
+  )
+end
+
+bindGlobalCursor({"alt", "cmd", "shift"}, "h", -1, 0)  -- left
+bindGlobalCursor({"alt", "cmd", "shift"}, "l", 1, 0)   -- right
+bindGlobalCursor({"alt", "cmd", "shift"}, "k", 0, -1)  -- up
+bindGlobalCursor({"alt", "cmd", "shift"}, "j", 0, 1)   -- down
+
+-- Option+Cmd+Shift+I: single click at current cursor position
+hs.hotkey.bind({"alt", "cmd", "shift"}, "i", function()
+  hs.eventtap.leftClick(hs.mouse.absolutePosition())
+end)
+
+-- Option+1/2/3: jump to middle of monitor 1/2/3
+hs.hotkey.bind({"alt"}, "1", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "2", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "3", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+-- Option+0/9/8: jump to monitor 1/2/3 and click to focus
+hs.hotkey.bind({"alt"}, "0", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "9", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "8", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+-- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
+-- Move cursor in small increments, hold to repeat
+local globalCursorStep = 180  -- pixels per single tap
+local globalCursorHoldStep = 68  -- pixels per movement when holding
+local globalCursorRepeatDelay = 0.05  -- almost instant delay before repeat starts
+local globalCursorRepeatInterval = 0.02  -- interval between repeats (fast)
+local globalCursorTimers = {}
+
+local function globalMoveCursor(dx, dy)
+  local pos = hs.mouse.absolutePosition()
+  hs.mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+end
+
+local function bindGlobalCursor(mods, key, dx, dy)
+  local tapDx = dx > 0 and globalCursorStep or (dx < 0 and -globalCursorStep or 0)
+  local tapDy = dy > 0 and globalCursorStep or (dy < 0 and -globalCursorStep or 0)
+  local holdDx = dx > 0 and globalCursorHoldStep or (dx < 0 and -globalCursorHoldStep or 0)
+  local holdDy = dy > 0 and globalCursorHoldStep or (dy < 0 and -globalCursorHoldStep or 0)
+  
+  hs.hotkey.bind(mods, key,
+    function()
+      globalMoveCursor(tapDx, tapDy)
+      globalCursorTimers[key] = {}
+      globalCursorTimers[key].delayTimer = hs.timer.doAfter(globalCursorRepeatDelay, function()
+        globalCursorTimers[key].repeatTimer = hs.timer.doEvery(globalCursorRepeatInterval, function()
+          globalMoveCursor(holdDx, holdDy)
+        end)
+      end)
+    end,
+    function()
+      local t = globalCursorTimers[key]
+      if t then
+        if t.delayTimer then t.delayTimer:stop() end
+        if t.repeatTimer then t.repeatTimer:stop() end
+        globalCursorTimers[key] = nil
+      end
+    end
+  )
+end
+
+bindGlobalCursor({"alt", "cmd", "shift"}, "h", -1, 0)  -- left
+bindGlobalCursor({"alt", "cmd", "shift"}, "l", 1, 0)   -- right
+bindGlobalCursor({"alt", "cmd", "shift"}, "k", 0, -1)  -- up
+bindGlobalCursor({"alt", "cmd", "shift"}, "j", 0, 1)   -- down
+
+-- Option+Cmd+Shift+I: single click at current cursor position
+hs.hotkey.bind({"alt", "cmd", "shift"}, "i", function()
+  hs.eventtap.leftClick(hs.mouse.absolutePosition())
+end)
+
+-- Option+1/2/3: jump to middle of monitor 1/2/3
+hs.hotkey.bind({"alt"}, "1", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "2", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "3", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+-- Option+0/9/8: jump to monitor 1/2/3 and click to focus
+hs.hotkey.bind({"alt"}, "0", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "9", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "8", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+-- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
+-- Move cursor in small increments, hold to repeat
+local globalCursorStep = 180  -- pixels per single tap
+local globalCursorHoldStep = 68  -- pixels per movement when holding
+local globalCursorRepeatDelay = 0.05  -- almost instant delay before repeat starts
+local globalCursorRepeatInterval = 0.02  -- interval between repeats (fast)
+local globalCursorTimers = {}
+
+local function globalMoveCursor(dx, dy)
+  local pos = hs.mouse.absolutePosition()
+  hs.mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+end
+
+local function bindGlobalCursor(mods, key, dx, dy)
+  local tapDx = dx > 0 and globalCursorStep or (dx < 0 and -globalCursorStep or 0)
+  local tapDy = dy > 0 and globalCursorStep or (dy < 0 and -globalCursorStep or 0)
+  local holdDx = dx > 0 and globalCursorHoldStep or (dx < 0 and -globalCursorHoldStep or 0)
+  local holdDy = dy > 0 and globalCursorHoldStep or (dy < 0 and -globalCursorHoldStep or 0)
+  
+  hs.hotkey.bind(mods, key,
+    function()
+      globalMoveCursor(tapDx, tapDy)
+      globalCursorTimers[key] = {}
+      globalCursorTimers[key].delayTimer = hs.timer.doAfter(globalCursorRepeatDelay, function()
+        globalCursorTimers[key].repeatTimer = hs.timer.doEvery(globalCursorRepeatInterval, function()
+          globalMoveCursor(holdDx, holdDy)
+        end)
+      end)
+    end,
+    function()
+      local t = globalCursorTimers[key]
+      if t then
+        if t.delayTimer then t.delayTimer:stop() end
+        if t.repeatTimer then t.repeatTimer:stop() end
+        globalCursorTimers[key] = nil
+      end
+    end
+  )
+end
+
+bindGlobalCursor({"alt", "cmd", "shift"}, "h", -1, 0)  -- left
+bindGlobalCursor({"alt", "cmd", "shift"}, "l", 1, 0)   -- right
+bindGlobalCursor({"alt", "cmd", "shift"}, "k", 0, -1)  -- up
+bindGlobalCursor({"alt", "cmd", "shift"}, "j", 0, 1)   -- down
+
+-- Option+Cmd+Shift+I: single click at current cursor position
+hs.hotkey.bind({"alt", "cmd", "shift"}, "i", function()
+  hs.eventtap.leftClick(hs.mouse.absolutePosition())
+end)
+
+-- Option+1/2/3: jump to middle of monitor 1/2/3
+hs.hotkey.bind({"alt"}, "1", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "2", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "3", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+-- Option+0/9/8: jump to monitor 1/2/3 and click to focus
+hs.hotkey.bind({"alt"}, "0", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "9", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "8", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+-- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
+-- Move cursor in small increments, hold to repeat
+local globalCursorStep = 180  -- pixels per single tap
+local globalCursorHoldStep = 68  -- pixels per movement when holding
+local globalCursorRepeatDelay = 0.05  -- almost instant delay before repeat starts
+local globalCursorRepeatInterval = 0.02  -- interval between repeats (fast)
+local globalCursorTimers = {}
+
+local function globalMoveCursor(dx, dy)
+  local pos = hs.mouse.absolutePosition()
+  hs.mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+end
+
+local function bindGlobalCursor(mods, key, dx, dy)
+  local tapDx = dx > 0 and globalCursorStep or (dx < 0 and -globalCursorStep or 0)
+  local tapDy = dy > 0 and globalCursorStep or (dy < 0 and -globalCursorStep or 0)
+  local holdDx = dx > 0 and globalCursorHoldStep or (dx < 0 and -globalCursorHoldStep or 0)
+  local holdDy = dy > 0 and globalCursorHoldStep or (dy < 0 and -globalCursorHoldStep or 0)
+  
+  hs.hotkey.bind(mods, key,
+    function()
+      globalMoveCursor(tapDx, tapDy)
+      globalCursorTimers[key] = {}
+      globalCursorTimers[key].delayTimer = hs.timer.doAfter(globalCursorRepeatDelay, function()
+        globalCursorTimers[key].repeatTimer = hs.timer.doEvery(globalCursorRepeatInterval, function()
+          globalMoveCursor(holdDx, holdDy)
+        end)
+      end)
+    end,
+    function()
+      local t = globalCursorTimers[key]
+      if t then
+        if t.delayTimer then t.delayTimer:stop() end
+        if t.repeatTimer then t.repeatTimer:stop() end
+        globalCursorTimers[key] = nil
+      end
+    end
+  )
+end
+
+bindGlobalCursor({"alt", "cmd", "shift"}, "h", -1, 0)  -- left
+bindGlobalCursor({"alt", "cmd", "shift"}, "l", 1, 0)   -- right
+bindGlobalCursor({"alt", "cmd", "shift"}, "k", 0, -1)  -- up
+bindGlobalCursor({"alt", "cmd", "shift"}, "j", 0, 1)   -- down
+
+-- Option+Cmd+Shift+I: single click at current cursor position
+hs.hotkey.bind({"alt", "cmd", "shift"}, "i", function()
+  hs.eventtap.leftClick(hs.mouse.absolutePosition())
+end)
+
+-- Option+1/2/3: jump to middle of monitor 1/2/3
+hs.hotkey.bind({"alt"}, "1", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "2", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "3", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+-- Option+0/9/8: jump to monitor 1/2/3 and click to focus
+hs.hotkey.bind({"alt"}, "0", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "9", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "8", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+-- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
+-- Move cursor in small increments, hold to repeat
+local globalCursorStep = 180  -- pixels per single tap
+local globalCursorHoldStep = 68  -- pixels per movement when holding
+local globalCursorRepeatDelay = 0.05  -- almost instant delay before repeat starts
+local globalCursorRepeatInterval = 0.02  -- interval between repeats (fast)
+local globalCursorTimers = {}
+
+local function globalMoveCursor(dx, dy)
+  local pos = hs.mouse.absolutePosition()
+  hs.mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+end
+
+local function bindGlobalCursor(mods, key, dx, dy)
+  local tapDx = dx > 0 and globalCursorStep or (dx < 0 and -globalCursorStep or 0)
+  local tapDy = dy > 0 and globalCursorStep or (dy < 0 and -globalCursorStep or 0)
+  local holdDx = dx > 0 and globalCursorHoldStep or (dx < 0 and -globalCursorHoldStep or 0)
+  local holdDy = dy > 0 and globalCursorHoldStep or (dy < 0 and -globalCursorHoldStep or 0)
+  
+  hs.hotkey.bind(mods, key,
+    function()
+      globalMoveCursor(tapDx, tapDy)
+      globalCursorTimers[key] = {}
+      globalCursorTimers[key].delayTimer = hs.timer.doAfter(globalCursorRepeatDelay, function()
+        globalCursorTimers[key].repeatTimer = hs.timer.doEvery(globalCursorRepeatInterval, function()
+          globalMoveCursor(holdDx, holdDy)
+        end)
+      end)
+    end,
+    function()
+      local t = globalCursorTimers[key]
+      if t then
+        if t.delayTimer then t.delayTimer:stop() end
+        if t.repeatTimer then t.repeatTimer:stop() end
+        globalCursorTimers[key] = nil
+      end
+    end
+  )
+end
+
+bindGlobalCursor({"alt", "cmd", "shift"}, "h", -1, 0)  -- left
+bindGlobalCursor({"alt", "cmd", "shift"}, "l", 1, 0)   -- right
+bindGlobalCursor({"alt", "cmd", "shift"}, "k", 0, -1)  -- up
+bindGlobalCursor({"alt", "cmd", "shift"}, "j", 0, 1)   -- down
+
+-- Option+Cmd+Shift+I: single click at current cursor position
+hs.hotkey.bind({"alt", "cmd", "shift"}, "i", function()
+  hs.eventtap.leftClick(hs.mouse.absolutePosition())
+end)
+
+-- Option+1/2/3: jump to middle of monitor 1/2/3
+hs.hotkey.bind({"alt"}, "1", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "2", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "3", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+-- Option+0/9/8: jump to monitor 1/2/3 and click to focus
+hs.hotkey.bind({"alt"}, "0", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "9", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "8", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+-- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
+-- Move cursor in small increments, hold to repeat
+local globalCursorStep = 180  -- pixels per single tap
+local globalCursorHoldStep = 68  -- pixels per movement when holding
+local globalCursorRepeatDelay = 0.05  -- almost instant delay before repeat starts
+local globalCursorRepeatInterval = 0.02  -- interval between repeats (fast)
+local globalCursorTimers = {}
+
+local function globalMoveCursor(dx, dy)
+  local pos = hs.mouse.absolutePosition()
+  hs.mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+end
+
+local function bindGlobalCursor(mods, key, dx, dy)
+  local tapDx = dx > 0 and globalCursorStep or (dx < 0 and -globalCursorStep or 0)
+  local tapDy = dy > 0 and globalCursorStep or (dy < 0 and -globalCursorStep or 0)
+  local holdDx = dx > 0 and globalCursorHoldStep or (dx < 0 and -globalCursorHoldStep or 0)
+  local holdDy = dy > 0 and globalCursorHoldStep or (dy < 0 and -globalCursorHoldStep or 0)
+  
+  hs.hotkey.bind(mods, key,
+    function()
+      globalMoveCursor(tapDx, tapDy)
+      globalCursorTimers[key] = {}
+      globalCursorTimers[key].delayTimer = hs.timer.doAfter(globalCursorRepeatDelay, function()
+        globalCursorTimers[key].repeatTimer = hs.timer.doEvery(globalCursorRepeatInterval, function()
+          globalMoveCursor(holdDx, holdDy)
+        end)
+      end)
+    end,
+    function()
+      local t = globalCursorTimers[key]
+      if t then
+        if t.delayTimer then t.delayTimer:stop() end
+        if t.repeatTimer then t.repeatTimer:stop() end
+        globalCursorTimers[key] = nil
+      end
+    end
+  )
+end
+
+bindGlobalCursor({"alt", "cmd", "shift"}, "h", -1, 0)  -- left
+bindGlobalCursor({"alt", "cmd", "shift"}, "l", 1, 0)   -- right
+bindGlobalCursor({"alt", "cmd", "shift"}, "k", 0, -1)  -- up
+bindGlobalCursor({"alt", "cmd", "shift"}, "j", 0, 1)   -- down
+
+-- Option+Cmd+Shift+I: single click at current cursor position
+hs.hotkey.bind({"alt", "cmd", "shift"}, "i", function()
+  hs.eventtap.leftClick(hs.mouse.absolutePosition())
+end)
+
+-- Option+1/2/3: jump to middle of monitor 1/2/3
+hs.hotkey.bind({"alt"}, "1", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "2", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "3", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+-- Option+0/9/8: jump to monitor 1/2/3 and click to focus
+hs.hotkey.bind({"alt"}, "0", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "9", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "8", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+-- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
+-- Move cursor in small increments, hold to repeat
+local globalCursorStep = 180  -- pixels per single tap
+local globalCursorHoldStep = 68  -- pixels per movement when holding
+local globalCursorRepeatDelay = 0.05  -- almost instant delay before repeat starts
+local globalCursorRepeatInterval = 0.02  -- interval between repeats (fast)
+local globalCursorTimers = {}
+
+local function globalMoveCursor(dx, dy)
+  local pos = hs.mouse.absolutePosition()
+  hs.mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+end
+
+local function bindGlobalCursor(mods, key, dx, dy)
+  local tapDx = dx > 0 and globalCursorStep or (dx < 0 and -globalCursorStep or 0)
+  local tapDy = dy > 0 and globalCursorStep or (dy < 0 and -globalCursorStep or 0)
+  local holdDx = dx > 0 and globalCursorHoldStep or (dx < 0 and -globalCursorHoldStep or 0)
+  local holdDy = dy > 0 and globalCursorHoldStep or (dy < 0 and -globalCursorHoldStep or 0)
+  
+  hs.hotkey.bind(mods, key,
+    function()
+      globalMoveCursor(tapDx, tapDy)
+      globalCursorTimers[key] = {}
+      globalCursorTimers[key].delayTimer = hs.timer.doAfter(globalCursorRepeatDelay, function()
+        globalCursorTimers[key].repeatTimer = hs.timer.doEvery(globalCursorRepeatInterval, function()
+          globalMoveCursor(holdDx, holdDy)
+        end)
+      end)
+    end,
+    function()
+      local t = globalCursorTimers[key]
+      if t then
+        if t.delayTimer then t.delayTimer:stop() end
+        if t.repeatTimer then t.repeatTimer:stop() end
+        globalCursorTimers[key] = nil
+      end
+    end
+  )
+end
+
+bindGlobalCursor({"alt", "cmd", "shift"}, "h", -1, 0)  -- left
+bindGlobalCursor({"alt", "cmd", "shift"}, "l", 1, 0)   -- right
+bindGlobalCursor({"alt", "cmd", "shift"}, "k", 0, -1)  -- up
+bindGlobalCursor({"alt", "cmd", "shift"}, "j", 0, 1)   -- down
+
+-- Option+Cmd+Shift+I: single click at current cursor position
+hs.hotkey.bind({"alt", "cmd", "shift"}, "i", function()
+  hs.eventtap.leftClick(hs.mouse.absolutePosition())
+end)
+
+-- Option+1/2/3: jump to middle of monitor 1/2/3
+hs.hotkey.bind({"alt"}, "1", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "2", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "3", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+-- Option+0/9/8: jump to monitor 1/2/3 and click to focus
+hs.hotkey.bind({"alt"}, "0", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "9", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "8", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+-- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
+-- Move cursor in small increments, hold to repeat
+local globalCursorStep = 180  -- pixels per single tap
+local globalCursorHoldStep = 68  -- pixels per movement when holding
+local globalCursorRepeatDelay = 0.05  -- almost instant delay before repeat starts
+local globalCursorRepeatInterval = 0.02  -- interval between repeats (fast)
+local globalCursorTimers = {}
+
+local function globalMoveCursor(dx, dy)
+  local pos = hs.mouse.absolutePosition()
+  hs.mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+end
+
+local function bindGlobalCursor(mods, key, dx, dy)
+  local tapDx = dx > 0 and globalCursorStep or (dx < 0 and -globalCursorStep or 0)
+  local tapDy = dy > 0 and globalCursorStep or (dy < 0 and -globalCursorStep or 0)
+  local holdDx = dx > 0 and globalCursorHoldStep or (dx < 0 and -globalCursorHoldStep or 0)
+  local holdDy = dy > 0 and globalCursorHoldStep or (dy < 0 and -globalCursorHoldStep or 0)
+  
+  hs.hotkey.bind(mods, key,
+    function()
+      globalMoveCursor(tapDx, tapDy)
+      globalCursorTimers[key] = {}
+      globalCursorTimers[key].delayTimer = hs.timer.doAfter(globalCursorRepeatDelay, function()
+        globalCursorTimers[key].repeatTimer = hs.timer.doEvery(globalCursorRepeatInterval, function()
+          globalMoveCursor(holdDx, holdDy)
+        end)
+      end)
+    end,
+    function()
+      local t = globalCursorTimers[key]
+      if t then
+        if t.delayTimer then t.delayTimer:stop() end
+        if t.repeatTimer then t.repeatTimer:stop() end
+        globalCursorTimers[key] = nil
+      end
+    end
+  )
+end
+
+bindGlobalCursor({"alt", "cmd", "shift"}, "h", -1, 0)  -- left
+bindGlobalCursor({"alt", "cmd", "shift"}, "l", 1, 0)   -- right
+bindGlobalCursor({"alt", "cmd", "shift"}, "k", 0, -1)  -- up
+bindGlobalCursor({"alt", "cmd", "shift"}, "j", 0, 1)   -- down
+
+-- Option+Cmd+Shift+I: single click at current cursor position
+hs.hotkey.bind({"alt", "cmd", "shift"}, "i", function()
+  hs.eventtap.leftClick(hs.mouse.absolutePosition())
+end)
+
+-- Option+1/2/3: jump to middle of monitor 1/2/3
+hs.hotkey.bind({"alt"}, "1", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "2", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "3", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+-- Option+0/9/8: jump to monitor 1/2/3 and click to focus
+hs.hotkey.bind({"alt"}, "0", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "9", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "8", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+-- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
+-- Move cursor in small increments, hold to repeat
+local globalCursorStep = 180  -- pixels per single tap
+local globalCursorHoldStep = 68  -- pixels per movement when holding
+local globalCursorRepeatDelay = 0.05  -- almost instant delay before repeat starts
+local globalCursorRepeatInterval = 0.02  -- interval between repeats (fast)
+local globalCursorTimers = {}
+
+local function globalMoveCursor(dx, dy)
+  local pos = hs.mouse.absolutePosition()
+  hs.mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+end
+
+local function bindGlobalCursor(mods, key, dx, dy)
+  local tapDx = dx > 0 and globalCursorStep or (dx < 0 and -globalCursorStep or 0)
+  local tapDy = dy > 0 and globalCursorStep or (dy < 0 and -globalCursorStep or 0)
+  local holdDx = dx > 0 and globalCursorHoldStep or (dx < 0 and -globalCursorHoldStep or 0)
+  local holdDy = dy > 0 and globalCursorHoldStep or (dy < 0 and -globalCursorHoldStep or 0)
+  
+  hs.hotkey.bind(mods, key,
+    function()
+      globalMoveCursor(tapDx, tapDy)
+      globalCursorTimers[key] = {}
+      globalCursorTimers[key].delayTimer = hs.timer.doAfter(globalCursorRepeatDelay, function()
+        globalCursorTimers[key].repeatTimer = hs.timer.doEvery(globalCursorRepeatInterval, function()
+          globalMoveCursor(holdDx, holdDy)
+        end)
+      end)
+    end,
+    function()
+      local t = globalCursorTimers[key]
+      if t then
+        if t.delayTimer then t.delayTimer:stop() end
+        if t.repeatTimer then t.repeatTimer:stop() end
+        globalCursorTimers[key] = nil
+      end
+    end
+  )
+end
+
+bindGlobalCursor({"alt", "cmd", "shift"}, "h", -1, 0)  -- left
+bindGlobalCursor({"alt", "cmd", "shift"}, "l", 1, 0)   -- right
+bindGlobalCursor({"alt", "cmd", "shift"}, "k", 0, -1)  -- up
+bindGlobalCursor({"alt", "cmd", "shift"}, "j", 0, 1)   -- down
+
+-- Option+Cmd+Shift+I: single click at current cursor position
+hs.hotkey.bind({"alt", "cmd", "shift"}, "i", function()
+  hs.eventtap.leftClick(hs.mouse.absolutePosition())
+end)
+
+-- Option+1/2/3: jump to middle of monitor 1/2/3
+hs.hotkey.bind({"alt"}, "1", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "2", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "3", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+-- Option+0/9/8: jump to monitor 1/2/3 and click to focus
+hs.hotkey.bind({"alt"}, "0", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "9", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "8", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+-- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode)
+-- Move cursor in small increments, hold to repeat
+local globalCursorStep = 180  -- pixels per single tap
+local globalCursorHoldStep = 68  -- pixels per movement when holding
+local globalCursorRepeatDelay = 0.05  -- almost instant delay before repeat starts
+local globalCursorRepeatInterval = 0.02  -- interval between repeats (fast)
+local globalCursorTimers = {}
+
+local function globalMoveCursor(dx, dy)
+  local pos = hs.mouse.absolutePosition()
+  hs.mouse.absolutePosition({ x = pos.x + dx, y = pos.y + dy })
+end
+
+local function bindGlobalCursor(mods, key, dx, dy)
+  local tapDx = dx > 0 and globalCursorStep or (dx < 0 and -globalCursorStep or 0)
+  local tapDy = dy > 0 and globalCursorStep or (dy < 0 and -globalCursorStep or 0)
+  local holdDx = dx > 0 and globalCursorHoldStep or (dx < 0 and -globalCursorHoldStep or 0)
+  local holdDy = dy > 0 and globalCursorHoldStep or (dy < 0 and -globalCursorHoldStep or 0)
+  
+  hs.hotkey.bind(mods, key,
+    function()
+      globalMoveCursor(tapDx, tapDy)
+      globalCursorTimers[key] = {}
+      globalCursorTimers[key].delayTimer = hs.timer.doAfter(globalCursorRepeatDelay, function()
+        globalCursorTimers[key].repeatTimer = hs.timer.doEvery(globalCursorRepeatInterval, function()
+          globalMoveCursor(holdDx, holdDy)
+        end)
+      end)
+    end,
+    function()
+      local t = globalCursorTimers[key]
+      if t then
+        if t.delayTimer then t.delayTimer:stop() end
+        if t.repeatTimer then t.repeatTimer:stop() end
+        globalCursorTimers[key] = nil
+      end
+    end
+  )
+end
+
+bindGlobalCursor({"alt", "cmd", "shift"}, "h", -1, 0)  -- left
+bindGlobalCursor({"alt", "cmd", "shift"}, "l", 1, 0)   -- right
+bindGlobalCursor({"alt", "cmd", "shift"}, "k", 0, -1)  -- up
+bindGlobalCursor({"alt", "cmd", "shift"}, "j", 0, 1)   -- down
+
+-- Option+Cmd+Shift+I: single click at current cursor position
+hs.hotkey.bind({"alt", "cmd", "shift"}, "i", function()
+  hs.eventtap.leftClick(hs.mouse.absolutePosition())
+end)
+
+-- Option+1/2/3: jump to middle of monitor 1/2/3
+hs.hotkey.bind({"alt"}, "1", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "2", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "3", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+  end
+end)
+
+-- Option+0/9/8: jump to monitor 1/2/3 and click to focus
+hs.hotkey.bind({"alt"}, "0", function()
+  local allScr = getPhysicalScreens()
+  if allScr[1] then
+    local f = allScr[1]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "9", function()
+  local allScr = getPhysicalScreens()
+  if allScr[2] then
+    local f = allScr[2]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+hs.hotkey.bind({"alt"}, "8", function()
+  local allScr = getPhysicalScreens()
+  if allScr[3] then
+    local f = allScr[3]:frame()
+    local pos = { x = f.x + f.w / 2, y = f.y + f.h / 2 }
+    setMousePosition(pos)
+    hs.timer.doAfter(0.05, function() hs.eventtap.leftClick(pos) end)
+  end
+end)
+
+-- Option+Cmd+Shift+H/J/K/L: global cursor movement (outside nav mode
