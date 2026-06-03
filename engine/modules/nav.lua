@@ -165,6 +165,9 @@ function M.setup(ctx)
     if ctx.navActive then modal:exit() else modal:enter() end
   end
 
+  -- A config key is bindable only if it's a non-empty string ("" means unbound).
+  local function bindable(k) return type(k) == "string" and #k > 0 end
+
   -- Modifier name → its keycodes (left/right) and the flag it sets.
   local MODIFIERS = {
     alt       = { codes = { 58, 61 }, flag = "alt" },
@@ -234,18 +237,18 @@ function M.setup(ctx)
     end })
   elseif act and (act.kind == "hotkey" or act.kind == "hyper") then
     local hk = act.hotkey or {}
-    hs.hotkey.bind(hk.mods or {}, hk.key or "f12", toggle)
+    if bindable(hk.key) then hs.hotkey.bind(hk.mods or {}, hk.key, toggle) end
   elseif act and act.kind == "capsLock" then
     hs.hotkey.bind({}, "f18", toggle) -- the GUI remaps Caps Lock → F18
   else
     for _, b in ipairs(nav.enterKeys or {}) do
-      hs.hotkey.bind(b.mods or {}, b.key, function() modal:enter() end)
+      if bindable(b.key) then hs.hotkey.bind(b.mods or {}, b.key, function() modal:enter() end) end
     end
   end
 
   -- Exit keys (e.g. escape) always apply.
   for _, b in ipairs(nav.exitKeys or {}) do
-    modal:bind(b.mods or {}, b.key, function() modal:exit() end)
+    if bindable(b.key) then modal:bind(b.mods or {}, b.key, function() modal:exit() end) end
   end
 
   -- In-mode help overlay: '?' (shift+/) lists every binding, built from config.

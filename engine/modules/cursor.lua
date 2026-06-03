@@ -18,7 +18,7 @@ function M.setup(ctx)
   end
 
   local function bindCursor(key, dx, dy)
-    if not key then return end
+    if type(key) ~= "string" or #key == 0 then return end
     local tapDx = dx > 0 and t.globalCursorStep or (dx < 0 and -t.globalCursorStep or 0)
     local tapDy = dy > 0 and t.globalCursorStep or (dy < 0 and -t.globalCursorStep or 0)
     local holdDx = dx > 0 and t.globalCursorHoldStep or (dx < 0 and -t.globalCursorHoldStep or 0)
@@ -48,7 +48,7 @@ function M.setup(ctx)
   bindCursor(keys.up, 0, -1)
   bindCursor(keys.down, 0, 1)
 
-  if keys.click then
+  if type(keys.click) == "string" and #keys.click > 0 then
     hs.hotkey.bind(mods, keys.click, function()
       eventtap.leftClick(mouse.absolutePosition())
     end)

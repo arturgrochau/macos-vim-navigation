@@ -123,14 +123,19 @@ function M.setup(ctx)
     local p = feat.parkPadding or 30
     ctx.setMousePosition({ x = f.x + f.w - p, y = f.y + f.h - p })
   end
+  -- A config-supplied key is bindable only if it's a non-empty string. An empty
+  -- string means "unbound" (e.g. cleared by the GUI) — Lua treats "" as truthy, so
+  -- guard explicitly to avoid hs.hotkey.bind erroring on an invalid key.
+  local function bindable(k) return type(k) == "string" and #k > 0 end
+
   for i, key in ipairs(feat.jumpKeys or {}) do
-    hs.hotkey.bind({ "alt" }, key, function() jumpTo(i, false) end)
+    if bindable(key) then hs.hotkey.bind({ "alt" }, key, function() jumpTo(i, false) end) end
   end
   for i, key in ipairs(feat.jumpClickKeys or {}) do
-    hs.hotkey.bind({ "alt" }, key, function() jumpTo(i, true) end)
+    if bindable(key) then hs.hotkey.bind({ "alt" }, key, function() jumpTo(i, true) end) end
   end
   for i, key in ipairs(feat.parkKeys or {}) do
-    hs.hotkey.bind({ "alt" }, key, function() parkAt(i) end)
+    if bindable(key) then hs.hotkey.bind({ "alt" }, key, function() parkAt(i) end) end
   end
 
   -- ---- Directional window/screen focus ---------------------------------------
@@ -189,10 +194,10 @@ function M.setup(ctx)
       if targetWin then targetWin:focus() end
     end
   end
-  if feat.focusLeft and feat.focusLeft.key then
+  if feat.focusLeft and bindable(feat.focusLeft.key) then
     hs.hotkey.bind(feat.focusLeft.mods or {}, feat.focusLeft.key, function() focusWindowInDirection("left") end)
   end
-  if feat.focusRight and feat.focusRight.key then
+  if feat.focusRight and bindable(feat.focusRight.key) then
     hs.hotkey.bind(feat.focusRight.mods or {}, feat.focusRight.key, function() focusWindowInDirection("right") end)
   end
 
@@ -206,10 +211,10 @@ function M.setup(ctx)
     local nextIdx = ((idx - 1 + dir) % #all) + 1
     centerMouseOn(all[nextIdx])
   end
-  if feat.nextDisplay and feat.nextDisplay.key then
+  if feat.nextDisplay and bindable(feat.nextDisplay.key) then
     hs.hotkey.bind(feat.nextDisplay.mods or {}, feat.nextDisplay.key, function() cycleDisplay(1) end)
   end
-  if feat.prevDisplay and feat.prevDisplay.key then
+  if feat.prevDisplay and bindable(feat.prevDisplay.key) then
     hs.hotkey.bind(feat.prevDisplay.mods or {}, feat.prevDisplay.key, function() cycleDisplay(-1) end)
   end
 end

@@ -32,7 +32,10 @@ local eventtap = {
 
 local function makeModal()
   return {
-    bind = function(self) counts.modalBind = counts.modalBind + 1; return self end,
+    bind = function(self, _, key)
+      assert(type(key) == "string" and #key > 0, "modal:bind: invalid key " .. tostring(key))
+      counts.modalBind = counts.modalBind + 1; return self
+    end,
     enter = function() end,
     exit = function() end,
   }
@@ -41,7 +44,12 @@ end
 hs = {
   configdir = ENGINE,
   hotkey = {
-    bind = function() counts.globalBind = counts.globalBind + 1 end,
+    -- Mirror real Hammerspoon: an empty/nil key is an error. This is what catches
+    -- accidental binds of cleared ("") config keys.
+    bind = function(_, key)
+      assert(type(key) == "string" and #key > 0, "hs.hotkey.bind: invalid key " .. tostring(key))
+      counts.globalBind = counts.globalBind + 1
+    end,
     modal = { new = makeModal },
   },
   mouse = {
@@ -124,5 +132,14 @@ allOk = run("minimal", {
 allOk = run("activator:double-tap", { features = { nav = { activator = { kind = "doubleTapModifier", modifier = "alt" } } } }) and allOk
 allOk = run("activator:capslock", { features = { nav = { activator = { kind = "capsLock" } } } }) and allOk
 allOk = run("activator:hyper", { features = { nav = { activator = { kind = "hyper", hotkey = { mods = { "ctrl", "alt", "shift", "cmd" }, key = "space" } } } } }) and allOk
+-- Regression: cleared ("") keys must be SKIPPED, not bound (real hs errors on "").
+allOk = run("empty-keys", {
+  features = { monitors = {
+    focusLeft = { mods = {}, key = "" }, focusRight = { mods = {}, key = "" },
+    nextDisplay = { mods = {}, key = "" }, prevDisplay = { mods = {}, key = "" },
+    jumpKeys = { "1", "", "3" }, jumpClickKeys = { "" }, parkKeys = { "" },
+  } },
+  apps = { { key = "", bundleID = "com.x.y", names = { "X" } }, { key = "c", bundleID = "com.openai.chat", names = { "ChatGPT" } } },
+}) and allOk
 
 os.exit(allOk and 0 or 1)

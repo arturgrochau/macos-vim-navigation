@@ -88,7 +88,9 @@ function M.setup(ctx)
   end
 
   for _, entry in ipairs(ctx.cfg.apps or {}) do
-    modal:bind(entry.mods or {}, entry.key, function() activate(entry) end)
+    if type(entry.key) == "string" and #entry.key > 0 then
+      modal:bind(entry.mods or {}, entry.key, function() activate(entry) end)
+    end
   end
 end
 
