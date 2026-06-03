@@ -38,5 +38,20 @@ hs.hotkey.bind({ "alt" }, "r", function()
   hs.alert("Reloaded")
 end)
 
+-- Auto-reload when the config file changes, so the GUI's "Apply" takes effect
+-- without any CLI dependency. Watches the config directory and reloads only when
+-- keydeck-config.json itself changes.
+ctx.configWatcher = hs.pathwatcher.new(hs.configdir, function(paths)
+  for _, p in ipairs(paths) do
+    if p:sub(-#"keydeck-config.json") == "keydeck-config.json" then
+      hs.reload()
+      return
+    end
+  end
+end):start()
+
+-- Manual reload via `open -g hammerspoon://reload` (GUI fallback).
+hs.urlevent.bind("reload", function() hs.reload() end)
+
 hs.alert.show("KeyDeck loaded — preset: " .. (cfg.preset or "default"))
 -- End of bootstrap.

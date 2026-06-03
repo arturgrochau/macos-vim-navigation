@@ -129,6 +129,8 @@ hs = {
   },
   fnutils = { filter = function(t) return t end },
   keycodes = { map = { d = 2, u = 32 } },
+  pathwatcher = { new = function() return { start = function(s) return s end } end },
+  urlevent = { bind = function() end },
   json = { read = function() return nil end },
   alert = setmetatable({ show = function(m) table.insert(rec.alerts, m) end }, { __call = function(_, m) table.insert(rec.alerts, m) end }),
 }

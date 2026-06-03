@@ -27,11 +27,12 @@ This config includes:
 
 ## ⚙️ Configurable Engine (new)
 
-This config is being refactored into a **config-driven engine** so features can be toggled and
-keys rebound from a GUI (and, soon, a SwiftUI preset editor) instead of hand-editing Lua. With no
-config file present it behaves exactly like this README describes; drop in a JSON preset to change it.
+This config is refactored into a **config-driven engine** plus a minimal **SwiftUI preset editor**,
+so features can be toggled and keys rebound from a GUI instead of hand-editing Lua. With no config
+file present it behaves exactly like this README describes; drop in a JSON preset to change it.
 
 - Engine + install + config docs: [`engine/README.md`](engine/README.md)
+- SwiftUI preset editor (KeyDeck): [`app/README.md`](app/README.md)
 - Ready-made presets (`default` / `developer` / `minimal`): [`config/presets/`](config/presets)
 - Full config contract: [`config/config.schema.json`](config/config.schema.json)
 

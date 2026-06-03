@@ -64,6 +64,8 @@ hs = {
   }, stubmt),
   fnutils = { filter = function(t) return t end },
   keycodes = { map = setmetatable({}, { __index = function() return 0 end }) },
+  pathwatcher = { new = function() return { start = function(s) return s end } end },
+  urlevent = { bind = function() end },
   json = { read = function() return nil end }, -- overridden per scenario
   alert = setmetatable({ show = function(m) table.insert(counts.alerts, m) end }, { __call = function(_, m) table.insert(counts.alerts, m) end }),
 }
