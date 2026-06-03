@@ -195,6 +195,23 @@ function M.setup(ctx)
   if feat.focusRight and feat.focusRight.key then
     hs.hotkey.bind(feat.focusRight.mods or {}, feat.focusRight.key, function() focusWindowInDirection("right") end)
   end
+
+  -- Move the pointer to the next / previous physical display (wrap-around).
+  local function cycleDisplay(dir)
+    local all = getPhysicalScreens()
+    if #all == 0 then return end
+    local cur = mouse.getCurrentScreen()
+    local idx = 1
+    for i, s in ipairs(all) do if s:id() == cur:id() then idx = i; break end end
+    local nextIdx = ((idx - 1 + dir) % #all) + 1
+    centerMouseOn(all[nextIdx])
+  end
+  if feat.nextDisplay and feat.nextDisplay.key then
+    hs.hotkey.bind(feat.nextDisplay.mods or {}, feat.nextDisplay.key, function() cycleDisplay(1) end)
+  end
+  if feat.prevDisplay and feat.prevDisplay.key then
+    hs.hotkey.bind(feat.prevDisplay.mods or {}, feat.prevDisplay.key, function() cycleDisplay(-1) end)
+  end
 end
 
 return M

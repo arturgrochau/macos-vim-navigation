@@ -87,4 +87,19 @@ public extension Config {
     }
 
     static let presetNames = ["default", "developer", "minimal"]
+
+    /// A copy limited to what the essentials editor manages. Clears the monitor
+    /// sub-bindings and hidden features that the UI doesn't surface, so the running
+    /// engine config never has "phantom" shortcuts the user can't see or control.
+    func curatedForEssentials() -> Config {
+        var c = self
+        c.features.cursor.enabled = false
+        c.features.windows.enabled = false
+        c.features.monitors.optionScroll = false
+        c.features.monitors.jumpClickKeys = []
+        c.features.monitors.parkKeys = []
+        c.features.monitors.focusLeft = KeyBinding()
+        c.features.monitors.focusRight = KeyBinding()
+        return c
+    }
 }

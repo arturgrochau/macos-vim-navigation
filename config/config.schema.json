@@ -49,6 +49,15 @@
           "additionalProperties": false,
           "properties": {
             "enabled": { "type": "boolean" },
+            "activator": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Primary way to toggle NAV MODE.",
+              "properties": {
+                "kind": { "enum": ["rightCmd", "rightAlt", "hotkey"] },
+                "hotkey": { "$ref": "#/definitions/binding" }
+              }
+            },
             "enterKeys": { "type": "array", "items": { "$ref": "#/definitions/binding" } },
             "exitKeys": { "type": "array", "items": { "$ref": "#/definitions/binding" } }
           }
@@ -91,7 +100,9 @@
             "parkKeys": { "type": "array", "items": { "type": "string" } },
             "parkPadding": { "type": "number", "minimum": 0 },
             "focusLeft": { "$ref": "#/definitions/binding" },
-            "focusRight": { "$ref": "#/definitions/binding" }
+            "focusRight": { "$ref": "#/definitions/binding" },
+            "nextDisplay": { "$ref": "#/definitions/binding" },
+            "prevDisplay": { "$ref": "#/definitions/binding" }
           }
         },
         "windows": {

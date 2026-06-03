@@ -10,7 +10,7 @@ package.path = ENGINE .. "/?.lua;" .. ENGINE .. "/?/init.lua;" .. package.path
 -- Instrumented mock state
 ----------------------------------------------------------------------
 local rec = { scrolls = {}, scrollPosts = {}, clicks = 0, rclicks = 0, downs = 0,
-              keystrokes = {}, launches = {}, modalExits = 0, alerts = {} }
+              keystrokes = {}, launches = {}, modalExits = 0, modalEnters = 0, alerts = {} }
 local CLOCK = 100
 local mousePos = { x = 0, y = 0 }
 
@@ -60,8 +60,9 @@ local modal = {
     modalBinds[modKey(mods, key)] = { press = press, release = release }
     return self
   end,
-  enter = function() end,
-  exit = function() rec.modalExits = rec.modalExits + 1 end,
+  -- Emulate Hammerspoon: enter/exit invoke the entered()/exited() hooks.
+  enter = function(self) rec.modalEnters = rec.modalEnters + 1; if self.entered then self:entered() end end,
+  exit = function(self) rec.modalExits = rec.modalExits + 1; if self.exited then self:exited() end end,
 }
 
 local function mkMouseEvent() -- result of newMouseEvent / newScrollEvent
@@ -153,7 +154,7 @@ local function check(name, cond, detail)
   else fail = fail + 1; print("  FAIL " .. name .. (detail and ("  -> " .. detail) or "")) end
 end
 local function approx(a, b) return math.abs(a - b) < 0.5 end
-local function resetRec() rec.scrolls, rec.scrollPosts, rec.clicks, rec.downs, rec.keystrokes, rec.launches, rec.modalExits, rec.alerts = {}, {}, 0, 0, {}, {}, 0, {} end
+local function resetRec() rec.scrolls, rec.scrollPosts, rec.clicks, rec.downs, rec.keystrokes, rec.launches, rec.modalExits, rec.modalEnters, rec.alerts = {}, {}, 0, 0, {}, {}, 0, 0, {} end
 local function setMouse(p) mousePos = { x = p.x, y = p.y } end
 local function pressModal(mods, key) local b = modalBinds[modKey(mods, key)]; assert(b, "no modal bind " .. modKey(mods, key)); b.press() end
 local function pressGlobal(mods, key) local b = globalBinds[modKey(mods, key)]; assert(b, "no global bind " .. modKey(mods, key)); b.press() end
@@ -211,12 +212,20 @@ check("opt+9 centers on screen 2 AND clicks", approx(mousePos.x, centerOf(S[2]).
 setMouse({ x = 0, y = 0 }); resetRec(); pressGlobal({ "alt" }, "4")
 check("opt+4 parks bottom-right of screen 1", approx(mousePos.x, 1440 - 30) and approx(mousePos.y, 900 - 30))
 
+print("Next / previous display (cursor cycles physical screens, wrap-around):")
+setMouse(centerOf(S[1])); resetRec(); pressGlobal({ "ctrl", "alt" }, "right")
+check("next display: S1 -> S2", approx(mousePos.x, centerOf(S[2]).x))
+pressGlobal({ "ctrl", "alt" }, "right"); pressGlobal({ "ctrl", "alt" }, "right")
+check("next display wraps S3 -> S1", approx(mousePos.x, centerOf(S[1]).x), ("x=%.0f"):format(mousePos.x))
+setMouse(centerOf(S[1])); pressGlobal({ "ctrl", "alt" }, "left")
+check("prev display wraps S1 -> S3", approx(mousePos.x, centerOf(S[3]).x), ("x=%.0f"):format(mousePos.x))
+
 print("Global cursor (cursor enabled): opt+cmd+shift+l moves right by globalCursorStep=180:")
 setMouse({ x = 100, y = 100 }); resetRec(); pressGlobal({ "alt", "cmd", "shift" }, "l")
 check("opt+cmd+shift+l moves +180px x", approx(mousePos.x, 100 + 180))
 
 print("Option-tap screen cycle + conflict guard (the no-conflict feature):")
-local flags = function(t) for _, cb in ipairs(flagsCbs) do cb({ getFlags = function() return t end }) end end
+local flags = function(t, kc) for _, cb in ipairs(flagsCbs) do cb({ getFlags = function() return t end, getKeyCode = function() return kc or 0 end }) end end
 local keydown = function(f, kc, ch) for _, cb in ipairs(keyDownCbs) do cb({
   getFlags = function() return f end, getKeyCode = function() return kc end, getCharacters = function() return ch end }) end end
 
@@ -236,6 +245,20 @@ flags({ alt = true }); keydown({ alt = true }, hs.keycodes.map.d, "d")
 check("⌥+D emits a scroll", #rec.scrolls == 1 and rec.scrolls[1][2] == -260, ("n=%d"):format(#rec.scrolls))
 flags({}); flush()
 check("⌥+D does not cycle screens", approx(mousePos.x, centerOf(S[1]).x))
+
+print("Right-⌘ nav activator (clean tap toggles NAV MODE; combo does not):")
+-- Clean tap: right-cmd down (keycode 54, only cmd flag) then up, no other key.
+resetRec()
+flags({ cmd = true }, 54); flags({}, 54)
+check("clean Right-⌘ tap enters NAV MODE", rec.modalEnters == 1, ("enters=%d"):format(rec.modalEnters))
+-- Tap again toggles back out.
+flags({ cmd = true }, 54); flags({}, 54)
+check("second Right-⌘ tap exits NAV MODE", rec.modalExits == 1, ("exits=%d"):format(rec.modalExits))
+-- Combo (Right-⌘ + C) must NOT toggle.
+resetRec()
+flags({ cmd = true }, 54); keydown({ cmd = true }, 8, "c"); flags({}, 54)
+check("Right-⌘+C does not toggle", rec.modalEnters == 0 and rec.modalExits == 0,
+  ("enters=%d exits=%d"):format(rec.modalEnters, rec.modalExits))
 
 print(("\n%d passed, %d failed"):format(pass, fail))
 os.exit(fail == 0 and 0 or 1)

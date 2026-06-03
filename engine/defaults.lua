@@ -35,7 +35,11 @@ return {
   features = {
     nav = {
       enabled = true,
-      -- Keys that enter NAV MODE (any of them). Rebindable.
+      -- Primary way to toggle NAV MODE. kind is "rightCmd" | "rightAlt" | "hotkey".
+      -- rightCmd/rightAlt = tap that modifier (clean tap, guarded like the option-tap);
+      -- hotkey = bind activator.hotkey as a normal toggle shortcut.
+      activator = { kind = "rightCmd", hotkey = { mods = {}, key = "f12" } },
+      -- Legacy fallback entry keys, used only when `activator` is absent.
       enterKeys = {
         { mods = { "ctrl", "alt", "cmd" }, key = "space" },
         { mods = {},                       key = "f12" },
@@ -71,6 +75,9 @@ return {
       -- Directional window/screen focus.
       focusLeft  = { mods = { "cmd", "shift" }, key = "-" },
       focusRight = { mods = { "cmd", "shift" }, key = "=" },
+      -- Move the pointer to the next / previous physical display (wrap-around).
+      nextDisplay = { mods = { "ctrl", "alt" }, key = "right" },
+      prevDisplay = { mods = { "ctrl", "alt" }, key = "left" },
     },
 
     -- Hide frontmost app / restore all hidden+minimized windows (off by default).

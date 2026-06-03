@@ -68,5 +68,46 @@ do {
 check("display ⌥⇧⌘H", Validation.display(mods: ["alt", "cmd", "shift"], key: "h") == "⌥⇧⌘H")
 check("display bare C", Validation.display(mods: [], key: "c") == "C")
 
+// 7. nav activator
+check("default activator is rightCmd", Config.default.features.nav.activator.kind == "rightCmd")
+do {
+    let json = #"{ "features": { "nav": { "activator": { "kind": "rightAlt" } } } }"#
+    let c = try ConfigStore.decode(Data(json.utf8))
+    check("activator partial: kind override", c.features.nav.activator.kind == "rightAlt")
+    check("activator partial: hotkey default filled", c.features.nav.activator.hotkey.key == "f12")
+} catch { check("activator partial (no throw)", false) }
+
+// 8. next / previous display
+check("default nextDisplay = ⌃⌥right",
+      Config.default.features.monitors.nextDisplay == KeyBinding(mods: ["ctrl", "alt"], key: "right"))
+check("default prevDisplay = ⌃⌥left",
+      Config.default.features.monitors.prevDisplay == KeyBinding(mods: ["ctrl", "alt"], key: "left"))
+
+// 9. KeyNames mapping
+check("keyName 123 -> left", KeyNames.keyName(forKeyCode: 123) == "left")
+check("keyName 49 -> space", KeyNames.keyName(forKeyCode: 49) == "space")
+check("keyName 8 -> c", KeyNames.keyName(forKeyCode: 8) == "c")
+check("keyName fallback to characters", KeyNames.keyName(forKeyCode: 9999, characters: "X") == "x")
+check("modifierNames cmd+option -> [alt,cmd]",
+      KeyNames.modifierNames(rawFlags: (1 << 20) | (1 << 19)) == ["alt", "cmd"])
+check("isModifierKeyCode 54 (rightcmd)", KeyNames.isModifierKeyCode(54))
+check("isModifierKeyCode 8 (c) is false", !KeyNames.isModifierKeyCode(8))
+
+// 10. curatedForEssentials clears unshown bindings
+do {
+    var c = Config.default
+    c.features.cursor.enabled = true
+    c.features.windows.enabled = true
+    let cur = c.curatedForEssentials()
+    check("curated: cursor off", !cur.features.cursor.enabled)
+    check("curated: windows off", !cur.features.windows.enabled)
+    check("curated: optionScroll off", !cur.features.monitors.optionScroll)
+    check("curated: jumpClickKeys cleared", cur.features.monitors.jumpClickKeys.isEmpty)
+    check("curated: parkKeys cleared", cur.features.monitors.parkKeys.isEmpty)
+    check("curated: focusLeft cleared", cur.features.monitors.focusLeft.key.isEmpty)
+    check("curated: jumpKeys preserved", cur.features.monitors.jumpKeys == ["1", "2", "3"])
+    check("curated: nextDisplay preserved", cur.features.monitors.nextDisplay.key == "right")
+}
+
 print("\n\(pass) passed, \(fail) failed")
 exit(fail == 0 ? 0 : 1)

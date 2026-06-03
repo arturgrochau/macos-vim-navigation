@@ -81,12 +81,31 @@ extension Tuning {
     }
 }
 
+/// How NAV MODE is toggled. kind is "rightCmd" | "rightAlt" | "hotkey".
+public struct NavActivator: Codable, Equatable {
+    public var kind: String
+    public var hotkey: KeyBinding
+    public init(kind: String, hotkey: KeyBinding) { self.kind = kind; self.hotkey = hotkey }
+    public static let `default` = NavActivator(kind: "rightCmd", hotkey: KeyBinding(mods: [], key: "f12"))
+}
+extension NavActivator {
+    enum CodingKeys: String, CodingKey { case kind, hotkey }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = NavActivator.default
+        kind = c.get(.kind, default: d.kind)
+        hotkey = c.get(.hotkey, default: d.hotkey)
+    }
+}
+
 public struct NavFeature: Codable, Equatable {
     public var enabled: Bool
+    public var activator: NavActivator
     public var enterKeys: [KeyBinding]
     public var exitKeys: [KeyBinding]
     public static let `default` = NavFeature(
         enabled: true,
+        activator: .default,
         enterKeys: [KeyBinding(mods: ["ctrl", "alt", "cmd"], key: "space"),
                     KeyBinding(mods: [], key: "f12"),
                     KeyBinding(mods: ["ctrl"], key: "=")],
@@ -94,11 +113,12 @@ public struct NavFeature: Codable, Equatable {
                    KeyBinding(mods: ["ctrl"], key: "c")])
 }
 extension NavFeature {
-    enum CodingKeys: String, CodingKey { case enabled, enterKeys, exitKeys }
+    enum CodingKeys: String, CodingKey { case enabled, activator, enterKeys, exitKeys }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = NavFeature.default
         enabled = c.get(.enabled, default: d.enabled)
+        activator = c.get(.activator, default: d.activator)
         enterKeys = c.get(.enterKeys, default: d.enterKeys)
         exitKeys = c.get(.exitKeys, default: d.exitKeys)
     }
@@ -159,18 +179,23 @@ public struct MonitorsFeature: Codable, Equatable {
     public var parkPadding: Double
     public var focusLeft: KeyBinding
     public var focusRight: KeyBinding
+    public var nextDisplay: KeyBinding
+    public var prevDisplay: KeyBinding
     public static let `default` = MonitorsFeature(
         enabled: true, skipVirtualDisplayPattern: "16:9|HiDPI|Virtual",
         optionTapCycle: true, optionScroll: true,
         jumpKeys: ["1", "2", "3"], jumpClickKeys: ["0", "9", "8"], parkKeys: ["4", "5", "6"],
         parkPadding: 30,
         focusLeft: KeyBinding(mods: ["cmd", "shift"], key: "-"),
-        focusRight: KeyBinding(mods: ["cmd", "shift"], key: "="))
+        focusRight: KeyBinding(mods: ["cmd", "shift"], key: "="),
+        nextDisplay: KeyBinding(mods: ["ctrl", "alt"], key: "right"),
+        prevDisplay: KeyBinding(mods: ["ctrl", "alt"], key: "left"))
 }
 extension MonitorsFeature {
     enum CodingKeys: String, CodingKey {
         case enabled, skipVirtualDisplayPattern, optionTapCycle, optionScroll
         case jumpKeys, jumpClickKeys, parkKeys, parkPadding, focusLeft, focusRight
+        case nextDisplay, prevDisplay
     }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -185,6 +210,8 @@ extension MonitorsFeature {
         parkPadding = c.get(.parkPadding, default: d.parkPadding)
         focusLeft = c.get(.focusLeft, default: d.focusLeft)
         focusRight = c.get(.focusRight, default: d.focusRight)
+        nextDisplay = c.get(.nextDisplay, default: d.nextDisplay)
+        prevDisplay = c.get(.prevDisplay, default: d.prevDisplay)
     }
 }
 

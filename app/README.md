@@ -44,13 +44,22 @@ therefore also runs the same assertions via an XCTest-free runner
 
 ## What it edits
 
-- **Features:** NAV MODE, visual mode, global cursor, multi-monitor, hide/restore — each a
-  toggle, with sub-options (modifiers, focus bindings) revealed when enabled.
-- **App shortcuts:** add/remove rows with key, modifiers, bundle ID, display names,
-  click target (`center`/`bottom`/`none`), and exit-NAV flag.
-- **Presets:** `default` / `developer` / `minimal` from the picker.
-- **Conflict detection:** duplicate bindings (within the Global or NAV-MODE namespace)
-  are flagged and block Apply until resolved.
+The UI is organized around the three things people actually do — not the config structure.
+
+- **Navigation Mode:** one toggle + how you enter it (tap **Right ⌘** / Right ⌥ / F12 /
+  a custom shortcut you record). Plain-language explanation of what the mode does.
+- **Display Switching:** tap ⌥ for the next display, recordable **Next / Previous display**
+  shortcuts, and ⌥1 / ⌥2 / ⌥3 to jump to a specific screen.
+- **App Launchers:** a simple `key → App` list. **Add App** searches your *installed* apps
+  (icons included) — no bundle IDs to type. Per-launcher editing hides position / click
+  behavior / bundle ID behind **Advanced**.
+
+Shortcuts use a click-to-record field (the standard macOS pattern), not modifier checkboxes.
+Duplicate keys are flagged and block **Apply** until resolved. On Apply, the editor writes a
+*curated* config (only what it shows), so the running engine never has hidden shortcuts.
+
+Visual mode, global cursor movement, hide/restore and scroll gestures remain in the engine
+but are intentionally not surfaced, to keep the editor minimal.
 
 ## Roadmap
 

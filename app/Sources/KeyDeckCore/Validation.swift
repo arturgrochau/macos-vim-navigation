@@ -38,13 +38,17 @@ public enum Validation {
 
         let f = config.features
         // Global hotkeys.
-        if f.nav.enabled { for b in f.nav.enterKeys { addGlobal(b.mods, b.key) } }
+        if f.nav.enabled, f.nav.activator.kind == "hotkey" {
+            addGlobal(f.nav.activator.hotkey.mods, f.nav.activator.hotkey.key)
+        }
         if f.monitors.enabled {
             for k in f.monitors.jumpKeys { addGlobal(["alt"], k) }
             for k in f.monitors.jumpClickKeys { addGlobal(["alt"], k) }
             for k in f.monitors.parkKeys { addGlobal(["alt"], k) }
             addGlobal(f.monitors.focusLeft.mods, f.monitors.focusLeft.key)
             addGlobal(f.monitors.focusRight.mods, f.monitors.focusRight.key)
+            addGlobal(f.monitors.nextDisplay.mods, f.monitors.nextDisplay.key)
+            addGlobal(f.monitors.prevDisplay.mods, f.monitors.prevDisplay.key)
         }
         if f.cursor.enabled {
             for k in [f.cursor.keys.left, f.cursor.keys.down, f.cursor.keys.up, f.cursor.keys.right, f.cursor.keys.click] {

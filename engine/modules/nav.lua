@@ -16,9 +16,11 @@ function M.setup(ctx)
 
   -- Modal lifecycle + overlays. The exit hook finalizes a pending visual selection.
   function modal:entered()
+    ctx.navActive = true
     overlay.createNormal()
   end
   function modal:exited()
+    ctx.navActive = false
     overlay.hideNormal()
     if ctx.mode == "visual" then
       local pos = mouse.absolutePosition()
@@ -156,11 +158,56 @@ function M.setup(ctx)
   end)
   ctx.gResetTap:start()
 
-  -- Enter / exit bindings (rebindable via config).
-  for _, b in ipairs(ctx.cfg.features.nav.enterKeys or {}) do
-    hs.hotkey.bind(b.mods or {}, b.key, function() modal:enter() end)
+  -- Toggle NAV MODE.
+  local function toggle()
+    if ctx.navActive then modal:exit() else modal:enter() end
   end
-  for _, b in ipairs(ctx.cfg.features.nav.exitKeys or {}) do
+
+  -- Activation. `activator` is the primary path; fall back to legacy enterKeys.
+  local nav = ctx.cfg.features.nav
+  local activator = nav.activator
+  if activator and activator.kind == "hotkey" then
+    local hk = activator.hotkey or {}
+    hs.hotkey.bind(hk.mods or {}, hk.key or "f12", toggle)
+  elseif activator and (activator.kind == "rightCmd" or activator.kind == "rightAlt") then
+    -- Tap a right-hand modifier to toggle. Guarded like the option-tap so it never
+    -- fires when the modifier is part of a real combo (e.g. Right ⌘ + C).
+    local targetKeyCode = activator.kind == "rightCmd" and 54 or 61  -- rightcmd / rightalt
+    local flagField = activator.kind == "rightCmd" and "cmd" or "alt"
+    local held, otherKey = false, false
+    ctx.navActivatorFlags = eventtap.new({ eventtap.event.types.flagsChanged }, function(e)
+      local f = e:getFlags()
+      local kc = e:getKeyCode()
+      if kc == targetKeyCode and f[flagField] then
+        -- Press of the target modifier. Only a candidate if it's the ONLY modifier down.
+        local lone = f[flagField] and not (f.cmd and f.alt) and not f.ctrl and not f.shift
+          and not (flagField == "cmd" and f.alt) and not (flagField == "alt" and f.cmd)
+        held = lone
+        otherKey = false
+      elseif kc == targetKeyCode and not f[flagField] then
+        -- Release of the target modifier.
+        if held and not otherKey then toggle() end
+        held = false
+      elseif held then
+        -- Another modifier changed while holding → it's a combo, not a tap.
+        otherKey = true
+      end
+      return false
+    end)
+    ctx.navActivatorFlags:start()
+    ctx.navActivatorKeys = eventtap.new({ eventtap.event.types.keyDown }, function()
+      if held then otherKey = true end
+      return false
+    end)
+    ctx.navActivatorKeys:start()
+  else
+    for _, b in ipairs(nav.enterKeys or {}) do
+      hs.hotkey.bind(b.mods or {}, b.key, function() modal:enter() end)
+    end
+  end
+
+  -- Exit keys (e.g. escape) always apply.
+  for _, b in ipairs(nav.exitKeys or {}) do
     modal:bind(b.mods or {}, b.key, function() modal:exit() end)
   end
 end
