@@ -7,8 +7,10 @@
 -- over this table, so a user config only needs to specify the keys it overrides.
 return {
   preset = "default",
-  -- When true, the engine emits extra hs.alert diagnostics (toggled from the GUI's Advanced).
+  -- When true, the engine emits extra hs.alert diagnostics (toggled from Developer Settings).
   debug = false,
+  -- Optional raw Lua run after modules load (Developer Settings escape hatch).
+  customLua = "",
 
   -- Numeric tunables shared across modules.
   tuning = {
@@ -44,8 +46,10 @@ return {
       --        | "capsLock"          → bind F18 (the GUI remaps Caps Lock → F18)
       --   modifier = alt|cmd|ctrl|shift (either side) or rightAlt|leftAlt|rightCmd|… (specific)
       --   onRelease = true → fire only when the tapped modifier is released without a combo.
+      -- Default: a plain, conflict-free hotkey (most reliable). Users can switch to a
+      -- modifier-release or double-tap trigger from the app's "Change" sheet.
       activator = {
-        kind = "tapModifier",
+        kind = "hotkey",
         modifier = "rightAlt",
         onRelease = true,
         hotkey = { mods = { "ctrl" }, key = "=" },

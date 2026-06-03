@@ -12,7 +12,7 @@ struct LicenseSheet: View {
             Text("KeyDeck License").font(.headline)
             Text(license.statusText()).foregroundColor(.secondary)
 
-            if license.state.isLicensed {
+            if license.state.isPro {
                 Button("Remove license from this Mac") { license.deactivate() }
             } else {
                 Text("Enter the license key from your Gumroad receipt:")

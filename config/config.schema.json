@@ -20,6 +20,7 @@
   "properties": {
     "preset": { "type": "string", "description": "Name of the active preset (informational)." },
     "debug": { "type": "boolean", "description": "Emit extra hs.alert diagnostics." },
+    "customLua": { "type": "string", "description": "Raw Lua run after modules load (Developer Settings)." },
     "tuning": {
       "type": "object",
       "additionalProperties": false,

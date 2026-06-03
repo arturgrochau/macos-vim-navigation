@@ -35,18 +35,18 @@ final class LicenseManager: ObservableObject {
         return dir.appendingPathComponent("license.json")
     }
 
-    init(now: Date = Date()) {
+    init() {
         if let data = try? Data(contentsOf: Self.fileURL),
            let s = try? Self.decoder.decode(LicenseState.self, from: data) {
             state = s
         } else {
-            state = .startingTrial(now: now)
+            state = .free
             persist()
         }
     }
 
-    var isApplyAllowed: Bool { state.isApplyAllowed(now: Date()) }
-    func statusText() -> String { state.statusText(now: Date()) }
+    var isPro: Bool { state.isPro }
+    func statusText() -> String { state.statusText() }
 
     /// Verify a key with Gumroad, bind it to this machine, and cache the result.
     func activate(key: String) async -> Result<Void, LicenseError> {
@@ -78,7 +78,7 @@ final class LicenseManager: ObservableObject {
 
     /// Re-verify silently if the cached receipt is stale (keeps offline use working).
     func revalidateIfStale() async {
-        guard state.isLicensed, let key = state.licenseKey, let at = state.verifiedAt else { return }
+        guard state.isPro, let key = state.licenseKey, let at = state.verifiedAt else { return }
         if Date().timeIntervalSince(at) > LicenseConfig.reverifyAfterDays * 86_400 {
             _ = await activate(key: key)
         }

@@ -95,7 +95,7 @@ public struct NavActivator: Codable, Equatable {
         self.kind = kind; self.modifier = modifier; self.onRelease = onRelease; self.hotkey = hotkey
     }
     public static let `default` = NavActivator(
-        kind: "tapModifier", modifier: "rightAlt", onRelease: true,
+        kind: "hotkey", modifier: "rightAlt", onRelease: true,
         hotkey: KeyBinding(mods: ["ctrl"], key: "="))
 }
 extension NavActivator {
@@ -324,12 +324,13 @@ extension AppShortcut {
 public struct Config: Codable, Equatable {
     public var preset: String
     public var debug: Bool
+    public var customLua: String
     public var tuning: Tuning
     public var features: Features
     public var apps: [AppShortcut]
 
     public static let `default` = Config(
-        preset: "default", debug: false, tuning: .default, features: .default,
+        preset: "default", debug: false, customLua: "", tuning: .default, features: .default,
         apps: [
             AppShortcut(key: "c", mods: [], bundleID: "com.openai.chat", names: ["ChatGPT"], clickTarget: "bottom", exitNav: true),
             AppShortcut(key: "c", mods: ["shift"], bundleID: "com.microsoft.VSCode", names: ["Visual Studio Code", "Code"], clickTarget: "center", exitNav: true),
@@ -339,12 +340,13 @@ public struct Config: Codable, Equatable {
         ])
 }
 extension Config {
-    enum CodingKeys: String, CodingKey { case preset, debug, tuning, features, apps }
+    enum CodingKeys: String, CodingKey { case preset, debug, customLua, tuning, features, apps }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = Config.default
         preset = c.get(.preset, default: d.preset)
         debug = c.get(.debug, default: d.debug)
+        customLua = c.get(.customLua, default: d.customLua)
         tuning = c.get(.tuning, default: d.tuning)
         features = c.get(.features, default: d.features)
         apps = c.get(.apps, default: d.apps)

@@ -69,7 +69,9 @@ check("display ⌥⇧⌘H", Validation.display(mods: ["alt", "cmd", "shift"], ke
 check("display bare C", Validation.display(mods: [], key: "c") == "C")
 
 // 7. nav activator
-check("default activator is tapModifier", Config.default.features.nav.activator.kind == "tapModifier")
+check("default activator is hotkey ⌃=",
+      Config.default.features.nav.activator.kind == "hotkey"
+      && Config.default.features.nav.activator.hotkey == KeyBinding(mods: ["ctrl"], key: "="))
 do {
     let json = #"{ "features": { "nav": { "activator": { "kind": "doubleTapModifier" } } } }"#
     let c = try ConfigStore.decode(Data(json.utf8))
@@ -110,12 +112,11 @@ do {
     check("curated: nextDisplay preserved", cur.features.monitors.nextDisplay.key == "right")
 }
 
-// 11. trigger activator defaults + KeyNames f18 + debug
-check("default activator: tapModifier", Config.default.features.nav.activator.kind == "tapModifier")
-check("default activator: rightAlt", Config.default.features.nav.activator.modifier == "rightAlt")
-check("default activator: onRelease", Config.default.features.nav.activator.onRelease)
+// 11. defaults + KeyNames f18 + debug + customLua
+check("default modifier still rightAlt", Config.default.features.nav.activator.modifier == "rightAlt")
 check("keyName 79 -> f18", KeyNames.keyName(forKeyCode: 79) == "f18")
 check("default debug is false", !Config.default.debug)
+check("default customLua is empty", Config.default.customLua.isEmpty)
 check("default optionTapCycle is false", !Config.default.features.monitors.optionTapCycle)
 
 // 12. SuggestedLaunchers
@@ -124,7 +125,7 @@ do {
     let s = SuggestedLaunchers.suggestions(installed: installed)
     check("suggest: ChatGPT on c", s.contains { $0.key == "c" && $0.bundleID == "com.openai.chat" })
     check("suggest: Browser on b", s.contains { $0.key == "b" && $0.bundleID == "company.thebrowser.Browser" })
-    check("suggest: Terminal on t", s.contains { $0.key == "t" })
+    check("suggest: Terminal on g", s.contains { $0.key == "g" })
     let keys = SuggestedLaunchers.catalog.map { $0.key }
     check("catalog keys are unique", Set(keys).count == keys.count)
 }
@@ -136,19 +137,38 @@ do {
     check("conflict: bare z is free", c.appLauncherName(forKey: "z", mods: [], excludingID: nil) == nil)
 }
 
-// 14. LicenseState trial / licensed / expired
+// 14. Freemium license + entitlements
 do {
-    let now = Date(timeIntervalSince1970: 1_000_000)
-    let fresh = LicenseState.startingTrial(now: now)
-    check("trial: 14 days left at start", fresh.daysLeftInTrial(now: now) == 14)
-    check("trial: apply allowed during trial", fresh.isApplyAllowed(now: now))
-    let later = now.addingTimeInterval(15 * 86_400)
-    check("trial: expired after 15 days", !fresh.trialActive(now: later))
-    check("trial: apply blocked after expiry", !fresh.isApplyAllowed(now: later))
-    var licensed = fresh
-    licensed.licenseKey = "KEY"; licensed.verifiedAt = now
-    check("licensed: apply allowed even after expiry", licensed.isApplyAllowed(now: later))
-    check("licensed: isLicensed true", licensed.isLicensed)
+    let free = LicenseState.free
+    check("free: not Pro", !free.isPro)
+    var licensed = free
+    licensed.licenseKey = "KEY"; licensed.verifiedAt = Date(timeIntervalSince1970: 1)
+    check("licensed: isPro", licensed.isPro)
+    check("entitlements: free caps at 5 launchers", !Entitlements.canAddLauncher(currentCount: 5, isPro: false))
+    check("entitlements: free can add a 5th (had 4)", Entitlements.canAddLauncher(currentCount: 4, isPro: false))
+    check("entitlements: pro unlimited launchers", Entitlements.canAddLauncher(currentCount: 999, isPro: true))
+    check("entitlements: display customize is Pro-only",
+          !Entitlements.displayCustomizationAllowed(isPro: false) && Entitlements.displayCustomizationAllowed(isPro: true))
+}
+
+// 15. EngineStatus decode
+do {
+    let json = #"{ "loadedAt": 1700000000, "preset": "default", "navEnabled": true }"#
+    let s = try JSONDecoder().decode(EngineStatus.self, from: Data(json.utf8))
+    check("EngineStatus decodes loadedAt", s.loadedAt == 1_700_000_000)
+    check("EngineStatus decodes navEnabled", s.navEnabled)
+}
+
+// 16. persistence round-trip ("restart" = encode then decode)
+do {
+    var c = Config.default
+    c.apps = [AppShortcut(key: "x", mods: [], bundleID: "com.x.y", names: ["X"], clickTarget: "center", exitNav: true)]
+    c.features.nav.activator = NavActivator(kind: "doubleTapModifier", modifier: "alt")
+    c.features.monitors.nextDisplay = KeyBinding(mods: ["ctrl"], key: "right")
+    let restored = try ConfigStore.decode(try ConfigStore.encode(c))
+    check("persistence: config round-trips unchanged", restored == c)
+    check("persistence: app mapping persists", restored.apps.first?.key == "x")
+    check("persistence: trigger persists", restored.features.nav.activator.kind == "doubleTapModifier")
 }
 
 print("\n\(pass) passed, \(fail) failed")

@@ -7,14 +7,17 @@ enum TriggerPreset: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .tapRightOption: return "Tap Right ⌥  (recommended)"
-        case .doubleTapOption: return "Double-tap ⌥"
+        case .controlEquals:   return "Ctrl + =  (recommended)"
+        case .doubleTapOption: return "Double-tap Option"
+        case .tapRightOption:  return "Right Option (on release)"
         case .capsLock:        return "Caps Lock"
-        case .controlEquals:   return "Control + ="
         case .hyper:           return "Hyper key (⌃⌥⇧⌘ + key)"
         case .custom:          return "Custom…"
         }
     }
+
+    /// Display order in the Change sheet (recommended first).
+    static var ordered: [TriggerPreset] { [.controlEquals, .doubleTapOption, .tapRightOption, .capsLock, .hyper, .custom] }
 
     /// Build the activator for this preset, preserving the user's hotkey where useful.
     func activator(existing: NavActivator) -> NavActivator {

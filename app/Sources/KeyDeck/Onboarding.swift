@@ -16,7 +16,7 @@ struct OnboardingView: View {
             Text("Welcome to KeyDeck").font(.largeTitle).bold()
 
             VStack(alignment: .leading, spacing: 8) {
-                concept("1.circle.fill", "Enter Navigation Mode", "Tap a trigger key (default: Right ⌥).")
+                concept("1.circle.fill", "Enter Navigation Mode", "Press your trigger key (default: Ctrl+=).")
                 concept("2.circle.fill", "Move between displays", "Jump across monitors with a keystroke.")
                 concept("3.circle.fill", "Launch apps", "Press a key to open your favorite apps.")
             }
@@ -39,8 +39,8 @@ struct OnboardingView: View {
             HStack {
                 Button("Skip") { onFinish([]) }
                 Spacer()
-                Text("Trigger: Tap Right ⌥").font(.callout).foregroundColor(.secondary)
-                Button("Continue") { onFinish(suggestions.filter { selected.contains($0.id) }) }
+                Text("Trigger: Ctrl+=").font(.callout).foregroundColor(.secondary)
+                Button("Create Defaults") { onFinish(suggestions.filter { selected.contains($0.id) }) }
                     .keyboardShortcut(.defaultAction)
             }
         }

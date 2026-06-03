@@ -1,33 +1,35 @@
 import SwiftUI
 import KeyDeckCore
 
-struct ContentView: View {
-    @State private var config = ConfigStore.load()
-    @State private var status = ""
-    @State private var statusIsError = false
+/// The Settings tab: the three outcomes (enter Nav Mode, switch displays, launch apps),
+/// an engine-health banner, and a verified Apply.
+struct SettingsView: View {
+    @ObservedObject var model: AppModel
+    @Binding var showLicense: Bool
+
     @State private var appsByID: [String: InstalledApp] = [:]
     @State private var showAdd = false
     @State private var editingIndex: Int?
-    @State private var showAdvanced = false
-    @State private var showOnboarding = !ConfigStore.fileExists
-    @State private var showLicense = false
-    @State private var capsEnabled = CapsLockSetup.isEnabled
-    @StateObject private var license = LicenseManager()
+    @State private var showTriggerChange = false
+    @State private var showCustomize = false
+    @State private var showUpgrade = false
 
-    private var conflicts: [BindingConflict] { Validation.conflicts(in: config) }
-    private var canApply: Bool { conflicts.isEmpty && license.isApplyAllowed }
+    private var conflicts: [BindingConflict] { Validation.conflicts(in: model.config) }
+    private var canAddLauncher: Bool {
+        Entitlements.canAddLauncher(currentCount: model.config.apps.count, isPro: model.isPro)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             header
             Divider()
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 18) {
+                    EngineBanner(model: model)
                     if !conflicts.isEmpty { conflictBanner }
                     navSection
                     displaySection
                     appsSection
-                    advancedSection
                 }
                 .padding(20)
             }
@@ -37,31 +39,30 @@ struct ContentView: View {
         .onAppear {
             appsByID = Dictionary(AppCatalog.installed().map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         }
-        .task { await license.revalidateIfStale() }
-        .sheet(isPresented: $showOnboarding) {
-            OnboardingView { chosen in
-                if !chosen.isEmpty { config.apps = chosen }
-                try? ConfigStore.save(config.curatedForEssentials())
-                showOnboarding = false
-            }
-        }
         .sheet(isPresented: $showAdd) {
             AddAppSheet(
-                conflictName: { key, mods in config.appLauncherName(forKey: key, mods: mods, excludingID: nil) },
-                onAdd: { shortcut in
-                    config.apps.removeAll { $0.key.lowercased() == shortcut.key.lowercased() && Set($0.mods) == Set(shortcut.mods) }
-                    config.apps.append(shortcut)
+                conflictName: { key, mods in model.config.appLauncherName(forKey: key, mods: mods, excludingID: nil) },
+                onAdd: { s in
+                    model.config.apps.removeAll { $0.key.lowercased() == s.key.lowercased() && Set($0.mods) == Set(s.mods) }
+                    model.config.apps.append(s)
                 })
         }
         .sheet(isPresented: Binding(get: { editingIndex != nil }, set: { if !$0 { editingIndex = nil } })) {
-            if let i = editingIndex, config.apps.indices.contains(i) {
-                AppEditorSheet(app: $config.apps[i],
+            if let i = editingIndex, model.config.apps.indices.contains(i) {
+                AppEditorSheet(app: $model.config.apps[i],
                                conflictName: { key, mods in
-                                   config.appLauncherName(forKey: key, mods: mods, excludingID: config.apps[i].id)
+                                   model.config.appLauncherName(forKey: key, mods: mods, excludingID: model.config.apps[i].id)
                                })
             }
         }
-        .sheet(isPresented: $showLicense) { LicenseSheet(license: license) }
+        .sheet(isPresented: $showTriggerChange) { TriggerChangeSheet(activator: $model.config.features.nav.activator) }
+        .sheet(isPresented: $showCustomize) { DisplayCustomizeSheet(monitors: $model.config.features.monitors) }
+        .alert("Upgrade to Pro", isPresented: $showUpgrade) {
+            Button("Upgrade…") { showLicense = true }
+            Button("Not now", role: .cancel) {}
+        } message: {
+            Text("The free plan includes up to \(Entitlements.freeMaxLaunchers) app launchers and the three display jumps. Upgrade for unlimited mappings and display customization.")
+        }
     }
 
     // MARK: Header
@@ -79,64 +80,30 @@ struct ContentView: View {
     // MARK: Navigation Mode
 
     private var navSection: some View {
-        SectionCard(title: "Navigation Mode", isOn: $config.features.nav.enabled) {
-            HStack {
-                Text("Trigger").frame(width: 80, alignment: .leading)
-                Picker("", selection: triggerPreset) {
-                    ForEach(TriggerPreset.allCases) { Text($0.label).tag($0) }
-                }.labelsHidden().frame(width: 250)
+        SectionCard(title: "Navigation Mode", isOn: $model.config.features.nav.enabled) {
+            HStack(spacing: 12) {
+                Text("Trigger:").foregroundColor(.secondary)
+                Text(triggerLabel(model.config.features.nav.activator))
+                    .font(.system(.body, design: .rounded)).bold()
+                Button("Change") { showTriggerChange = true }
+                Spacer()
             }
-            let kind = config.features.nav.activator.kind
-            if kind == "tapModifier" {
-                Toggle("Activate on release (ignored when used in a shortcut)",
-                       isOn: $config.features.nav.activator.onRelease)
-            }
-            if triggerPreset.wrappedValue == .custom || kind == "hyper" {
-                HStack {
-                    Text("Shortcut").frame(width: 80, alignment: .leading)
-                    ShortcutRecorder(binding: $config.features.nav.activator.hotkey).frame(width: 130, height: 26)
-                }
-            }
-            if kind == "capsLock" { capsLockRow }
-            Text(triggerPreset.wrappedValue.explanation(config.features.nav.activator))
+            Text(triggerSentence(model.config.features.nav.activator))
                 .font(.callout).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
-            Text("In Navigation Mode: h / j / k / l move the pointer, d / u scroll, your app keys launch apps. Press ? for help, Esc to leave.")
-                .font(.caption).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private var capsLockRow: some View {
-        HStack(spacing: 10) {
-            Text("Caps Lock").frame(width: 80, alignment: .leading)
-            if capsEnabled {
-                Label("Set up", systemImage: "checkmark.circle.fill").foregroundColor(.green)
-                Button("Remove") { CapsLockSetup.disable(); capsEnabled = false }
-            } else {
-                Button("Set up Caps Lock") { capsEnabled = CapsLockSetup.enable() }
-                Text("Remaps Caps Lock → F18 (reversible).").font(.caption).foregroundColor(.secondary)
-            }
-            Spacer()
         }
     }
 
     // MARK: Display Switching
 
     private var displaySection: some View {
-        SectionCard(title: "Display Switching", isOn: $config.features.monitors.enabled) {
-            HStack {
-                Text("Next display").frame(width: 130, alignment: .leading)
-                ShortcutRecorder(binding: $config.features.monitors.nextDisplay).frame(width: 120, height: 26)
+        SectionCard(title: "Display Switching", isOn: $model.config.features.monitors.enabled) {
+            Text("In Navigation Mode:").font(.callout).foregroundColor(.secondary)
+            HStack(spacing: 18) {
+                ForEach(Array(model.config.features.monitors.jumpKeys.prefix(3).enumerated()), id: \.offset) { i, k in
+                    Text("⌥\(k) → Display \(i + 1)").font(.system(.body, design: .rounded))
+                }
             }
-            HStack {
-                Text("Previous display").frame(width: 130, alignment: .leading)
-                ShortcutRecorder(binding: $config.features.monitors.prevDisplay).frame(width: 120, height: 26)
-            }
-            Toggle("Jump to a display with ⌥1 / ⌥2 / ⌥3", isOn: jumpEnabled)
-            Toggle("Also tap ⌥ to cycle displays", isOn: $config.features.monitors.optionTapCycle)
-            if config.features.monitors.optionTapCycle && config.features.nav.activator.modifier.contains("Alt") {
-                Text("⚠ This may clash with an Option-based Nav Mode trigger.")
-                    .font(.caption).foregroundColor(.orange)
-            }
+            Button("Customize") { if model.isPro { showCustomize = true } else { showUpgrade = true } }
         }
     }
 
@@ -147,22 +114,26 @@ struct ContentView: View {
             HStack {
                 Text("App Launchers").font(.headline)
                 Spacer()
-                Button { showAdd = true } label: { Label("Add App", systemImage: "plus") }
+                Button { if canAddLauncher { showAdd = true } else { showUpgrade = true } } label: {
+                    Label("Add", systemImage: "plus")
+                }
             }
-            Text("While in Navigation Mode, press a key to launch an app.")
-                .font(.caption).foregroundColor(.secondary)
-            if config.apps.isEmpty {
-                Text("No launchers yet. Click “Add App”.").foregroundColor(.secondary).font(.callout).padding(.vertical, 6)
+            if model.config.apps.isEmpty {
+                Text("No launchers yet. Click “Add”.").foregroundColor(.secondary).font(.callout).padding(.vertical, 6)
             } else {
                 VStack(spacing: 0) {
-                    ForEach(Array(config.apps.enumerated()), id: \.element.id) { idx, app in
+                    ForEach(Array(model.config.apps.enumerated()), id: \.element.id) { idx, app in
                         appRow(app, index: idx)
-                        if idx < config.apps.count - 1 { Divider() }
+                        if idx < model.config.apps.count - 1 { Divider() }
                     }
                 }
                 .background(Color(nsColor: .controlBackgroundColor))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(nsColor: .separatorColor)))
+            }
+            if !model.isPro {
+                Text("Free plan: \(model.config.apps.count)/\(Entitlements.freeMaxLaunchers) launchers")
+                    .font(.caption).foregroundColor(.secondary)
             }
         }
     }
@@ -170,9 +141,7 @@ struct ContentView: View {
     private func appRow(_ app: AppShortcut, index: Int) -> some View {
         HStack(spacing: 10) {
             Text(app.key.isEmpty ? "—" : Validation.display(mods: app.mods, key: app.key))
-                .font(.system(.body, design: .rounded)).bold().frame(minWidth: 34)
-                .padding(.vertical, 3).padding(.horizontal, 6)
-                .background(Color.accentColor.opacity(0.15)).clipShape(RoundedRectangle(cornerRadius: 5))
+                .font(.system(.body, design: .rounded)).bold().frame(minWidth: 30)
             Text("→").foregroundColor(.secondary)
             if let a = appsByID[app.bundleID] {
                 Image(nsImage: a.icon).resizable().frame(width: 20, height: 20)
@@ -182,74 +151,24 @@ struct ContentView: View {
             Text(app.names.first ?? app.bundleID)
             Spacer()
             Button { editingIndex = index } label: { Image(systemName: "pencil") }.buttonStyle(.borderless)
-            Button(role: .destructive) { config.apps.removeAll { $0.id == app.id } } label: {
+            Button(role: .destructive) { model.config.apps.removeAll { $0.id == app.id } } label: {
                 Image(systemName: "trash")
             }.buttonStyle(.borderless)
         }
         .padding(.horizontal, 12).padding(.vertical, 8)
     }
 
-    // MARK: Advanced
-
-    private var advancedSection: some View {
-        DisclosureGroup("Advanced", isExpanded: $showAdvanced) {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Navigation").font(.caption).foregroundColor(.secondary)
-                Toggle("Visual selection mode", isOn: $config.features.visual.enabled)
-                Toggle("Global cursor movement (⌥⌘⇧ + h/j/k/l)", isOn: $config.features.cursor.enabled)
-                Divider()
-                Text("Developer").font(.caption).foregroundColor(.secondary)
-                Toggle("Debug logging", isOn: $config.debug)
-                HStack(spacing: 12) {
-                    Button("Reveal config file") {
-                        NSWorkspace.shared.selectFile(ConfigStore.path, inFileViewerRootedAtPath: "")
-                    }
-                    Button("License…") { showLicense = true }
-                    Button("Reset to defaults") { config = .default }
-                }
-            }
-            .padding(.top, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
-    // MARK: Footer
+    // MARK: Footer (verified Apply)
 
     private var footer: some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(license.statusText()).font(.caption)
-                    .foregroundColor(license.isApplyAllowed ? .secondary : .red)
-                Button { NSWorkspace.shared.open(URL(string: "https://github.com/arturgrochau")!) } label: {
-                    Text("Made by Artur Grochau").font(.caption2)
-                }.buttonStyle(.link)
-            }
+        HStack(alignment: .center, spacing: 12) {
+            ApplyStatusView(outcome: model.outcome) { model.setupEngine() }
             Spacer()
-            if !status.isEmpty {
-                Text(status).font(.caption).foregroundColor(statusIsError ? .red : .secondary)
-                    .lineLimit(1).truncationMode(.middle)
-            }
-            if !license.isApplyAllowed { Button("Enter License") { showLicense = true } }
-            Button { apply() } label: { Text("Apply & Reload").bold() }
+            Button { model.apply() } label: { Text("Apply & Reload").bold() }
                 .keyboardShortcut("s", modifiers: .command)
-                .disabled(!canApply)
-                .help(license.isApplyAllowed ? "" : "Trial expired — enter a license to Apply")
+                .disabled(!conflicts.isEmpty)
         }
         .padding(.horizontal, 20).padding(.vertical, 12)
-    }
-
-    private func apply() {
-        guard canApply else { return }
-        do {
-            let curated = config.curatedForEssentials()
-            try ConfigStore.apply(curated)
-            config = curated
-            status = "Applied & reloaded."
-            statusIsError = false
-        } catch {
-            status = "Failed: \(error.localizedDescription)"
-            statusIsError = true
-        }
     }
 
     private var conflictBanner: some View {
@@ -264,16 +183,30 @@ struct ContentView: View {
         .background(Color.orange.opacity(0.12)).cornerRadius(8)
     }
 
-    // MARK: Bindings
+    // MARK: trigger labels
 
-    private var triggerPreset: Binding<TriggerPreset> {
-        Binding(get: { TriggerPreset.from(config.features.nav.activator) },
-                set: { config.features.nav.activator = $0.activator(existing: config.features.nav.activator) })
+    private func modSymbol(_ m: String) -> String {
+        if m.contains("Alt") || m == "alt" { return m.hasPrefix("right") ? "Right ⌥" : (m.hasPrefix("left") ? "Left ⌥" : "⌥") }
+        if m.contains("Cmd") || m == "cmd" { return m.hasPrefix("right") ? "Right ⌘" : (m.hasPrefix("left") ? "Left ⌘" : "⌘") }
+        if m.contains("Ctrl") || m == "ctrl" { return "⌃" }
+        if m.contains("Shift") || m == "shift" { return "⇧" }
+        return m
     }
-
-    private var jumpEnabled: Binding<Bool> {
-        Binding(get: { !config.features.monitors.jumpKeys.isEmpty },
-                set: { config.features.monitors.jumpKeys = $0 ? ["1", "2", "3"] : [] })
+    private func triggerLabel(_ a: NavActivator) -> String {
+        switch a.kind {
+        case "hotkey", "hyper": return Validation.display(mods: a.hotkey.mods, key: a.hotkey.key)
+        case "tapModifier": return modSymbol(a.modifier)
+        case "doubleTapModifier": return "double-tap \(modSymbol(a.modifier))"
+        case "capsLock": return "Caps Lock"
+        default: return "—"
+        }
+    }
+    private func triggerSentence(_ a: NavActivator) -> String {
+        let l = triggerLabel(a)
+        switch a.kind {
+        case "tapModifier": return "Press \(l) (tap and release) to enter Navigation Mode. Press Esc to leave."
+        default: return "Press \(l) to enter Navigation Mode. Press Esc to leave."
+        }
     }
 }
 
@@ -295,5 +228,62 @@ struct SectionCard<Content: View>: View {
         .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(nsColor: .separatorColor).opacity(0.5)))
+    }
+}
+
+/// Engine-health banner: prompts setup until the engine is actually active.
+struct EngineBanner: View {
+    @ObservedObject var model: AppModel
+    var body: some View {
+        switch model.health {
+        case .active:
+            Label("Engine active in Hammerspoon", systemImage: "checkmark.circle.fill")
+                .foregroundColor(.green).font(.callout)
+        case .installedNotLoaded, .notInstalled:
+            VStack(alignment: .leading, spacing: 6) {
+                banner(color: .orange, icon: "bolt.horizontal.circle.fill",
+                       text: "KeyDeck isn't active yet. Set it up to make your shortcuts work.",
+                       button: "Set up engine") { model.setupEngine() }
+                if let err = EngineInstaller.lastError() {
+                    Text("Last engine error: \(err)").font(.caption).foregroundColor(.red)
+                        .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        case .noHammerspoon:
+            banner(color: .red, icon: "exclamationmark.triangle.fill",
+                   text: "Hammerspoon isn't installed. KeyDeck needs it to run.",
+                   button: "Get Hammerspoon") { NSWorkspace.shared.open(URL(string: "https://www.hammerspoon.org")!) }
+        }
+    }
+    private func banner(color: Color, icon: String, text: String, button: String, action: @escaping () -> Void) -> some View {
+        HStack {
+            Label(text, systemImage: icon).foregroundColor(color)
+            Spacer()
+            Button(button, action: action)
+        }
+        .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+        .background(color.opacity(0.12)).cornerRadius(8)
+    }
+}
+
+/// The never-silently-fail Apply checklist.
+struct ApplyStatusView: View {
+    let outcome: ApplyOutcome
+    var onSetup: () -> Void
+    var body: some View {
+        switch outcome {
+        case .idle: EmptyView()
+        case .running: HStack(spacing: 6) { ProgressView().controlSize(.small); Text("Applying…").font(.caption) }
+        case .done(let navActive):
+            Text("✓ Saved  ·  ✓ Reloaded  ·  \(navActive ? "✓ Navigation Mode active" : "Nav Mode off")")
+                .font(.caption).foregroundColor(.green).lineLimit(1).truncationMode(.tail)
+        case .needsSetup:
+            HStack(spacing: 8) {
+                Text("Saved, but the engine didn't reload.").font(.caption).foregroundColor(.orange)
+                Button("Set up engine", action: onSetup).controlSize(.small)
+            }
+        case .failed(let msg):
+            Text(msg).font(.caption).foregroundColor(.red).lineLimit(1).truncationMode(.middle)
+        }
     }
 }
