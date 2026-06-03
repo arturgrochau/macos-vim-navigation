@@ -1,0 +1,16 @@
+{
+  "preset": "minimal",
+  "features": {
+    "nav": { "enabled": true },
+    "visual": { "enabled": false },
+    "cursor": { "enabled": false },
+    "monitors": {
+      "enabled": true,
+      "jumpKeys": ["1", "2", "3"],
+      "jumpClickKeys": [],
+      "parkKeys": []
+    },
+    "windows": { "enabled": false }
+  },
+  "apps": []
+}

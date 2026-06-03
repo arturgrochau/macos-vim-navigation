@@ -25,6 +25,18 @@ This config includes:
 
 ---
 
+## ⚙️ Configurable Engine (new)
+
+This config is being refactored into a **config-driven engine** so features can be toggled and
+keys rebound from a GUI (and, soon, a SwiftUI preset editor) instead of hand-editing Lua. With no
+config file present it behaves exactly like this README describes; drop in a JSON preset to change it.
+
+- Engine + install + config docs: [`engine/README.md`](engine/README.md)
+- Ready-made presets (`default` / `developer` / `minimal`): [`config/presets/`](config/presets)
+- Full config contract: [`config/config.schema.json`](config/config.schema.json)
+
+---
+
 ## 📺 Visual Mode Indicators 
 
 When navigation mode is active, you'll see helpful overlays in the bottom-right corner of your screen:

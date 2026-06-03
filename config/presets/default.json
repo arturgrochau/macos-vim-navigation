@@ -1,0 +1,10 @@
+{
+  "preset": "default",
+  "features": {
+    "nav": { "enabled": true },
+    "visual": { "enabled": true },
+    "cursor": { "enabled": false },
+    "monitors": { "enabled": true },
+    "windows": { "enabled": false }
+  }
+}
