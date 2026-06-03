@@ -44,11 +44,14 @@ Hammerspoon auto-loads `~/.hammerspoon/init.lua`, so the engine folder becomes y
 Hammerspoon config directory:
 
 ```bash
-# Back up any existing config first!
-cp -R engine/ ~/.hammerspoon/
-# or, for development, symlink the repo:
-ln -s "$PWD/engine" ~/.hammerspoon
+# Safe installer: backs up any existing ~/.hammerspoon, then installs the engine.
+engine/install.sh                      # defaults
+engine/install.sh --preset developer   # install a preset too
+# It prints the exact command to restore your old config.
 ```
+
+Or manually (back up first!): `cp -R engine/ ~/.hammerspoon/`, or symlink for dev:
+`ln -s "$PWD/engine" ~/.hammerspoon`.
 
 Then open Hammerspoon and **Reload Config** (or press `⌥R`). A "KeyDeck loaded" alert confirms
 which preset is active. No `keydeck-config.json` = defaults.
@@ -112,14 +115,11 @@ lives in `modules/monitors.lua`.
 
 There is no headless Hammerspoon test runner, so verification is two-tiered:
 
-1. **Static / load test** (no Hammerspoon needed):
+1. **Offline suite** (no Hammerspoon needed) — syntax, JSON, load test, and a
+   behavior test that invokes the bound callbacks and asserts their effects
+   (movement math, scroll deltas, clicks, app launch, monitor jumps, ⌥-tap guard):
    ```bash
-   # syntax-check every Lua file
-   for f in engine/init.lua engine/*.lua engine/lib/*.lua engine/modules/*.lua; do
-     luajit -e "assert(loadfile('$f'))" && echo "ok $f"
-   done
-   # full load test against a mock hs API (exercises every module's setup)
-   luajit engine/test/load_harness.lua "$PWD/engine"
+   engine/test/run.sh
    ```
 2. **Live test:** install per above, Reload Config, and confirm the "KeyDeck loaded" alert plus
    the behaviors for your preset (NAV MODE entry, hjkl, screen switching, app shortcuts).
