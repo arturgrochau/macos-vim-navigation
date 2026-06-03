@@ -27,8 +27,12 @@ shortcuts is never serialized.
 ```bash
 cd app
 swift build           # compile (incl. the SwiftUI app)
-swift run KeyDeck      # launch the editor
+swift run KeyDeck      # launch via SwiftPM (dev)
 test/run.sh           # full verification (build + core-logic checks [+ swift test if Xcode])
+
+# Build a proper, double-clickable macOS app bundle (dock icon, window, menu):
+bundle.sh             # → app/KeyDeck.app  (release, ad-hoc signed)
+open KeyDeck.app
 ```
 
 Requires the macOS SDK (Command Line Tools or Xcode). No external packages.
