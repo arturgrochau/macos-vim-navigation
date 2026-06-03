@@ -29,6 +29,7 @@ private struct AppList: View {
 
 /// Add a launcher: pick an installed app, then press the key to launch it.
 struct AddAppSheet: View {
+    var conflictName: (String, [String]) -> String?
     var onAdd: (AppShortcut) -> Void
     @Environment(\.dismiss) private var dismiss
 
@@ -36,6 +37,7 @@ struct AddAppSheet: View {
     @State private var search = ""
     @State private var selected: InstalledApp?
     @State private var key = KeyBinding()
+    @State private var pendingConflict: String?
 
     private var filtered: [InstalledApp] {
         search.isEmpty ? apps : apps.filter { $0.name.localizedCaseInsensitiveContains(search) }
@@ -68,26 +70,39 @@ struct AddAppSheet: View {
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
-                Button("Add") {
-                    if let app = selected {
-                        onAdd(AppShortcut(key: key.key, mods: key.mods, bundleID: app.id,
-                                          names: [app.name], clickTarget: "center", exitNav: true))
-                    }
-                    dismiss()
-                }
-                .keyboardShortcut(.defaultAction)
-                .disabled(selected == nil || key.key.isEmpty)
+                Button("Add") { attemptAdd() }
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(selected == nil || key.key.isEmpty)
             }
         }
         .padding(18)
         .frame(width: 440)
         .onAppear { apps = AppCatalog.installed() }
+        .alert("Key already in use", isPresented: Binding(get: { pendingConflict != nil }, set: { if !$0 { pendingConflict = nil } })) {
+            Button("Replace", role: .destructive) { commit() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("\(pendingConflict ?? "Another launcher") already uses \(Validation.display(mods: key.mods, key: key.key)).")
+        }
+    }
+
+    private func attemptAdd() {
+        guard selected != nil, !key.key.isEmpty else { return }
+        if let other = conflictName(key.key, key.mods) { pendingConflict = other } else { commit() }
+    }
+
+    private func commit() {
+        guard let app = selected else { return }
+        onAdd(AppShortcut(key: key.key, mods: key.mods, bundleID: app.id,
+                          names: [app.name], clickTarget: "center", exitNav: true))
+        dismiss()
     }
 }
 
 /// Edit an existing launcher: key, app, and (advanced) position / behavior / bundle ID.
 struct AppEditorSheet: View {
     @Binding var app: AppShortcut
+    var conflictName: (String, [String]) -> String?
     @Environment(\.dismiss) private var dismiss
 
     @State private var apps: [InstalledApp] = []
@@ -117,6 +132,10 @@ struct AppEditorSheet: View {
                 ShortcutRecorder(binding: keyBinding, captureModifiers: false).frame(width: 110, height: 26)
                 Text("(press while in Navigation Mode)").font(.caption).foregroundColor(.secondary)
             }
+            if let other = conflictName(app.key, app.mods), !app.key.isEmpty {
+                Text("⚠ \(other) also uses \(Validation.display(mods: app.mods, key: app.key))")
+                    .font(.caption).foregroundColor(.orange)
+            }
 
             DisclosureGroup("Advanced", isExpanded: $showAdvanced) {
                 VStack(alignment: .leading, spacing: 8) {
@@ -137,10 +156,7 @@ struct AppEditorSheet: View {
                 .padding(.top, 6)
             }
 
-            HStack {
-                Spacer()
-                Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
-            }
+            HStack { Spacer(); Button("Done") { dismiss() }.keyboardShortcut(.defaultAction) }
         }
         .padding(18)
         .frame(width: 420)

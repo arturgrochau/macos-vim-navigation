@@ -22,6 +22,8 @@ function M.setup(ctx)
   function modal:exited()
     ctx.navActive = false
     overlay.hideNormal()
+    overlay.hideHelp()
+    ctx.helpVisible = false
     if ctx.mode == "visual" then
       local pos = mouse.absolutePosition()
       if ctx.dragging then
@@ -163,33 +165,46 @@ function M.setup(ctx)
     if ctx.navActive then modal:exit() else modal:enter() end
   end
 
-  -- Activation. `activator` is the primary path; fall back to legacy enterKeys.
-  local nav = ctx.cfg.features.nav
-  local activator = nav.activator
-  if activator and activator.kind == "hotkey" then
-    local hk = activator.hotkey or {}
-    hs.hotkey.bind(hk.mods or {}, hk.key or "f12", toggle)
-  elseif activator and (activator.kind == "rightCmd" or activator.kind == "rightAlt") then
-    -- Tap a right-hand modifier to toggle. Guarded like the option-tap so it never
-    -- fires when the modifier is part of a real combo (e.g. Right ⌘ + C).
-    local targetKeyCode = activator.kind == "rightCmd" and 54 or 61  -- rightcmd / rightalt
-    local flagField = activator.kind == "rightCmd" and "cmd" or "alt"
+  -- Modifier name → its keycodes (left/right) and the flag it sets.
+  local MODIFIERS = {
+    alt       = { codes = { 58, 61 }, flag = "alt" },
+    leftAlt   = { codes = { 58 },     flag = "alt" },
+    rightAlt  = { codes = { 61 },     flag = "alt" },
+    cmd       = { codes = { 54, 55 }, flag = "cmd" },
+    leftCmd   = { codes = { 55 },     flag = "cmd" },
+    rightCmd  = { codes = { 54 },     flag = "cmd" },
+    ctrl      = { codes = { 59, 62 }, flag = "ctrl" },
+    leftCtrl  = { codes = { 59 },     flag = "ctrl" },
+    rightCtrl = { codes = { 62 },     flag = "ctrl" },
+    shift     = { codes = { 56, 60 }, flag = "shift" },
+  }
+  local function hasCode(codes, kc)
+    for _, c in ipairs(codes) do if c == kc then return true end end
+    return false
+  end
+  local function otherFlagSet(f, flag)
+    for _, k in ipairs({ "cmd", "alt", "ctrl", "shift" }) do
+      if k ~= flag and f[k] then return true end
+    end
+    return false
+  end
+
+  -- Watch a modifier for a CLEAN tap (pressed alone, no other key) and call
+  -- handlers.onPress / handlers.onRelease accordingly. This is the "activate on
+  -- release without stealing combos" behavior.
+  local function watchModifierTap(modName, handlers)
+    local m = MODIFIERS[modName] or MODIFIERS.rightAlt
     local held, otherKey = false, false
     ctx.navActivatorFlags = eventtap.new({ eventtap.event.types.flagsChanged }, function(e)
-      local f = e:getFlags()
-      local kc = e:getKeyCode()
-      if kc == targetKeyCode and f[flagField] then
-        -- Press of the target modifier. Only a candidate if it's the ONLY modifier down.
-        local lone = f[flagField] and not (f.cmd and f.alt) and not f.ctrl and not f.shift
-          and not (flagField == "cmd" and f.alt) and not (flagField == "alt" and f.cmd)
-        held = lone
+      local f, kc = e:getFlags(), e:getKeyCode()
+      if hasCode(m.codes, kc) and f[m.flag] then
+        held = not otherFlagSet(f, m.flag)
         otherKey = false
-      elseif kc == targetKeyCode and not f[flagField] then
-        -- Release of the target modifier.
-        if held and not otherKey then toggle() end
+        if held and handlers.onPress then handlers.onPress() end
+      elseif hasCode(m.codes, kc) and not f[m.flag] then
+        if held and not otherKey and handlers.onRelease then handlers.onRelease() end
         held = false
       elseif held then
-        -- Another modifier changed while holding → it's a combo, not a tap.
         otherKey = true
       end
       return false
@@ -200,6 +215,28 @@ function M.setup(ctx)
       return false
     end)
     ctx.navActivatorKeys:start()
+  end
+
+  -- Activation dispatch.
+  local nav = ctx.cfg.features.nav
+  local act = nav.activator
+  if act and act.kind == "tapModifier" then
+    if act.onRelease == false then
+      watchModifierTap(act.modifier or "rightAlt", { onPress = toggle })
+    else
+      watchModifierTap(act.modifier or "rightAlt", { onRelease = toggle })
+    end
+  elseif act and act.kind == "doubleTapModifier" then
+    local last = 0
+    watchModifierTap(act.modifier or "rightAlt", { onRelease = function()
+      local now = timer.secondsSinceEpoch()
+      if (now - last) < 0.35 then last = 0; toggle() else last = now end
+    end })
+  elseif act and (act.kind == "hotkey" or act.kind == "hyper") then
+    local hk = act.hotkey or {}
+    hs.hotkey.bind(hk.mods or {}, hk.key or "f12", toggle)
+  elseif act and act.kind == "capsLock" then
+    hs.hotkey.bind({}, "f18", toggle) -- the GUI remaps Caps Lock → F18
   else
     for _, b in ipairs(nav.enterKeys or {}) do
       hs.hotkey.bind(b.mods or {}, b.key, function() modal:enter() end)
@@ -210,6 +247,39 @@ function M.setup(ctx)
   for _, b in ipairs(nav.exitKeys or {}) do
     modal:bind(b.mods or {}, b.key, function() modal:exit() end)
   end
+
+  -- In-mode help overlay: '?' (shift+/) lists every binding, built from config.
+  local function buildHelp()
+    local sections = {
+      { title = "Navigation", items = {
+        { "h j k l", "Move pointer" }, { "d / u", "Scroll down / up" },
+        { "gg / G", "Top / bottom" }, { "v", "Select" }, { "y / p", "Copy / paste" },
+        { "Esc", "Leave Navigation Mode" },
+      } },
+    }
+    local launchers = {}
+    for _, a in ipairs(ctx.cfg.apps or {}) do
+      local label = (a.mods and #a.mods > 0 and "⇧" or "") .. (a.key or ""):upper()
+      table.insert(launchers, { label, (a.names and a.names[1]) or a.bundleID or "App" })
+    end
+    if #launchers > 0 then table.insert(sections, { title = "App Launchers", items = launchers }) end
+    local mon = ctx.cfg.features.monitors
+    if mon and mon.enabled then
+      local disp = {}
+      if mon.nextDisplay and mon.nextDisplay.key then table.insert(disp, { "Next", "Next display" }) end
+      if mon.prevDisplay and mon.prevDisplay.key then table.insert(disp, { "Prev", "Previous display" }) end
+      if mon.jumpKeys and #mon.jumpKeys > 0 then table.insert(disp, { "⌥1 ⌥2 ⌥3", "Jump to display" }) end
+      if #disp > 0 then table.insert(sections, { title = "Displays", items = disp }) end
+    end
+    return sections
+  end
+  modal:bind({ "shift" }, "/", function()
+    if ctx.helpVisible then
+      overlay.hideHelp(); ctx.helpVisible = false
+    else
+      overlay.showHelp(buildHelp()); ctx.helpVisible = true
+    end
+  end)
 end
 
 return M

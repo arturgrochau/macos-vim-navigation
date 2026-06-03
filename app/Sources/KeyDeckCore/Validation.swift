@@ -38,8 +38,11 @@ public enum Validation {
 
         let f = config.features
         // Global hotkeys.
-        if f.nav.enabled, f.nav.activator.kind == "hotkey" {
-            addGlobal(f.nav.activator.hotkey.mods, f.nav.activator.hotkey.key)
+        if f.nav.enabled {
+            let a = f.nav.activator
+            if a.kind == "hotkey" || a.kind == "hyper" { addGlobal(a.hotkey.mods, a.hotkey.key) }
+            else if a.kind == "capsLock" { addGlobal([], "f18") }
+            // tapModifier / doubleTapModifier are modifier taps — no normal-key conflict.
         }
         if f.monitors.enabled {
             for k in f.monitors.jumpKeys { addGlobal(["alt"], k) }

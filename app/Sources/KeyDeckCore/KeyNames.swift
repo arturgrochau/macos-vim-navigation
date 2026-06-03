@@ -18,6 +18,7 @@ public enum KeyNames {
         115: "home", 116: "pageup", 119: "end", 121: "pagedown",
         122: "f1", 120: "f2", 99: "f3", 118: "f4", 96: "f5", 97: "f6", 98: "f7",
         100: "f8", 101: "f9", 109: "f10", 103: "f11", 111: "f12",
+        105: "f13", 107: "f14", 113: "f15", 106: "f16", 64: "f17", 79: "f18", 80: "f19", 90: "f20",
     ]
 
     /// Resolve a key name from a keyCode, falling back to the typed character.

@@ -81,19 +81,31 @@ extension Tuning {
     }
 }
 
-/// How NAV MODE is toggled. kind is "rightCmd" | "rightAlt" | "hotkey".
+/// How NAV MODE is toggled.
+/// kind: "tapModifier" | "doubleTapModifier" | "hotkey" | "hyper" | "capsLock"
+/// modifier (tap/double-tap): "alt"|"cmd"|"ctrl"|"shift" (either side) or "rightAlt"|"leftAlt"|…
+/// onRelease (tapModifier): fire only on a clean release with no combo.
 public struct NavActivator: Codable, Equatable {
     public var kind: String
+    public var modifier: String
+    public var onRelease: Bool
     public var hotkey: KeyBinding
-    public init(kind: String, hotkey: KeyBinding) { self.kind = kind; self.hotkey = hotkey }
-    public static let `default` = NavActivator(kind: "rightCmd", hotkey: KeyBinding(mods: [], key: "f12"))
+    public init(kind: String, modifier: String = "rightAlt", onRelease: Bool = true,
+                hotkey: KeyBinding = KeyBinding(mods: ["ctrl"], key: "=")) {
+        self.kind = kind; self.modifier = modifier; self.onRelease = onRelease; self.hotkey = hotkey
+    }
+    public static let `default` = NavActivator(
+        kind: "tapModifier", modifier: "rightAlt", onRelease: true,
+        hotkey: KeyBinding(mods: ["ctrl"], key: "="))
 }
 extension NavActivator {
-    enum CodingKeys: String, CodingKey { case kind, hotkey }
+    enum CodingKeys: String, CodingKey { case kind, modifier, onRelease, hotkey }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = NavActivator.default
         kind = c.get(.kind, default: d.kind)
+        modifier = c.get(.modifier, default: d.modifier)
+        onRelease = c.get(.onRelease, default: d.onRelease)
         hotkey = c.get(.hotkey, default: d.hotkey)
     }
 }
@@ -183,7 +195,7 @@ public struct MonitorsFeature: Codable, Equatable {
     public var prevDisplay: KeyBinding
     public static let `default` = MonitorsFeature(
         enabled: true, skipVirtualDisplayPattern: "16:9|HiDPI|Virtual",
-        optionTapCycle: true, optionScroll: true,
+        optionTapCycle: false, optionScroll: true,
         jumpKeys: ["1", "2", "3"], jumpClickKeys: ["0", "9", "8"], parkKeys: ["4", "5", "6"],
         parkPadding: 30,
         focusLeft: KeyBinding(mods: ["cmd", "shift"], key: "-"),
@@ -311,12 +323,13 @@ extension AppShortcut {
 
 public struct Config: Codable, Equatable {
     public var preset: String
+    public var debug: Bool
     public var tuning: Tuning
     public var features: Features
     public var apps: [AppShortcut]
 
     public static let `default` = Config(
-        preset: "default", tuning: .default, features: .default,
+        preset: "default", debug: false, tuning: .default, features: .default,
         apps: [
             AppShortcut(key: "c", mods: [], bundleID: "com.openai.chat", names: ["ChatGPT"], clickTarget: "bottom", exitNav: true),
             AppShortcut(key: "c", mods: ["shift"], bundleID: "com.microsoft.VSCode", names: ["Visual Studio Code", "Code"], clickTarget: "center", exitNav: true),
@@ -326,11 +339,12 @@ public struct Config: Codable, Equatable {
         ])
 }
 extension Config {
-    enum CodingKeys: String, CodingKey { case preset, tuning, features, apps }
+    enum CodingKeys: String, CodingKey { case preset, debug, tuning, features, apps }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = Config.default
         preset = c.get(.preset, default: d.preset)
+        debug = c.get(.debug, default: d.debug)
         tuning = c.get(.tuning, default: d.tuning)
         features = c.get(.features, default: d.features)
         apps = c.get(.apps, default: d.apps)

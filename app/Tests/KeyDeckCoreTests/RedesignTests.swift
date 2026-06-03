@@ -6,15 +6,18 @@ import XCTest
 /// these so they also run under Command Line Tools.)
 final class RedesignTests: XCTestCase {
 
-    func testDefaultActivatorIsRightCmd() {
-        XCTAssertEqual(Config.default.features.nav.activator.kind, "rightCmd")
+    func testDefaultActivatorIsTapRightOption() {
+        XCTAssertEqual(Config.default.features.nav.activator.kind, "tapModifier")
+        XCTAssertEqual(Config.default.features.nav.activator.modifier, "rightAlt")
+        XCTAssertTrue(Config.default.features.nav.activator.onRelease)
     }
 
     func testActivatorPartialDecode() throws {
-        let json = #"{ "features": { "nav": { "activator": { "kind": "rightAlt" } } } }"#
+        let json = #"{ "features": { "nav": { "activator": { "kind": "doubleTapModifier" } } } }"#
         let c = try ConfigStore.decode(Data(json.utf8))
-        XCTAssertEqual(c.features.nav.activator.kind, "rightAlt")
-        XCTAssertEqual(c.features.nav.activator.hotkey.key, "f12")  // default filled
+        XCTAssertEqual(c.features.nav.activator.kind, "doubleTapModifier")
+        XCTAssertEqual(c.features.nav.activator.hotkey.key, "=")          // default filled
+        XCTAssertEqual(c.features.nav.activator.modifier, "rightAlt")     // default filled
     }
 
     func testNextPrevDisplayDefaults() {
@@ -37,7 +40,7 @@ final class RedesignTests: XCTestCase {
         c.features.cursor.enabled = true
         c.features.windows.enabled = true
         let cur = c.curatedForEssentials()
-        XCTAssertFalse(cur.features.cursor.enabled)
+        XCTAssertTrue(cur.features.cursor.enabled)   // Advanced-controlled, preserved
         XCTAssertFalse(cur.features.windows.enabled)
         XCTAssertFalse(cur.features.monitors.optionScroll)
         XCTAssertTrue(cur.features.monitors.jumpClickKeys.isEmpty)
@@ -45,5 +48,45 @@ final class RedesignTests: XCTestCase {
         XCTAssertTrue(cur.features.monitors.focusLeft.key.isEmpty)
         XCTAssertEqual(cur.features.monitors.jumpKeys, ["1", "2", "3"])     // preserved
         XCTAssertEqual(cur.features.monitors.nextDisplay.key, "right")      // preserved
+    }
+
+    func testActivatorDefaults() {
+        let a = Config.default.features.nav.activator
+        XCTAssertEqual(a.kind, "tapModifier")
+        XCTAssertEqual(a.modifier, "rightAlt")
+        XCTAssertTrue(a.onRelease)
+        XCTAssertFalse(Config.default.features.monitors.optionTapCycle)
+        XCTAssertEqual(KeyNames.keyName(forKeyCode: 79), "f18")
+        XCTAssertFalse(Config.default.debug)
+    }
+
+    func testSuggestedLaunchers() {
+        let installed = [("com.openai.chat", "ChatGPT"), ("company.thebrowser.Browser", "Arc"), ("com.apple.Terminal", "Terminal")]
+        let s = SuggestedLaunchers.suggestions(installed: installed)
+        XCTAssertTrue(s.contains { $0.key == "c" && $0.bundleID == "com.openai.chat" })
+        XCTAssertTrue(s.contains { $0.key == "b" && $0.bundleID == "company.thebrowser.Browser" })
+        XCTAssertTrue(s.contains { $0.key == "t" })
+        let keys = SuggestedLaunchers.catalog.map { $0.key }
+        XCTAssertEqual(Set(keys).count, keys.count)
+    }
+
+    func testConflictHelper() {
+        let c = Config.default
+        XCTAssertNotNil(c.appLauncherName(forKey: "c", mods: [], excludingID: nil))
+        XCTAssertNil(c.appLauncherName(forKey: "z", mods: [], excludingID: nil))
+    }
+
+    func testLicenseStateTrialAndLicensed() {
+        let now = Date(timeIntervalSince1970: 1_000_000)
+        let fresh = LicenseState.startingTrial(now: now)
+        XCTAssertEqual(fresh.daysLeftInTrial(now: now), 14)
+        XCTAssertTrue(fresh.isApplyAllowed(now: now))
+        let later = now.addingTimeInterval(15 * 86_400)
+        XCTAssertFalse(fresh.trialActive(now: later))
+        XCTAssertFalse(fresh.isApplyAllowed(now: later))
+        var licensed = fresh
+        licensed.licenseKey = "KEY"; licensed.verifiedAt = now
+        XCTAssertTrue(licensed.isApplyAllowed(now: later))
+        XCTAssertTrue(licensed.isLicensed)
     }
 }

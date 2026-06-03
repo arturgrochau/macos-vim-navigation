@@ -141,6 +141,10 @@ hs = {
 ----------------------------------------------------------------------
 local defaults = dofile(ENGINE .. "/defaults.lua")
 defaults.features.cursor.enabled = true
+-- Exercise the option-tap display cycle (off by default) and pin the nav activator to a
+-- Right-⌘ tap so it doesn't overlap the Option-based cycle in these tests.
+defaults.features.monitors.optionTapCycle = true
+defaults.features.nav.activator = { kind = "tapModifier", modifier = "rightCmd", onRelease = true, hotkey = { mods = { "ctrl" }, key = "=" } }
 package.loaded["config"] = { load = function() return defaults end, path = "x" }
 local ok, err = pcall(dofile, ENGINE .. "/init.lua")
 if not ok then print("FAIL load: " .. tostring(err)); os.exit(1) end
@@ -259,6 +263,7 @@ resetRec()
 flags({ cmd = true }, 54); keydown({ cmd = true }, 8, "c"); flags({}, 54)
 check("Right-⌘+C does not toggle", rec.modalEnters == 0 and rec.modalExits == 0,
   ("enters=%d exits=%d"):format(rec.modalEnters, rec.modalExits))
+check("help overlay '?' is bound", modalBinds[modKey({ "shift" }, "/")] ~= nil)
 
 print(("\n%d passed, %d failed"):format(pass, fail))
 os.exit(fail == 0 and 0 or 1)

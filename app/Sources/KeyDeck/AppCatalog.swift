@@ -40,4 +40,9 @@ enum AppCatalog {
         }
         return out.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
+
+    /// (bundleID, name) pairs for KeyDeckCore.SuggestedLaunchers.
+    static func installedTuples() -> [(bundleID: String, name: String)] {
+        installed().map { ($0.id, $0.name) }
+    }
 }

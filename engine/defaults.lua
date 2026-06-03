@@ -7,6 +7,8 @@
 -- over this table, so a user config only needs to specify the keys it overrides.
 return {
   preset = "default",
+  -- When true, the engine emits extra hs.alert diagnostics (toggled from the GUI's Advanced).
+  debug = false,
 
   -- Numeric tunables shared across modules.
   tuning = {
@@ -35,10 +37,19 @@ return {
   features = {
     nav = {
       enabled = true,
-      -- Primary way to toggle NAV MODE. kind is "rightCmd" | "rightAlt" | "hotkey".
-      -- rightCmd/rightAlt = tap that modifier (clean tap, guarded like the option-tap);
-      -- hotkey = bind activator.hotkey as a normal toggle shortcut.
-      activator = { kind = "rightCmd", hotkey = { mods = {}, key = "f12" } },
+      -- Primary way to toggle NAV MODE.
+      --   kind = "tapModifier"       → tap `modifier` alone (guarded; see onRelease)
+      --        | "doubleTapModifier" → tap `modifier` twice quickly
+      --        | "hotkey" | "hyper"  → bind `hotkey` as a toggle shortcut
+      --        | "capsLock"          → bind F18 (the GUI remaps Caps Lock → F18)
+      --   modifier = alt|cmd|ctrl|shift (either side) or rightAlt|leftAlt|rightCmd|… (specific)
+      --   onRelease = true → fire only when the tapped modifier is released without a combo.
+      activator = {
+        kind = "tapModifier",
+        modifier = "rightAlt",
+        onRelease = true,
+        hotkey = { mods = { "ctrl" }, key = "=" },
+      },
       -- Legacy fallback entry keys, used only when `activator` is absent.
       enterKeys = {
         { mods = { "ctrl", "alt", "cmd" }, key = "space" },
@@ -65,7 +76,9 @@ return {
       enabled = true,
       -- Screens whose name matches this Lua pattern are treated as virtual and skipped.
       skipVirtualDisplayPattern = "16:9|HiDPI|Virtual",
-      optionTapCycle = true,   -- bare Option tap cycles to next physical screen
+      -- Off by default: the recommended NAV-MODE trigger is a Right-Option tap, so a
+      -- bare Option-tap display cycle would conflict. Use nextDisplay/prevDisplay instead.
+      optionTapCycle = false,  -- bare Option tap cycles to next physical screen
       optionScroll   = true,   -- Option+D / Option+U scroll half-page globally
       -- Per-screen jump bindings (Option + key). Index = physical screen left-to-right.
       jumpKeys      = { "1", "2", "3" }, -- center mouse on monitor N

@@ -3,13 +3,19 @@ import KeyDeckCore
 
 struct ContentView: View {
     @State private var config = ConfigStore.load()
-    @State private var status = ConfigStore.fileExists ? "Loaded your settings." : "Using defaults — Apply to save."
+    @State private var status = ""
     @State private var statusIsError = false
     @State private var appsByID: [String: InstalledApp] = [:]
     @State private var showAdd = false
     @State private var editingIndex: Int?
+    @State private var showAdvanced = false
+    @State private var showOnboarding = !ConfigStore.fileExists
+    @State private var showLicense = false
+    @State private var capsEnabled = CapsLockSetup.isEnabled
+    @StateObject private var license = LicenseManager()
 
     private var conflicts: [BindingConflict] { Validation.conflicts(in: config) }
+    private var canApply: Bool { conflicts.isEmpty && license.isApplyAllowed }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -21,6 +27,7 @@ struct ContentView: View {
                     navSection
                     displaySection
                     appsSection
+                    advancedSection
                 }
                 .padding(20)
             }
@@ -30,14 +37,31 @@ struct ContentView: View {
         .onAppear {
             appsByID = Dictionary(AppCatalog.installed().map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         }
+        .task { await license.revalidateIfStale() }
+        .sheet(isPresented: $showOnboarding) {
+            OnboardingView { chosen in
+                if !chosen.isEmpty { config.apps = chosen }
+                try? ConfigStore.save(config.curatedForEssentials())
+                showOnboarding = false
+            }
+        }
         .sheet(isPresented: $showAdd) {
-            AddAppSheet { config.apps.append($0) }
+            AddAppSheet(
+                conflictName: { key, mods in config.appLauncherName(forKey: key, mods: mods, excludingID: nil) },
+                onAdd: { shortcut in
+                    config.apps.removeAll { $0.key.lowercased() == shortcut.key.lowercased() && Set($0.mods) == Set(shortcut.mods) }
+                    config.apps.append(shortcut)
+                })
         }
         .sheet(isPresented: Binding(get: { editingIndex != nil }, set: { if !$0 { editingIndex = nil } })) {
             if let i = editingIndex, config.apps.indices.contains(i) {
-                AppEditorSheet(app: $config.apps[i])
+                AppEditorSheet(app: $config.apps[i],
+                               conflictName: { key, mods in
+                                   config.appLauncherName(forKey: key, mods: mods, excludingID: config.apps[i].id)
+                               })
             }
         }
+        .sheet(isPresented: $showLicense) { LicenseSheet(license: license) }
     }
 
     // MARK: Header
@@ -45,7 +69,7 @@ struct ContentView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("KeyDeck").font(.title2).bold()
-            Text("Tap a key to enter Navigation Mode, then use your keyboard to move between displays and launch apps. Launching an app returns you to normal typing.")
+            Text("Press a trigger key to enter Navigation Mode. While active, use keyboard shortcuts to switch displays and launch apps. Press Esc to leave.")
                 .font(.callout).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -57,21 +81,41 @@ struct ContentView: View {
     private var navSection: some View {
         SectionCard(title: "Navigation Mode", isOn: $config.features.nav.enabled) {
             HStack {
-                Text("Enter with").frame(width: 90, alignment: .leading)
-                Picker("", selection: activationKind) {
-                    Text("Right ⌘").tag("rightCmd")
-                    Text("Right ⌥").tag("rightAlt")
-                    Text("F12").tag("f12")
-                    Text("Custom…").tag("custom")
-                }.labelsHidden().frame(width: 160)
-                if activationKind.wrappedValue == "custom" {
-                    ShortcutRecorder(binding: $config.features.nav.activator.hotkey).frame(width: 120, height: 26)
-                }
-                Spacer()
+                Text("Trigger").frame(width: 80, alignment: .leading)
+                Picker("", selection: triggerPreset) {
+                    ForEach(TriggerPreset.allCases) { Text($0.label).tag($0) }
+                }.labelsHidden().frame(width: 250)
             }
-            Text(activationDescription).font(.callout).foregroundColor(.secondary)
-            Text("In Navigation Mode: h / j / k / l move the pointer, d / u scroll, and your app keys (below) launch apps. Press Esc to leave.")
+            let kind = config.features.nav.activator.kind
+            if kind == "tapModifier" {
+                Toggle("Activate on release (ignored when used in a shortcut)",
+                       isOn: $config.features.nav.activator.onRelease)
+            }
+            if triggerPreset.wrappedValue == .custom || kind == "hyper" {
+                HStack {
+                    Text("Shortcut").frame(width: 80, alignment: .leading)
+                    ShortcutRecorder(binding: $config.features.nav.activator.hotkey).frame(width: 130, height: 26)
+                }
+            }
+            if kind == "capsLock" { capsLockRow }
+            Text(triggerPreset.wrappedValue.explanation(config.features.nav.activator))
+                .font(.callout).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
+            Text("In Navigation Mode: h / j / k / l move the pointer, d / u scroll, your app keys launch apps. Press ? for help, Esc to leave.")
                 .font(.caption).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var capsLockRow: some View {
+        HStack(spacing: 10) {
+            Text("Caps Lock").frame(width: 80, alignment: .leading)
+            if capsEnabled {
+                Label("Set up", systemImage: "checkmark.circle.fill").foregroundColor(.green)
+                Button("Remove") { CapsLockSetup.disable(); capsEnabled = false }
+            } else {
+                Button("Set up Caps Lock") { capsEnabled = CapsLockSetup.enable() }
+                Text("Remaps Caps Lock → F18 (reversible).").font(.caption).foregroundColor(.secondary)
+            }
+            Spacer()
         }
     }
 
@@ -79,7 +123,6 @@ struct ContentView: View {
 
     private var displaySection: some View {
         SectionCard(title: "Display Switching", isOn: $config.features.monitors.enabled) {
-            Toggle("Tap ⌥ to jump to the next display", isOn: $config.features.monitors.optionTapCycle)
             HStack {
                 Text("Next display").frame(width: 130, alignment: .leading)
                 ShortcutRecorder(binding: $config.features.monitors.nextDisplay).frame(width: 120, height: 26)
@@ -89,6 +132,11 @@ struct ContentView: View {
                 ShortcutRecorder(binding: $config.features.monitors.prevDisplay).frame(width: 120, height: 26)
             }
             Toggle("Jump to a display with ⌥1 / ⌥2 / ⌥3", isOn: jumpEnabled)
+            Toggle("Also tap ⌥ to cycle displays", isOn: $config.features.monitors.optionTapCycle)
+            if config.features.monitors.optionTapCycle && config.features.nav.activator.modifier.contains("Alt") {
+                Text("⚠ This may clash with an Option-based Nav Mode trigger.")
+                    .font(.caption).foregroundColor(.orange)
+            }
         }
     }
 
@@ -103,7 +151,6 @@ struct ContentView: View {
             }
             Text("While in Navigation Mode, press a key to launch an app.")
                 .font(.caption).foregroundColor(.secondary)
-
             if config.apps.isEmpty {
                 Text("No launchers yet. Click “Add App”.").foregroundColor(.secondary).font(.callout).padding(.vertical, 6)
             } else {
@@ -121,8 +168,12 @@ struct ContentView: View {
     }
 
     private func appRow(_ app: AppShortcut, index: Int) -> some View {
-        HStack(spacing: 12) {
-            keyChip(app)
+        HStack(spacing: 10) {
+            Text(app.key.isEmpty ? "—" : Validation.display(mods: app.mods, key: app.key))
+                .font(.system(.body, design: .rounded)).bold().frame(minWidth: 34)
+                .padding(.vertical, 3).padding(.horizontal, 6)
+                .background(Color.accentColor.opacity(0.15)).clipShape(RoundedRectangle(cornerRadius: 5))
+            Text("→").foregroundColor(.secondary)
             if let a = appsByID[app.bundleID] {
                 Image(nsImage: a.icon).resizable().frame(width: 20, height: 20)
             } else {
@@ -138,34 +189,57 @@ struct ContentView: View {
         .padding(.horizontal, 12).padding(.vertical, 8)
     }
 
-    private func keyChip(_ app: AppShortcut) -> some View {
-        Text(app.key.isEmpty ? "—" : Validation.display(mods: app.mods, key: app.key))
-            .font(.system(.body, design: .rounded)).bold()
-            .frame(minWidth: 34)
-            .padding(.vertical, 3).padding(.horizontal, 6)
-            .background(Color.accentColor.opacity(0.15))
-            .clipShape(RoundedRectangle(cornerRadius: 5))
+    // MARK: Advanced
+
+    private var advancedSection: some View {
+        DisclosureGroup("Advanced", isExpanded: $showAdvanced) {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Navigation").font(.caption).foregroundColor(.secondary)
+                Toggle("Visual selection mode", isOn: $config.features.visual.enabled)
+                Toggle("Global cursor movement (⌥⌘⇧ + h/j/k/l)", isOn: $config.features.cursor.enabled)
+                Divider()
+                Text("Developer").font(.caption).foregroundColor(.secondary)
+                Toggle("Debug logging", isOn: $config.debug)
+                HStack(spacing: 12) {
+                    Button("Reveal config file") {
+                        NSWorkspace.shared.selectFile(ConfigStore.path, inFileViewerRootedAtPath: "")
+                    }
+                    Button("License…") { showLicense = true }
+                    Button("Reset to defaults") { config = .default }
+                }
+            }
+            .padding(.top, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 
     // MARK: Footer
 
     private var footer: some View {
-        HStack {
-            Text(status).font(.callout).foregroundColor(statusIsError ? .red : .secondary)
-                .lineLimit(1).truncationMode(.middle)
-            Spacer()
-            Button("Reset to defaults") { config = .default }
-            Button("Reveal config") {
-                NSWorkspace.shared.selectFile(ConfigStore.path, inFileViewerRootedAtPath: "")
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(license.statusText()).font(.caption)
+                    .foregroundColor(license.isApplyAllowed ? .secondary : .red)
+                Button { NSWorkspace.shared.open(URL(string: "https://github.com/arturgrochau")!) } label: {
+                    Text("Made by Artur Grochau").font(.caption2)
+                }.buttonStyle(.link)
             }
+            Spacer()
+            if !status.isEmpty {
+                Text(status).font(.caption).foregroundColor(statusIsError ? .red : .secondary)
+                    .lineLimit(1).truncationMode(.middle)
+            }
+            if !license.isApplyAllowed { Button("Enter License") { showLicense = true } }
             Button { apply() } label: { Text("Apply & Reload").bold() }
                 .keyboardShortcut("s", modifiers: .command)
-                .disabled(!conflicts.isEmpty)
+                .disabled(!canApply)
+                .help(license.isApplyAllowed ? "" : "Trial expired — enter a license to Apply")
         }
         .padding(.horizontal, 20).padding(.vertical, 12)
     }
 
     private func apply() {
+        guard canApply else { return }
         do {
             let curated = config.curatedForEssentials()
             try ConfigStore.apply(curated)
@@ -177,8 +251,6 @@ struct ContentView: View {
             statusIsError = true
         }
     }
-
-    // MARK: Conflict banner
 
     private var conflictBanner: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -192,41 +264,11 @@ struct ContentView: View {
         .background(Color.orange.opacity(0.12)).cornerRadius(8)
     }
 
-    // MARK: Activation helpers
+    // MARK: Bindings
 
-    private var activationKind: Binding<String> {
-        Binding(
-            get: {
-                let a = config.features.nav.activator
-                if a.kind == "rightCmd" { return "rightCmd" }
-                if a.kind == "rightAlt" { return "rightAlt" }
-                if a.hotkey.mods.isEmpty && a.hotkey.key == "f12" { return "f12" }
-                return "custom"
-            },
-            set: { sel in
-                let cur = config.features.nav.activator.hotkey
-                switch sel {
-                case "rightCmd": config.features.nav.activator = NavActivator(kind: "rightCmd", hotkey: cur)
-                case "rightAlt": config.features.nav.activator = NavActivator(kind: "rightAlt", hotkey: cur)
-                case "f12": config.features.nav.activator = NavActivator(kind: "hotkey", hotkey: KeyBinding(mods: [], key: "f12"))
-                default:
-                    var hk = cur
-                    if hk.key.isEmpty || (hk.mods.isEmpty && hk.key == "f12") { hk = KeyBinding(mods: ["ctrl", "alt"], key: "n") }
-                    config.features.nav.activator = NavActivator(kind: "hotkey", hotkey: hk)
-                }
-            })
-    }
-
-    private var activationDescription: String {
-        switch activationKind.wrappedValue {
-        case "rightCmd": return "Tap the right ⌘ key to toggle Navigation Mode (tapping it alone — it still works as ⌘ in shortcuts)."
-        case "rightAlt": return "Tap the right ⌥ key to toggle Navigation Mode."
-        case "f12": return "Press F12 to toggle Navigation Mode."
-        default:
-            let hk = config.features.nav.activator.hotkey
-            return hk.key.isEmpty ? "Click the field to record a shortcut."
-                : "Press \(Validation.display(mods: hk.mods, key: hk.key)) to toggle Navigation Mode."
-        }
+    private var triggerPreset: Binding<TriggerPreset> {
+        Binding(get: { TriggerPreset.from(config.features.nav.activator) },
+                set: { config.features.nav.activator = $0.activator(existing: config.features.nav.activator) })
     }
 
     private var jumpEnabled: Binding<Bool> {
@@ -243,11 +285,9 @@ struct SectionCard<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Toggle(isOn: $isOn) { Text(title).font(.headline) }
-                .toggleStyle(.switch)
+            Toggle(isOn: $isOn) { Text(title).font(.headline) }.toggleStyle(.switch)
             if isOn {
-                VStack(alignment: .leading, spacing: 8) { content() }
-                    .padding(.leading, 4)
+                VStack(alignment: .leading, spacing: 8) { content() }.padding(.leading, 4)
             }
         }
         .padding(14)

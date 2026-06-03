@@ -69,12 +69,13 @@ check("display ⌥⇧⌘H", Validation.display(mods: ["alt", "cmd", "shift"], ke
 check("display bare C", Validation.display(mods: [], key: "c") == "C")
 
 // 7. nav activator
-check("default activator is rightCmd", Config.default.features.nav.activator.kind == "rightCmd")
+check("default activator is tapModifier", Config.default.features.nav.activator.kind == "tapModifier")
 do {
-    let json = #"{ "features": { "nav": { "activator": { "kind": "rightAlt" } } } }"#
+    let json = #"{ "features": { "nav": { "activator": { "kind": "doubleTapModifier" } } } }"#
     let c = try ConfigStore.decode(Data(json.utf8))
-    check("activator partial: kind override", c.features.nav.activator.kind == "rightAlt")
-    check("activator partial: hotkey default filled", c.features.nav.activator.hotkey.key == "f12")
+    check("activator partial: kind override", c.features.nav.activator.kind == "doubleTapModifier")
+    check("activator partial: hotkey default filled", c.features.nav.activator.hotkey.key == "=")
+    check("activator partial: modifier default filled", c.features.nav.activator.modifier == "rightAlt")
 } catch { check("activator partial (no throw)", false) }
 
 // 8. next / previous display
@@ -99,7 +100,7 @@ do {
     c.features.cursor.enabled = true
     c.features.windows.enabled = true
     let cur = c.curatedForEssentials()
-    check("curated: cursor off", !cur.features.cursor.enabled)
+    check("curated: cursor preserved (Advanced-controlled)", cur.features.cursor.enabled)
     check("curated: windows off", !cur.features.windows.enabled)
     check("curated: optionScroll off", !cur.features.monitors.optionScroll)
     check("curated: jumpClickKeys cleared", cur.features.monitors.jumpClickKeys.isEmpty)
@@ -107,6 +108,47 @@ do {
     check("curated: focusLeft cleared", cur.features.monitors.focusLeft.key.isEmpty)
     check("curated: jumpKeys preserved", cur.features.monitors.jumpKeys == ["1", "2", "3"])
     check("curated: nextDisplay preserved", cur.features.monitors.nextDisplay.key == "right")
+}
+
+// 11. trigger activator defaults + KeyNames f18 + debug
+check("default activator: tapModifier", Config.default.features.nav.activator.kind == "tapModifier")
+check("default activator: rightAlt", Config.default.features.nav.activator.modifier == "rightAlt")
+check("default activator: onRelease", Config.default.features.nav.activator.onRelease)
+check("keyName 79 -> f18", KeyNames.keyName(forKeyCode: 79) == "f18")
+check("default debug is false", !Config.default.debug)
+check("default optionTapCycle is false", !Config.default.features.monitors.optionTapCycle)
+
+// 12. SuggestedLaunchers
+do {
+    let installed = [("com.openai.chat", "ChatGPT"), ("company.thebrowser.Browser", "Arc"), ("com.apple.Terminal", "Terminal")]
+    let s = SuggestedLaunchers.suggestions(installed: installed)
+    check("suggest: ChatGPT on c", s.contains { $0.key == "c" && $0.bundleID == "com.openai.chat" })
+    check("suggest: Browser on b", s.contains { $0.key == "b" && $0.bundleID == "company.thebrowser.Browser" })
+    check("suggest: Terminal on t", s.contains { $0.key == "t" })
+    let keys = SuggestedLaunchers.catalog.map { $0.key }
+    check("catalog keys are unique", Set(keys).count == keys.count)
+}
+
+// 13. conflict helper
+do {
+    let c = Config.default  // has c→ChatGPT and ⇧c→VSCode
+    check("conflict: bare c is taken", c.appLauncherName(forKey: "c", mods: [], excludingID: nil) != nil)
+    check("conflict: bare z is free", c.appLauncherName(forKey: "z", mods: [], excludingID: nil) == nil)
+}
+
+// 14. LicenseState trial / licensed / expired
+do {
+    let now = Date(timeIntervalSince1970: 1_000_000)
+    let fresh = LicenseState.startingTrial(now: now)
+    check("trial: 14 days left at start", fresh.daysLeftInTrial(now: now) == 14)
+    check("trial: apply allowed during trial", fresh.isApplyAllowed(now: now))
+    let later = now.addingTimeInterval(15 * 86_400)
+    check("trial: expired after 15 days", !fresh.trialActive(now: later))
+    check("trial: apply blocked after expiry", !fresh.isApplyAllowed(now: later))
+    var licensed = fresh
+    licensed.licenseKey = "KEY"; licensed.verifiedAt = now
+    check("licensed: apply allowed even after expiry", licensed.isApplyAllowed(now: later))
+    check("licensed: isLicensed true", licensed.isLicensed)
 }
 
 print("\n\(pass) passed, \(fail) failed")

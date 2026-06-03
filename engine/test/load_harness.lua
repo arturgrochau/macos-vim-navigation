@@ -120,5 +120,9 @@ allOk = run("minimal", {
   features = { visual = { enabled = false } },
   apps = {},
 }) and allOk
+-- Scenarios 4-6: every activator kind loads without error.
+allOk = run("activator:double-tap", { features = { nav = { activator = { kind = "doubleTapModifier", modifier = "alt" } } } }) and allOk
+allOk = run("activator:capslock", { features = { nav = { activator = { kind = "capsLock" } } } }) and allOk
+allOk = run("activator:hyper", { features = { nav = { activator = { kind = "hyper", hotkey = { mods = { "ctrl", "alt", "shift", "cmd" }, key = "space" } } } } }) and allOk
 
 os.exit(allOk and 0 or 1)

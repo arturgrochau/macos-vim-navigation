@@ -61,8 +61,36 @@ Duplicate keys are flagged and block **Apply** until resolved. On Apply, the edi
 Visual mode, global cursor movement, hide/restore and scroll gestures remain in the engine
 but are intentionally not surfaced, to keep the editor minimal.
 
+## First run & triggers
+
+- **Onboarding** (shown when no config exists): explains the three concepts and proposes
+  launchers from the apps you actually have installed — pick and **Continue**.
+- **Trigger presets:** **Tap Right ⌥ (on release)** by default — entering Nav Mode only when
+  Option is tapped *alone*, so it never steals your ⌥-shortcuts. Alternatives: Double-tap ⌥,
+  Caps Lock (one-click `hidutil` remap → F18 + LaunchAgent), Control + =, Hyper key, Custom.
+- **Advanced** (collapsed): Visual mode, Global cursor, Debug logging, Reveal config, License.
+- Press **?** inside Nav Mode for an on-screen list of every binding.
+
+## Licensing (Gumroad)
+
+14-day trial, then **Apply** is gated until a license is entered (your last-applied config keeps
+running). Verification uses the **Gumroad License API** + machine binding + a cached receipt
+(works offline after activation).
+
+**To enable it for your product:** create the product on Gumroad, enable license keys, then set
+the constants in `Sources/KeyDeck/License.swift` → `LicenseConfig`:
+
+```swift
+static let productID = "your_gumroad_product_id"   // Product → Advanced → product_id
+static let buyURL    = URL(string: "https://gumroad.com/l/your-permalink")!
+static let maxActivations = 3                       // per-key machine cap
+```
+
+Until `productID` is set, activation returns a clear "not configured" message and the trial logic
+still works. Note: client-side verification + machine binding + cached receipt is reasonable indie
+protection; a small server would be needed for stronger guarantees (a later step).
+
 ## Roadmap
 
-- Live key-capture for rebinding (currently key name + modifier checkboxes).
-- Packaged, notarized `.app` bundle + first-run Hammerspoon install (Milestone 3).
-- Gumroad licensing for paid presets/features (Milestone 4).
+- Notarized `.app` + first-run Hammerspoon install check (Milestone 3, partial: `bundle.sh` exists).
+- Optional licensing server for stronger anti-piracy.

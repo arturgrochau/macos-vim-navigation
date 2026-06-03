@@ -93,7 +93,8 @@ public extension Config {
     /// engine config never has "phantom" shortcuts the user can't see or control.
     func curatedForEssentials() -> Config {
         var c = self
-        c.features.cursor.enabled = false
+        // Visual mode and global cursor are user-controlled in Advanced, so leave them.
+        // Hide/restore windows is never surfaced — keep it off.
         c.features.windows.enabled = false
         c.features.monitors.optionScroll = false
         c.features.monitors.jumpClickKeys = []
@@ -101,5 +102,15 @@ public extension Config {
         c.features.monitors.focusLeft = KeyBinding()
         c.features.monitors.focusRight = KeyBinding()
         return c
+    }
+
+    /// Name of the app launcher already using this key+mods (for conflict prompts), or nil.
+    func appLauncherName(forKey key: String, mods: [String], excludingID id: UUID?) -> String? {
+        for a in apps where a.id != id {
+            if a.key.lowercased() == key.lowercased() && Set(a.mods) == Set(mods) {
+                return a.names.first ?? a.bundleID
+            }
+        }
+        return nil
     }
 }
