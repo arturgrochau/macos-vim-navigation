@@ -23,7 +23,17 @@ function Core.new(hs, modal, cfg)
     -- timer bookkeeping for hold-to-repeat
     held = {},
     holdTimers = {},
+    -- every global hotkey is registered here so the Spoon's stop() can delete it
+    hotkeys = {},
   }
+
+  -- Bind a global hotkey and track it for teardown. Modules use this instead
+  -- of hs.hotkey.bind directly.
+  function ctx.bindGlobal(mods, key, pressed, released)
+    local hk = hs.hotkey.bind(mods, key, pressed, released)
+    if hk then table.insert(ctx.hotkeys, hk) end
+    return hk
+  end
 
   -- Invert scroll deltas when natural scrolling is on, matching system behavior.
   function ctx.norm(delta)

@@ -160,10 +160,11 @@ function M.setup(ctx)
   end)
   ctx.gResetTap:start()
 
-  -- Toggle NAV MODE.
+  -- Toggle NAV MODE. Exposed on ctx so the Spoon's bindHotkeys() can map it.
   local function toggle()
     if ctx.navActive then modal:exit() else modal:enter() end
   end
+  ctx.toggleNav = toggle
 
   -- A config key is bindable only if it's a non-empty string ("" means unbound).
   local function bindable(k) return type(k) == "string" and #k > 0 end
@@ -237,12 +238,12 @@ function M.setup(ctx)
     end })
   elseif act and (act.kind == "hotkey" or act.kind == "hyper") then
     local hk = act.hotkey or {}
-    if bindable(hk.key) then hs.hotkey.bind(hk.mods or {}, hk.key, toggle) end
+    if bindable(hk.key) then ctx.bindGlobal(hk.mods or {}, hk.key, toggle) end
   elseif act and act.kind == "capsLock" then
-    hs.hotkey.bind({}, "f18", toggle) -- the GUI remaps Caps Lock → F18
+    ctx.bindGlobal({}, "f18", toggle) -- the GUI remaps Caps Lock → F18
   else
     for _, b in ipairs(nav.enterKeys or {}) do
-      if bindable(b.key) then hs.hotkey.bind(b.mods or {}, b.key, function() modal:enter() end) end
+      if bindable(b.key) then ctx.bindGlobal(b.mods or {}, b.key, function() modal:enter() end) end
     end
   end
 

@@ -129,13 +129,13 @@ function M.setup(ctx)
   local function bindable(k) return type(k) == "string" and #k > 0 end
 
   for i, key in ipairs(feat.jumpKeys or {}) do
-    if bindable(key) then hs.hotkey.bind({ "alt" }, key, function() jumpTo(i, false) end) end
+    if bindable(key) then ctx.bindGlobal({ "alt" }, key, function() jumpTo(i, false) end) end
   end
   for i, key in ipairs(feat.jumpClickKeys or {}) do
-    if bindable(key) then hs.hotkey.bind({ "alt" }, key, function() jumpTo(i, true) end) end
+    if bindable(key) then ctx.bindGlobal({ "alt" }, key, function() jumpTo(i, true) end) end
   end
   for i, key in ipairs(feat.parkKeys or {}) do
-    if bindable(key) then hs.hotkey.bind({ "alt" }, key, function() parkAt(i) end) end
+    if bindable(key) then ctx.bindGlobal({ "alt" }, key, function() parkAt(i) end) end
   end
 
   -- ---- Directional window/screen focus ---------------------------------------
@@ -195,10 +195,10 @@ function M.setup(ctx)
     end
   end
   if feat.focusLeft and bindable(feat.focusLeft.key) then
-    hs.hotkey.bind(feat.focusLeft.mods or {}, feat.focusLeft.key, function() focusWindowInDirection("left") end)
+    ctx.bindGlobal(feat.focusLeft.mods or {}, feat.focusLeft.key, function() focusWindowInDirection("left") end)
   end
   if feat.focusRight and bindable(feat.focusRight.key) then
-    hs.hotkey.bind(feat.focusRight.mods or {}, feat.focusRight.key, function() focusWindowInDirection("right") end)
+    ctx.bindGlobal(feat.focusRight.mods or {}, feat.focusRight.key, function() focusWindowInDirection("right") end)
   end
 
   -- Move the pointer to the next / previous physical display (wrap-around).
@@ -212,10 +212,10 @@ function M.setup(ctx)
     centerMouseOn(all[nextIdx])
   end
   if feat.nextDisplay and bindable(feat.nextDisplay.key) then
-    hs.hotkey.bind(feat.nextDisplay.mods or {}, feat.nextDisplay.key, function() cycleDisplay(1) end)
+    ctx.bindGlobal(feat.nextDisplay.mods or {}, feat.nextDisplay.key, function() cycleDisplay(1) end)
   end
   if feat.prevDisplay and bindable(feat.prevDisplay.key) then
-    hs.hotkey.bind(feat.prevDisplay.mods or {}, feat.prevDisplay.key, function() cycleDisplay(-1) end)
+    ctx.bindGlobal(feat.prevDisplay.mods or {}, feat.prevDisplay.key, function() cycleDisplay(-1) end)
   end
 end
 

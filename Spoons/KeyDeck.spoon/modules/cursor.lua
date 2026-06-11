@@ -23,7 +23,7 @@ function M.setup(ctx)
     local tapDy = dy > 0 and t.globalCursorStep or (dy < 0 and -t.globalCursorStep or 0)
     local holdDx = dx > 0 and t.globalCursorHoldStep or (dx < 0 and -t.globalCursorHoldStep or 0)
     local holdDy = dy > 0 and t.globalCursorHoldStep or (dy < 0 and -t.globalCursorHoldStep or 0)
-    hs.hotkey.bind(mods, key,
+    ctx.bindGlobal(mods, key,
       function()
         moveBy(tapDx, tapDy)
         ctx.cursorTimers[key] = {}
@@ -49,7 +49,7 @@ function M.setup(ctx)
   bindCursor(keys.down, 0, 1)
 
   if type(keys.click) == "string" and #keys.click > 0 then
-    hs.hotkey.bind(mods, keys.click, function()
+    ctx.bindGlobal(mods, keys.click, function()
       eventtap.leftClick(mouse.absolutePosition())
     end)
   end

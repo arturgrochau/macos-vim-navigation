@@ -96,11 +96,15 @@ function obj:_start()
     if fn then pcall(fn) elseif cfg.debug then hs.alert.show("customLua error: " .. tostring(err)) end
   end
 
-  -- Reload binding is always available.
-  hs.hotkey.bind({ "alt" }, "r", function()
-    hs.reload()
-    hs.alert("Reloaded")
-  end)
+  -- Debug-only reload binding. A Spoon coexisting with the user's own config
+  -- must not claim ⌥R unconditionally; the pathwatcher and hammerspoon://reload
+  -- cover normal reloads.
+  if cfg.debug then
+    ctx.bindGlobal({ "alt" }, "r", function()
+      hs.reload()
+      hs.alert("Reloaded")
+    end)
+  end
 
   -- Auto-reload when keydeck-config.json changes (GUI Apply takes effect with no CLI dep).
   ctx.configWatcher = hs.pathwatcher.new(hs.configdir, function(paths)
@@ -117,6 +121,7 @@ function obj:_start()
 
   writeStatus(cfg)
   if cfg.debug then hs.alert.show("KeyDeck loaded — preset: " .. (cfg.preset or "default")) end
+  self.engine = ctx
   return ctx
 end
 
@@ -128,11 +133,86 @@ end
 function obj:start()
   local ok, res = pcall(function() return self:_start() end)
   if ok then
-    self.engine = res
     writeError("") -- clear any stale error
   else
     writeError(tostring(res))
     if hs and hs.alert then hs.alert.show("KeyDeck failed to start (open the KeyDeck app for details)") end
+  end
+  return self
+end
+
+--- KeyDeck:stop()
+--- Method
+--- Tears down everything start() created: exits NAV MODE, deletes every global
+--- hotkey, and stops all event taps, watchers, timers, and overlays.
+function obj:stop()
+  local ctx = self.engine
+  if not ctx then return self end
+
+  if ctx.navActive and ctx.modal then pcall(function() ctx.modal:exit() end) end
+
+  for _, hk in ipairs(ctx.hotkeys or {}) do
+    pcall(function() hk:delete() end)
+  end
+
+  -- Event taps and watchers are stored under known names on ctx.
+  for _, name in ipairs({ "gResetTap", "navActivatorFlags", "navActivatorKeys",
+                          "optionFlagsWatcher", "optionKeyWatcher", "configWatcher" }) do
+    if ctx[name] then
+      pcall(function() ctx[name]:stop() end)
+      ctx[name] = nil
+    end
+  end
+
+  -- Hold-to-repeat timers.
+  for key, t in pairs(ctx.held or {}) do
+    pcall(function() t:stop() end)
+    ctx.held[key] = nil
+  end
+  for key, h in pairs(ctx.holdTimers or {}) do
+    pcall(function()
+      if h.delayTimer then h.delayTimer:stop() end
+      if h.repeatTimer then h.repeatTimer:stop() end
+    end)
+    ctx.holdTimers[key] = nil
+  end
+  for key, h in pairs(ctx.cursorTimers or {}) do
+    pcall(function()
+      if h.delayTimer then h.delayTimer:stop() end
+      if h.repeatTimer then h.repeatTimer:stop() end
+    end)
+    ctx.cursorTimers[key] = nil
+  end
+
+  -- Overlay canvases.
+  if ctx.overlay then
+    pcall(function() ctx.overlay.hideHelp() end)
+    if ctx.overlay.hideVisual then pcall(function() ctx.overlay.hideVisual() end) end
+    if ctx.overlay.normal then
+      pcall(function() ctx.overlay.normal:delete() end)
+      ctx.overlay.normal = nil
+    end
+  end
+
+  self.engine = nil
+  return self
+end
+
+--- KeyDeck:bindHotkeys(mapping)
+--- Method
+--- Standard Spoon hotkey binding. Supported actions:
+---  * toggle - toggle NAV MODE
+---
+--- Example:
+---   spoon.KeyDeck:bindHotkeys({ toggle = { { "ctrl" }, "=" } })
+function obj:bindHotkeys(mapping)
+  local spec = {
+    toggle = function()
+      if self.engine and self.engine.toggleNav then self.engine.toggleNav() end
+    end,
+  }
+  if hs.spoons and hs.spoons.bindHotkeysToSpec then
+    hs.spoons.bindHotkeysToSpec(spec, mapping)
   end
   return self
 end

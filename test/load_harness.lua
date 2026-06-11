@@ -4,7 +4,8 @@
 -- its files, so no package.path setup is needed here.
 local SPOON = arg[1]
 
-local counts = { globalBind = 0, modalBind = 0, eventtaps = 0, alerts = {} }
+local counts = { globalBind = 0, modalBind = 0, eventtaps = 0, alerts = {},
+                 hotkeyDeletes = 0, tapStops = 0 }
 
 -- A permissive stub: any index returns a callable that returns another stub,
 -- and it is itself callable. Concrete behaviors are layered on top where needed.
@@ -24,7 +25,11 @@ local eventtap = {
     newMouseEvent = function() return stub() end,
     newScrollEvent = function() return stub() end,
   }, stubmt),
-  new = function() counts.eventtaps = counts.eventtaps + 1; return { start = function(s) return s end } end,
+  new = function()
+    counts.eventtaps = counts.eventtaps + 1
+    return { start = function(s) return s end,
+             stop = function() counts.tapStops = counts.tapStops + 1 end }
+  end,
   scrollWheel = function() end,
   leftClick = function() end,
   rightClick = function() end,
@@ -50,6 +55,7 @@ hs = {
     bind = function(_, key)
       assert(type(key) == "string" and #key > 0, "hs.hotkey.bind: invalid key " .. tostring(key))
       counts.globalBind = counts.globalBind + 1
+      return { delete = function() counts.hotkeyDeletes = counts.hotkeyDeletes + 1 end }
     end,
     modal = { new = makeModal },
   },
@@ -73,7 +79,10 @@ hs = {
   }, stubmt),
   fnutils = { filter = function(t) return t end },
   keycodes = { map = setmetatable({}, { __index = function() return 0 end }) },
-  pathwatcher = { new = function() return { start = function(s) return s end } end },
+  pathwatcher = { new = function()
+    return { start = function(s) return s end,
+             stop = function() counts.tapStops = counts.tapStops + 1 end }
+  end },
   urlevent = { bind = function() end },
   json = { read = function() return nil end }, -- overridden per scenario
   alert = setmetatable({ show = function(m) table.insert(counts.alerts, m) end }, { __call = function(_, m) table.insert(counts.alerts, m) end }),
@@ -147,5 +156,32 @@ allOk = run("empty-keys", {
   } },
   apps = { { key = "", bundleID = "com.x.y", names = { "X" } }, { key = "c", bundleID = "com.openai.chat", names = { "ChatGPT" } } },
 }) and allOk
+
+-- Lifecycle: start() → stop() → start() must run cleanly, and stop() must
+-- actually delete every tracked hotkey and stop every tap/watcher.
+do
+  currentUserConfig = nil
+  hs.json.read = function() return nil end
+  counts.globalBind, counts.modalBind, counts.eventtaps, counts.alerts = 0, 0, 0, {}
+  counts.hotkeyDeletes, counts.tapStops = 0, 0
+  local ok, err = pcall(function()
+    local spoonObj = dofile(SPOON .. "/init.lua")
+    spoonObj:init()
+    spoonObj:_start()
+    local boundBefore = counts.globalBind
+    spoonObj:stop()
+    assert(counts.hotkeyDeletes == boundBefore,
+      ("stop() deleted %d of %d hotkeys"):format(counts.hotkeyDeletes, boundBefore))
+    assert(counts.tapStops > 0, "stop() stopped no taps/watchers")
+    assert(spoonObj.engine == nil, "stop() must clear self.engine")
+    spoonObj:_start()
+  end)
+  if ok then
+    print(string.format("PASS [start-stop-start]  hotkeyDeletes=%d tapStops=%d", counts.hotkeyDeletes, counts.tapStops))
+  else
+    print("FAIL [start-stop-start]: " .. tostring(err))
+    allOk = false
+  end
+end
 
 os.exit(allOk and 0 or 1)
