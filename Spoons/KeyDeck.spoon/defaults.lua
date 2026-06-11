@@ -68,9 +68,9 @@ return {
 
     visual = { enabled = true },
 
-    -- Global cursor movement outside NAV MODE (off by default; on in "developer").
+    -- Global cursor movement outside NAV MODE (personal setup: on).
     cursor = {
-      enabled = false,
+      enabled = true,
       mods = { "alt", "cmd", "shift" },
       keys = { left = "h", down = "j", up = "k", right = "l", click = "i" },
     },
@@ -100,17 +100,21 @@ return {
       prevDisplay = { mods = { "ctrl", "alt" }, key = "left" },
     },
 
-    -- Hide frontmost app / restore all hidden+minimized windows (off by default).
+    -- Hide frontmost app / restore all hidden+minimized windows (personal setup: on).
     windows = {
-      enabled = false,
+      enabled = true,
       hide    = { mods = { "alt", "cmd" },   key = "h" },
       restore = { mods = { "alt", "shift" }, key = "r" },
     },
   },
 
-  -- Per-app launch/focus shortcuts (NAV MODE). Fully data-driven: add an entry
-  -- to get a new shortcut. clickTarget is one of "center" | "bottom" | "none".
-  -- Empty by default — the KeyDeck app detects installed apps and fills this in,
-  -- or add entries to keydeck-config.json by hand (see the example config).
-  apps = {},
+  -- Per-app launch/focus shortcuts (NAV MODE). Personal setup.
+  -- clickTarget is one of "center" | "bottom" | "none".
+  apps = {
+    { key = "c", mods = {},          bundleID = "com.openai.chat",           names = { "ChatGPT" },                    clickTarget = "bottom", exitNav = true },
+    { key = "c", mods = { "shift" }, bundleID = "com.microsoft.VSCode",       names = { "Visual Studio Code", "Code" }, clickTarget = "center", exitNav = true },
+    { key = "o", mods = {},          bundleID = "company.thebrowser.Browser", names = { "Arc" },                        clickTarget = "center", exitNav = true },
+    { key = "o", mods = { "shift" }, bundleID = "com.chatgpt.atlas",          names = { "ChatGPT Atlas" },              clickTarget = "center", exitNav = true },
+    { key = "t", mods = {},          bundleID = "com.microsoft.teams2",       names = { "Microsoft Teams" },            clickTarget = "center", exitNav = true },
+  },
 }
