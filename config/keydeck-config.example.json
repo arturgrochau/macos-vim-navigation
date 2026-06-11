@@ -1,0 +1,30 @@
+{
+  "preset": "example",
+  "features": {
+    "nav": {
+      "enabled": true,
+      "activator": {
+        "kind": "hotkey",
+        "hotkey": { "mods": ["ctrl"], "key": "=" }
+      },
+      "exitKeys": [
+        { "mods": [], "key": "escape" }
+      ]
+    },
+    "monitors": {
+      "enabled": true,
+      "optionTapCycle": true,
+      "cycleModifier": "alt"
+    }
+  },
+  "apps": [
+    {
+      "key": "s",
+      "mods": [],
+      "bundleID": "com.apple.Safari",
+      "names": ["Safari"],
+      "clickTarget": "center",
+      "exitNav": true
+    }
+  ]
+}

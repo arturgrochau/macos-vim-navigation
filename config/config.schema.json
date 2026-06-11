@@ -69,7 +69,8 @@
               "type": "string",
               "description": "Pipe-separated name substrings; screens matching any are treated as virtual and skipped."
             },
-            "optionTapCycle": { "type": "boolean" },
+            "optionTapCycle": { "type": "boolean", "description": "Tap cycleModifier alone (on release, idle-guarded) to move to the next display." },
+            "cycleModifier": { "enum": ["alt", "ctrl", "cmd"], "description": "Modifier whose clean tap-and-release cycles displays. Default alt (Option)." },
             "optionScroll": { "type": "boolean" },
             "jumpKeys": { "type": "array", "items": { "type": "string" } },
             "jumpClickKeys": { "type": "array", "items": { "type": "string" } },

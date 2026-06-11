@@ -1,15 +1,14 @@
--- Multi-monitor management — the central purpose of the tool. Keyboard-only
--- screen and window focus:
---   * bare Option tap            -> cycle pointer to the next physical screen
---   * Option + jumpKeys          -> center pointer on monitor N
---   * Option + jumpClickKeys     -> center on monitor N and click to focus
---   * Option + parkKeys          -> park pointer at monitor N's bottom-right
---   * Option + d / u             -> scroll half-page globally (no NAV MODE)
---   * focusLeft / focusRight     -> focus the window on the left/right screen
+-- Multi-monitor management. Keyboard-only screen and window focus:
+--   * bare cycleModifier tap (⌥ default) -> cycle pointer to the next screen
+--   * cycleModifier + d / u              -> scroll half-page globally (no NAV MODE)
+--   * Option + jumpKeys                  -> center pointer on monitor N
+--   * Option + jumpClickKeys             -> center on monitor N and click to focus
+--   * Option + parkKeys                  -> park pointer at monitor N's bottom-right
+--   * focusLeft / focusRight             -> focus the window on the left/right screen
 --
--- The Option tap uses an on-release, idle-guarded watcher so it never clobbers
--- regular Option-modified shortcuts (e.g. Cmd+J): the cycle only fires if no
--- other key was pressed and the keyboard has been idle for optionReleaseIdleSeconds.
+-- The modifier tap uses an on-release, idle-guarded watcher so it never clobbers
+-- regular modifier shortcuts (e.g. ⌥+Cmd+J): the cycle only fires if no other
+-- key was pressed and the keyboard has been idle for optionReleaseIdleSeconds.
 local M = {}
 
 function M.setup(ctx)
@@ -44,19 +43,28 @@ function M.setup(ctx)
     ctx.setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
   end
 
-  -- ---- Option-tap screen cycle + Option+D/U scroll ----------------------------
+  -- ---- Modifier-release screen cycle + modifier+D/U scroll --------------------
+  -- The modifier is configurable (cycleModifier: "alt" | "ctrl" | "cmd",
+  -- Option by default); the release/idle guard logic is identical for all.
   if feat.optionTapCycle or feat.optionScroll then
+    local cycleMod = feat.cycleModifier or "alt"
+    local function otherModsHeld(f)
+      for _, m in ipairs({ "cmd", "alt", "ctrl", "shift" }) do
+        if m ~= cycleMod and f[m] then return true end
+      end
+      return false
+    end
     local optionOtherKey, optionHoldActive = false, false
     local pendingReleaseTimer = nil
     local lastOptionKeyTime = 0
 
     ctx.optionFlagsWatcher = eventtap.new({ eventtap.event.types.flagsChanged }, function(e)
       local f = e:getFlags()
-      if f.alt and not optionHoldActive then
+      if f[cycleMod] and not optionHoldActive then
         optionHoldActive = true
         optionOtherKey = false
         if pendingReleaseTimer then pendingReleaseTimer:stop(); pendingReleaseTimer = nil end
-      elseif not f.alt and optionHoldActive then
+      elseif not f[cycleMod] and optionHoldActive then
         optionHoldActive = false
         local idle = timer.secondsSinceEpoch() - lastOptionKeyTime
         if feat.optionTapCycle and not optionOtherKey and idle > t.optionReleaseIdleSeconds then
@@ -81,7 +89,7 @@ function M.setup(ctx)
       if optionHoldActive or pendingReleaseTimer then
         lastOptionKeyTime = timer.secondsSinceEpoch()
         local f = e:getFlags()
-        if feat.optionScroll and f.alt and not (f.cmd or f.ctrl or f.shift) then
+        if feat.optionScroll and f[cycleMod] and not otherModsHeld(f) then
           local kc = e:getKeyCode()
           if kc == hs.keycodes.map.d then
             optionOtherKey = true

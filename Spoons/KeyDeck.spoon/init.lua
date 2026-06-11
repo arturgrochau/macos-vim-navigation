@@ -76,6 +76,24 @@ function obj:_start()
 
   local cfg = config.load(defaults)
 
+  -- Mutual-exclusion guard: if the NAV activator taps the same modifier the
+  -- display cycle listens on, a clean tap would both toggle NAV MODE and (after
+  -- the idle window) switch displays. Disable the cycle for this session.
+  do
+    local nav, mon = cfg.features.nav, cfg.features.monitors
+    local act = nav and nav.activator
+    if nav and nav.enabled and mon and mon.enabled and mon.optionTapCycle
+       and act and (act.kind == "tapModifier" or act.kind == "doubleTapModifier") then
+      local base = tostring(act.modifier or ""):gsub("^left", ""):gsub("^right", ""):lower()
+      if base == (mon.cycleModifier or "alt") then
+        mon.optionTapCycle = false
+        if cfg.debug then
+          hs.alert.show("KeyDeck: display cycle disabled — NAV trigger uses the same modifier")
+        end
+      end
+    end
+  end
+
   local modal = hs.hotkey.modal.new()
   local ctx = Core.new(hs, modal, cfg)
   ctx.overlay = Overlay.new(ctx)

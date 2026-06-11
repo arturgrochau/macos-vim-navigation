@@ -147,6 +147,10 @@ local userConfig = {
     monitors = { optionTapCycle = true },
     nav = { activator = { kind = "tapModifier", modifier = "rightCmd", onRelease = true } },
   },
+  -- Defaults ship no launchers; the launch test needs one.
+  apps = {
+    { key = "c", mods = {}, bundleID = "com.openai.chat", names = { "ChatGPT" }, clickTarget = "bottom", exitNav = true },
+  },
 }
 hs.json.read = function() return userConfig end
 local realopen = io.open
@@ -278,6 +282,46 @@ flags({ cmd = true }, 54); keydown({ cmd = true }, 8, "c"); flags({}, 54)
 check("Right-⌘+C does not toggle", rec.modalEnters == 0 and rec.modalExits == 0,
   ("enters=%d exits=%d"):format(rec.modalEnters, rec.modalExits))
 check("help overlay '?' is bound", modalBinds[modKey({ "shift" }, "/")] ~= nil)
+
+-- Reload the Spoon with a different user config. The flags/keyDown callback
+-- lists are cleared first so the helpers address only the new instance.
+local function reloadWith(cfg)
+  flagsCbs, keyDownCbs = {}, {}
+  userConfig = cfg
+  return pcall(function()
+    local spoonObj = dofile(SPOON .. "/init.lua")
+    spoonObj:init()
+    return spoonObj:_start()
+  end)
+end
+
+print("cycleModifier = ctrl (display cycle on Ctrl release):")
+local okCtrl, errCtrl = reloadWith({
+  features = {
+    monitors = { optionTapCycle = true, cycleModifier = "ctrl" },
+    nav = { activator = { kind = "tapModifier", modifier = "rightCmd", onRelease = true } },
+  },
+})
+check("reload with cycleModifier=ctrl", okCtrl, tostring(errCtrl))
+setMouse(centerOf(S[1])); resetRec(); timerQ = {}; CLOCK = 400
+flags({ ctrl = true }); flags({}); flush()
+check("clean ⌃ tap cycles S1 -> S2", approx(mousePos.x, centerOf(S[2]).x), ("x=%.0f"):format(mousePos.x))
+setMouse(centerOf(S[1])); resetRec(); timerQ = {}; CLOCK = 500
+flags({ alt = true }); flags({}); flush()
+check("⌥ tap does NOT cycle when cycleModifier=ctrl", approx(mousePos.x, centerOf(S[1]).x))
+
+print("Clash guard (NAV tap on ⌥ while cycle is also on ⌥ -> cycle disabled):")
+local okClash, errClash = reloadWith({
+  features = {
+    monitors = { optionTapCycle = true, cycleModifier = "alt" },
+    nav = { activator = { kind = "tapModifier", modifier = "alt", onRelease = true } },
+  },
+})
+check("reload with clashing alt/alt config", okClash, tostring(errClash))
+setMouse(centerOf(S[1])); resetRec(); timerQ = {}; CLOCK = 600
+flags({ alt = true }, 58); flags({}, 58); flush()
+check("⌥ tap toggles NAV MODE", rec.modalEnters == 1, ("enters=%d"):format(rec.modalEnters))
+check("⌥ tap does NOT also cycle displays", approx(mousePos.x, centerOf(S[1]).x), ("x=%.0f"):format(mousePos.x))
 
 print(("\n%d passed, %d failed"):format(pass, fail))
 os.exit(fail == 0 and 0 or 1)

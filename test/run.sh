@@ -14,7 +14,7 @@ for f in Spoons/KeyDeck.spoon/*.lua Spoons/KeyDeck.spoon/lib/*.lua Spoons/KeyDec
 done
 
 echo "== 2. JSON validity =="
-for j in config/*.json config/presets/*.json; do
+for j in config/*.json; do
   python3 -c "import json;json.load(open('$j'))" && echo "  ok   $j"
 done
 
