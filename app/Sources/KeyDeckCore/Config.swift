@@ -2,7 +2,8 @@ import Foundation
 
 // Decode helper: pull a value if present, otherwise fall back to a default. This
 // mirrors the engine's deep-merge-over-defaults behavior, so a partial config
-// file (or a preset that only sets a few keys) loads cleanly into a full Config.
+// file (or an old config still carrying removed feature blocks) loads cleanly
+// into a full Config. Unknown keys are ignored by Codable.
 extension KeyedDecodingContainer {
     func get<T: Decodable>(_ key: Key, default def: T) -> T {
         // `try?` flattens decodeIfPresent's `T?` to `T?`, so a single binding
@@ -41,27 +42,19 @@ public struct Tuning: Codable, Equatable {
     public var scrollRepeatInterval: Double
     public var directionInitialDelay: Double
     public var directionRepeatInterval: Double
-    public var dragMoveFrac: Double
-    public var globalCursorStep: Double
-    public var globalCursorHoldStep: Double
-    public var globalCursorRepeatDelay: Double
-    public var globalCursorRepeatInterval: Double
     public var optionReleaseIdleSeconds: Double
     public var optionScrollAmount: Double
 
     public static let `default` = Tuning(
         scrollStep: 62, scrollInitialDelay: 0.15, scrollRepeatInterval: 0.05,
-        directionInitialDelay: 0.05, directionRepeatInterval: 0.15, dragMoveFrac: 0.05,
-        globalCursorStep: 180, globalCursorHoldStep: 68,
-        globalCursorRepeatDelay: 0.05, globalCursorRepeatInterval: 0.02,
+        directionInitialDelay: 0.05, directionRepeatInterval: 0.15,
         optionReleaseIdleSeconds: 2.0, optionScrollAmount: 260)
 }
 
 extension Tuning {
     enum CodingKeys: String, CodingKey {
         case scrollStep, scrollInitialDelay, scrollRepeatInterval, directionInitialDelay
-        case directionRepeatInterval, dragMoveFrac, globalCursorStep, globalCursorHoldStep
-        case globalCursorRepeatDelay, globalCursorRepeatInterval, optionReleaseIdleSeconds, optionScrollAmount
+        case directionRepeatInterval, optionReleaseIdleSeconds, optionScrollAmount
     }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -71,20 +64,14 @@ extension Tuning {
         scrollRepeatInterval = c.get(.scrollRepeatInterval, default: d.scrollRepeatInterval)
         directionInitialDelay = c.get(.directionInitialDelay, default: d.directionInitialDelay)
         directionRepeatInterval = c.get(.directionRepeatInterval, default: d.directionRepeatInterval)
-        dragMoveFrac = c.get(.dragMoveFrac, default: d.dragMoveFrac)
-        globalCursorStep = c.get(.globalCursorStep, default: d.globalCursorStep)
-        globalCursorHoldStep = c.get(.globalCursorHoldStep, default: d.globalCursorHoldStep)
-        globalCursorRepeatDelay = c.get(.globalCursorRepeatDelay, default: d.globalCursorRepeatDelay)
-        globalCursorRepeatInterval = c.get(.globalCursorRepeatInterval, default: d.globalCursorRepeatInterval)
         optionReleaseIdleSeconds = c.get(.optionReleaseIdleSeconds, default: d.optionReleaseIdleSeconds)
         optionScrollAmount = c.get(.optionScrollAmount, default: d.optionScrollAmount)
     }
 }
 
-/// How NAV MODE is toggled.
+/// How NAV MODE is toggled. The UI only writes kind "hotkey"; the other kinds
+/// remain decodable so hand-edited and pre-existing configs keep working.
 /// kind: "tapModifier" | "doubleTapModifier" | "hotkey" | "hyper" | "capsLock"
-/// modifier (tap/double-tap): "alt"|"cmd"|"ctrl"|"shift" (either side) or "rightAlt"|"leftAlt"|…
-/// onRelease (tapModifier): fire only on a clean release with no combo.
 public struct NavActivator: Codable, Equatable {
     public var kind: String
     public var modifier: String
@@ -113,70 +100,21 @@ extension NavActivator {
 public struct NavFeature: Codable, Equatable {
     public var enabled: Bool
     public var activator: NavActivator
-    public var enterKeys: [KeyBinding]
     public var exitKeys: [KeyBinding]
     public static let `default` = NavFeature(
         enabled: true,
         activator: .default,
-        enterKeys: [KeyBinding(mods: ["ctrl", "alt", "cmd"], key: "space"),
-                    KeyBinding(mods: [], key: "f12"),
-                    KeyBinding(mods: ["ctrl"], key: "=")],
         exitKeys: [KeyBinding(mods: [], key: "escape"),
                    KeyBinding(mods: ["ctrl"], key: "c")])
 }
 extension NavFeature {
-    enum CodingKeys: String, CodingKey { case enabled, activator, enterKeys, exitKeys }
+    enum CodingKeys: String, CodingKey { case enabled, activator, exitKeys }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = NavFeature.default
         enabled = c.get(.enabled, default: d.enabled)
         activator = c.get(.activator, default: d.activator)
-        enterKeys = c.get(.enterKeys, default: d.enterKeys)
         exitKeys = c.get(.exitKeys, default: d.exitKeys)
-    }
-}
-
-public struct ToggleFeature: Codable, Equatable {
-    public var enabled: Bool
-    public init(enabled: Bool) { self.enabled = enabled }
-}
-extension ToggleFeature {
-    enum CodingKeys: String, CodingKey { case enabled }
-    public init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        enabled = c.get(.enabled, default: true)
-    }
-}
-
-public struct CursorKeys: Codable, Equatable {
-    public var left, down, up, right, click: String
-    public static let `default` = CursorKeys(left: "h", down: "j", up: "k", right: "l", click: "i")
-}
-extension CursorKeys {
-    enum CodingKeys: String, CodingKey { case left, down, up, right, click }
-    public init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        let d = CursorKeys.default
-        left = c.get(.left, default: d.left); down = c.get(.down, default: d.down)
-        up = c.get(.up, default: d.up); right = c.get(.right, default: d.right)
-        click = c.get(.click, default: d.click)
-    }
-}
-
-public struct CursorFeature: Codable, Equatable {
-    public var enabled: Bool
-    public var mods: [String]
-    public var keys: CursorKeys
-    public static let `default` = CursorFeature(enabled: false, mods: ["alt", "cmd", "shift"], keys: .default)
-}
-extension CursorFeature {
-    enum CodingKeys: String, CodingKey { case enabled, mods, keys }
-    public init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        let d = CursorFeature.default
-        enabled = c.get(.enabled, default: d.enabled)
-        mods = c.get(.mods, default: d.mods)
-        keys = c.get(.keys, default: d.keys)
     }
 }
 
@@ -184,6 +122,8 @@ public struct MonitorsFeature: Codable, Equatable {
     public var enabled: Bool
     public var skipVirtualDisplayPattern: String
     public var optionTapCycle: Bool
+    /// Modifier whose clean tap-and-release cycles displays: "alt" | "ctrl" | "cmd".
+    public var cycleModifier: String
     public var optionScroll: Bool
     public var jumpKeys: [String]
     public var jumpClickKeys: [String]
@@ -195,7 +135,7 @@ public struct MonitorsFeature: Codable, Equatable {
     public var prevDisplay: KeyBinding
     public static let `default` = MonitorsFeature(
         enabled: true, skipVirtualDisplayPattern: "16:9|HiDPI|Virtual",
-        optionTapCycle: false, optionScroll: true,
+        optionTapCycle: true, cycleModifier: "alt", optionScroll: true,
         jumpKeys: ["1", "2", "3"], jumpClickKeys: ["0", "9", "8"], parkKeys: ["4", "5", "6"],
         parkPadding: 30,
         focusLeft: KeyBinding(mods: ["cmd", "shift"], key: "-"),
@@ -205,7 +145,7 @@ public struct MonitorsFeature: Codable, Equatable {
 }
 extension MonitorsFeature {
     enum CodingKeys: String, CodingKey {
-        case enabled, skipVirtualDisplayPattern, optionTapCycle, optionScroll
+        case enabled, skipVirtualDisplayPattern, optionTapCycle, cycleModifier, optionScroll
         case jumpKeys, jumpClickKeys, parkKeys, parkPadding, focusLeft, focusRight
         case nextDisplay, prevDisplay
     }
@@ -215,6 +155,7 @@ extension MonitorsFeature {
         enabled = c.get(.enabled, default: d.enabled)
         skipVirtualDisplayPattern = c.get(.skipVirtualDisplayPattern, default: d.skipVirtualDisplayPattern)
         optionTapCycle = c.get(.optionTapCycle, default: d.optionTapCycle)
+        cycleModifier = c.get(.cycleModifier, default: d.cycleModifier)
         optionScroll = c.get(.optionScroll, default: d.optionScroll)
         jumpKeys = c.get(.jumpKeys, default: d.jumpKeys)
         jumpClickKeys = c.get(.jumpClickKeys, default: d.jumpClickKeys)
@@ -227,46 +168,18 @@ extension MonitorsFeature {
     }
 }
 
-public struct WindowsFeature: Codable, Equatable {
-    public var enabled: Bool
-    public var hide: KeyBinding
-    public var restore: KeyBinding
-    public static let `default` = WindowsFeature(
-        enabled: false,
-        hide: KeyBinding(mods: ["alt", "cmd"], key: "h"),
-        restore: KeyBinding(mods: ["alt", "shift"], key: "r"))
-}
-extension WindowsFeature {
-    enum CodingKeys: String, CodingKey { case enabled, hide, restore }
-    public init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        let d = WindowsFeature.default
-        enabled = c.get(.enabled, default: d.enabled)
-        hide = c.get(.hide, default: d.hide)
-        restore = c.get(.restore, default: d.restore)
-    }
-}
-
 public struct Features: Codable, Equatable {
     public var nav: NavFeature
-    public var visual: ToggleFeature
-    public var cursor: CursorFeature
     public var monitors: MonitorsFeature
-    public var windows: WindowsFeature
-    public static let `default` = Features(
-        nav: .default, visual: ToggleFeature(enabled: true),
-        cursor: .default, monitors: .default, windows: .default)
+    public static let `default` = Features(nav: .default, monitors: .default)
 }
 extension Features {
-    enum CodingKeys: String, CodingKey { case nav, visual, cursor, monitors, windows }
+    enum CodingKeys: String, CodingKey { case nav, monitors }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = Features.default
         nav = c.get(.nav, default: d.nav)
-        visual = c.get(.visual, default: d.visual)
-        cursor = c.get(.cursor, default: d.cursor)
         monitors = c.get(.monitors, default: d.monitors)
-        windows = c.get(.windows, default: d.windows)
     }
 }
 
@@ -329,15 +242,10 @@ public struct Config: Codable, Equatable {
     public var features: Features
     public var apps: [AppShortcut]
 
+    /// Ships with no launchers — the app detects installed apps and suggests them.
     public static let `default` = Config(
         preset: "default", debug: false, customLua: "", tuning: .default, features: .default,
-        apps: [
-            AppShortcut(key: "c", mods: [], bundleID: "com.openai.chat", names: ["ChatGPT"], clickTarget: "bottom", exitNav: true),
-            AppShortcut(key: "c", mods: ["shift"], bundleID: "com.microsoft.VSCode", names: ["Visual Studio Code", "Code"], clickTarget: "center", exitNav: true),
-            AppShortcut(key: "o", mods: [], bundleID: "company.thebrowser.Browser", names: ["Arc"], clickTarget: "center", exitNav: true),
-            AppShortcut(key: "o", mods: ["shift"], bundleID: "com.chatgpt.atlas", names: ["ChatGPT Atlas"], clickTarget: "center", exitNav: true),
-            AppShortcut(key: "t", mods: [], bundleID: "com.microsoft.teams2", names: ["Microsoft Teams"], clickTarget: "center", exitNav: true),
-        ])
+        apps: [])
 }
 extension Config {
     enum CodingKeys: String, CodingKey { case preset, debug, customLua, tuning, features, apps }

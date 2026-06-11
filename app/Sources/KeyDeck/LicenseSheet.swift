@@ -1,4 +1,5 @@
 import SwiftUI
+import KeyDeckCore
 
 struct LicenseSheet: View {
     @ObservedObject var license: LicenseManager
@@ -10,17 +11,27 @@ struct LicenseSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("KeyDeck License").font(.headline)
-            Text(license.statusText()).foregroundColor(.secondary)
+            Text(tierLine).foregroundColor(.secondary)
 
             if license.state.isPro {
+                if let email = license.state.email {
+                    Text(email).font(.callout).foregroundColor(.secondary)
+                }
                 Button("Remove license from this Mac") { license.deactivate() }
             } else {
-                Text("Enter the license key from your Gumroad receipt:")
+                Button {
+                    NSWorkspace.shared.open(LicenseConfig.buyURL)
+                } label: {
+                    Text("Buy KeyDeck Pro").bold().frame(maxWidth: .infinity)
+                }
+                .controlSize(.large)
+
+                Text("Already bought it? Enter the license key from your Gumroad receipt:")
+                    .font(.callout)
                 TextField("XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX", text: $key)
                     .textFieldStyle(.roundedBorder).font(.system(.body, design: .monospaced))
                 if let error { Text(error).foregroundColor(.red).font(.callout) }
                 HStack {
-                    Button("Buy a license") { NSWorkspace.shared.open(LicenseConfig.buyURL) }
                     Spacer()
                     Button(busy ? "Activating…" : "Activate") { activate() }
                         .disabled(busy || key.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -31,6 +42,18 @@ struct LicenseSheet: View {
         }
         .padding(18)
         .frame(width: 440)
+    }
+
+    private var tierLine: String {
+        switch license.state.tier {
+        case .pro:
+            return "Pro — unlimited launchers. Thank you!"
+        case .trial(let days):
+            return "Free trial — everything unlocked, \(days) day\(days == 1 ? "" : "s") left. " +
+                   "Afterwards KeyDeck stays free with up to \(Entitlements.freeMaxLaunchers) launchers."
+        case .free:
+            return "Free plan — up to \(Entitlements.freeMaxLaunchers) launchers. Pro removes the limit."
+        }
     }
 
     private func activate() {

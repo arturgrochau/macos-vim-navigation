@@ -13,6 +13,30 @@ public enum Validation {
     static let symbols: [String: String] = ["cmd": "⌘", "alt": "⌥", "ctrl": "⌃", "shift": "⇧"]
     static let order = ["ctrl", "alt", "shift", "cmd"]
 
+    /// Keys the engine reserves inside NAV MODE (modules/nav.lua). A launcher
+    /// assigned to one of these would silently shadow a navigation binding.
+    public static let reservedNavKeys: Set<String> = [
+        "h", "j", "k", "l",            // pointer movement
+        "d", "u", "w", "b",            // scrolling
+        "g",                           // gg / G scroll-to-edge
+        "i", "a",                      // clicks
+        "up", "down", "left", "right", // arrow equivalents
+    ]
+    /// Shift-modified keys reserved by NAV MODE (big moves/scrolls, focus
+    /// cycling, center-mouse, the ? help overlay).
+    public static let reservedShiftNavKeys: Set<String> = [
+        "h", "j", "k", "l", "d", "u", "w", "b", "g", "a", "i", "m", "/",
+    ]
+
+    /// True when key+mods collides with a binding the engine itself owns in NAV MODE.
+    public static func isReservedNavKey(key: String, mods: [String]) -> Bool {
+        let k = key.lowercased()
+        let m = Set(mods.map { $0.lowercased() })
+        if m.isEmpty { return reservedNavKeys.contains(k) }
+        if m == ["shift"] { return reservedShiftNavKeys.contains(k) }
+        return false
+    }
+
     public static func display(mods: [String], key: String) -> String {
         let m = order.filter { mods.contains($0) }.map { symbols[$0] ?? $0 }.joined()
         return m + key.uppercased()
@@ -23,6 +47,8 @@ public enum Validation {
     }
 
     /// Returns one entry per signature that appears more than once in a namespace.
+    /// The engine's own NAV MODE keys are seeded into the modal namespace, so a
+    /// launcher on e.g. `j` is reported as a conflict.
     public static func conflicts(in config: Config) -> [BindingConflict] {
         var global: [(String, String)] = []   // (signature, display)
         var modal: [(String, String)] = []
@@ -53,20 +79,13 @@ public enum Validation {
             addGlobal(f.monitors.nextDisplay.mods, f.monitors.nextDisplay.key)
             addGlobal(f.monitors.prevDisplay.mods, f.monitors.prevDisplay.key)
         }
-        if f.cursor.enabled {
-            for k in [f.cursor.keys.left, f.cursor.keys.down, f.cursor.keys.up, f.cursor.keys.right, f.cursor.keys.click] {
-                addGlobal(f.cursor.mods, k)
-            }
-        }
-        if f.windows.enabled {
-            addGlobal(f.windows.hide.mods, f.windows.hide.key)
-            addGlobal(f.windows.restore.mods, f.windows.restore.key)
-        }
-        // Reload is always bound to ⌥R.
-        addGlobal(["alt"], "r")
 
-        // Modal (NAV MODE) keys.
-        if f.nav.enabled { for b in f.nav.exitKeys { addModal(b.mods, b.key) } }
+        // Modal (NAV MODE) keys: the engine's reserved keys, exit keys, launchers.
+        if f.nav.enabled {
+            for k in reservedNavKeys { addModal([], k) }
+            for k in reservedShiftNavKeys { addModal(["shift"], k) }
+            for b in f.nav.exitKeys { addModal(b.mods, b.key) }
+        }
         for a in config.apps { addModal(a.mods, a.key) }
 
         return tally(global, scope: "Global") + tally(modal, scope: "NAV MODE")

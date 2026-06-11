@@ -13,8 +13,10 @@ public struct LauncherCategory {
 
 public enum SuggestedLaunchers {
     /// Unique-key catalog tuned for a broad range of Mac professionals.
+    /// Keys deliberately avoid Validation.reservedNavKeys (h j k l d u w b g
+    /// i a …) so a suggestion never shadows a NAV MODE binding.
     public static let catalog: [LauncherCategory] = [
-        .init(key: "b", label: "Browser",
+        .init(key: "o", label: "Browser",
               bundleIDs: ["company.thebrowser.Browser", "com.google.Chrome", "com.apple.Safari",
                           "com.microsoft.edgemac", "com.brave.Browser", "org.mozilla.firefox", "com.chatgpt.atlas"],
               nameKeywords: ["arc", "chrome", "safari", "edge", "brave", "firefox"], clickTarget: "center"),
@@ -24,8 +26,8 @@ public enum SuggestedLaunchers {
               nameKeywords: ["visual studio code", "code", "cursor", "xcode", "zed"], clickTarget: "center"),
         .init(key: "t", label: "Teams", bundleIDs: ["com.microsoft.teams2", "com.microsoft.teams"], nameKeywords: ["teams"], clickTarget: "center"),
         .init(key: "s", label: "Slack", bundleIDs: ["com.tinyspeck.slackmacgap"], nameKeywords: ["slack"], clickTarget: "center"),
-        .init(key: "a", label: "Claude", bundleIDs: ["com.anthropic.claudefordesktop"], nameKeywords: ["claude"], clickTarget: "bottom"),
-        .init(key: "g", label: "Terminal",
+        .init(key: "q", label: "Claude", bundleIDs: ["com.anthropic.claudefordesktop"], nameKeywords: ["claude"], clickTarget: "bottom"),
+        .init(key: "x", label: "Terminal",
               bundleIDs: ["com.apple.Terminal", "com.googlecode.iterm2", "dev.warp.Warp-Stable", "com.mitchellh.ghostty"],
               nameKeywords: ["terminal", "iterm", "warp", "ghostty"], clickTarget: "center"),
         .init(key: "m", label: "Mail / Messages",

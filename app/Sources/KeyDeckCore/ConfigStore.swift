@@ -53,54 +53,20 @@ public enum ConfigStore {
 }
 
 public extension Config {
-    /// Built-in presets mirroring config/presets/*.json.
-    static func preset(named name: String) -> Config {
-        switch name {
-        case "developer":
-            var c = Config.default
-            c.preset = "developer"
-            c.features.cursor.enabled = true
-            c.features.windows.enabled = true
-            c.apps = [
-                AppShortcut(key: "c", mods: [], bundleID: "com.openai.chat", names: ["ChatGPT"], clickTarget: "bottom"),
-                AppShortcut(key: "c", mods: ["shift"], bundleID: "com.anthropic.claudefordesktop", names: ["Claude"], clickTarget: "center"),
-                AppShortcut(key: "g", mods: [], bundleID: "com.google.Chrome", names: ["Google Chrome"], clickTarget: "center"),
-                AppShortcut(key: "o", mods: [], bundleID: "company.thebrowser.Browser", names: ["Arc"], clickTarget: "center"),
-                AppShortcut(key: "t", mods: [], bundleID: "com.microsoft.teams2", names: ["Microsoft Teams"], clickTarget: "center"),
-            ]
-            return c
-        case "minimal":
-            var c = Config.default
-            c.preset = "minimal"
-            c.features.visual.enabled = false
-            c.features.cursor.enabled = false
-            c.features.windows.enabled = false
-            c.features.monitors.jumpClickKeys = []
-            c.features.monitors.parkKeys = []
-            c.apps = []
-            return c
-        default:
-            var c = Config.default
-            c.preset = "default"
-            return c
-        }
-    }
-
-    static let presetNames = ["default", "developer", "minimal"]
-
-    /// A copy limited to what the essentials editor manages. Clears the monitor
-    /// sub-bindings and hidden features that the UI doesn't surface, so the running
-    /// engine config never has "phantom" shortcuts the user can't see or control.
-    func curatedForEssentials() -> Config {
+    /// A copy limited to what the app's UI manages: the nav shortcut, the
+    /// display-cycle toggle + modifier, and the launcher list. Every monitor
+    /// sub-binding the UI doesn't surface is cleared, so the running engine
+    /// never has "phantom" shortcuts the user can't see or control.
+    func curated() -> Config {
         var c = self
-        // Visual mode and global cursor are user-controlled in Advanced, so leave them.
-        // Hide/restore windows is never surfaced — keep it off.
-        c.features.windows.enabled = false
         c.features.monitors.optionScroll = false
+        c.features.monitors.jumpKeys = []
         c.features.monitors.jumpClickKeys = []
         c.features.monitors.parkKeys = []
         c.features.monitors.focusLeft = KeyBinding()
         c.features.monitors.focusRight = KeyBinding()
+        c.features.monitors.nextDisplay = KeyBinding()
+        c.features.monitors.prevDisplay = KeyBinding()
         return c
     }
 

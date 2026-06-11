@@ -4,6 +4,10 @@ import KeyDeckCore
 
 /// Fill these after creating the Gumroad product. `productID` is the product's ID
 /// (Gumroad: Product → Advanced → "product_id"); `buyURL` is its public page.
+///
+/// TODO(release): set the real Gumroad product ID and verify buyURL before
+/// shipping — activation fails with "not configured" until then. See the
+/// release checklist in the README.
 enum LicenseConfig {
     static let productID = "YOUR_GUMROAD_PRODUCT_ID"
     static let buyURL = URL(string: "https://gumroad.com/l/keydeck")!
@@ -41,21 +45,28 @@ final class LicenseManager: ObservableObject {
             state = s
         } else {
             state = .free
-            persist()
         }
+        // Trial clock starts on the very first launch and persists forever.
+        if state.firstLaunchAt == nil {
+            state.firstLaunchAt = Date()
+        }
+        persist()
     }
 
     var isPro: Bool { state.isPro }
     func statusText() -> String { state.statusText() }
 
     /// Verify a key with Gumroad, bind it to this machine, and cache the result.
-    func activate(key: String) async -> Result<Void, LicenseError> {
+    /// `incrementUses` must be true only for a NEW activation: silent
+    /// re-verification with it set would burn an activation every week and
+    /// eventually lock out a legitimate user via maxActivations.
+    func activate(key: String, incrementUses: Bool = true) async -> Result<Void, LicenseError> {
         guard LicenseConfig.productID != "YOUR_GUMROAD_PRODUCT_ID" else { return .failure(.notConfigured) }
         var req = URLRequest(url: URL(string: "https://api.gumroad.com/v2/licenses/verify")!)
         req.httpMethod = "POST"
         req.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
-        req.httpBody = "product_id=\(LicenseConfig.productID)&license_key=\(trimmed)&increment_uses_count=true"
+        req.httpBody = "product_id=\(LicenseConfig.productID)&license_key=\(trimmed)&increment_uses_count=\(incrementUses)"
             .data(using: .utf8)
         do {
             let (data, _) = try await URLSession.shared.data(for: req)
@@ -76,11 +87,13 @@ final class LicenseManager: ObservableObject {
         }
     }
 
-    /// Re-verify silently if the cached receipt is stale (keeps offline use working).
+    /// Re-verify silently if the cached receipt is stale (keeps offline use
+    /// working). Never increments the Gumroad uses count — this is a check,
+    /// not a new activation.
     func revalidateIfStale() async {
         guard state.isPro, let key = state.licenseKey, let at = state.verifiedAt else { return }
         if Date().timeIntervalSince(at) > LicenseConfig.reverifyAfterDays * 86_400 {
-            _ = await activate(key: key)
+            _ = await activate(key: key, incrementUses: false)
         }
     }
 

@@ -10,14 +10,27 @@ final class ConfigTests: XCTestCase {
     }
 
     func testPartialConfigFillsDefaults() throws {
-        // Only flips one nested flag; everything else must fall back to defaults.
-        let json = #"{ "features": { "cursor": { "enabled": true } } }"#
+        // Only flips one nested value; everything else must fall back to defaults.
+        let json = #"{ "features": { "monitors": { "cycleModifier": "ctrl" } } }"#
         let c = try ConfigStore.decode(Data(json.utf8))
-        XCTAssertTrue(c.features.cursor.enabled)             // override applied
-        XCTAssertEqual(c.tuning.scrollStep, 62)              // default filled
-        XCTAssertTrue(c.features.nav.enabled)                // default filled
-        XCTAssertEqual(c.apps, Config.default.apps)          // default apps preserved
-        XCTAssertEqual(c.features.cursor.keys.left, "h")     // nested default filled
+        XCTAssertEqual(c.features.monitors.cycleModifier, "ctrl")  // override applied
+        XCTAssertEqual(c.tuning.scrollStep, 62)                    // default filled
+        XCTAssertTrue(c.features.nav.enabled)                      // default filled
+        XCTAssertTrue(c.features.monitors.optionTapCycle)          // default filled
+    }
+
+    func testOldConfigWithRemovedBlocksDecodes() throws {
+        // Configs written before visual/cursor/windows were removed must load.
+        let json = #"""
+        { "features": { "visual": { "enabled": true },
+                        "cursor": { "enabled": true, "keys": { "left": "h" } },
+                        "windows": { "enabled": true } },
+          "tuning": { "globalCursorStep": 180, "dragMoveFrac": 0.05, "scrollStep": 70 },
+          "apps": [ { "key": "c", "bundleID": "com.openai.chat", "names": ["ChatGPT"] } ] }
+        """#
+        let c = try ConfigStore.decode(Data(json.utf8))
+        XCTAssertEqual(c.tuning.scrollStep, 70)
+        XCTAssertEqual(c.apps.count, 1)
     }
 
     func testKeyBindingPartialDecode() throws {
@@ -26,45 +39,36 @@ final class ConfigTests: XCTestCase {
         XCTAssertEqual(b.mods, [])
     }
 
-    func testDeveloperPreset() {
-        let c = Config.preset(named: "developer")
-        XCTAssertEqual(c.preset, "developer")
-        XCTAssertTrue(c.features.cursor.enabled)
-        XCTAssertTrue(c.features.windows.enabled)
-        XCTAssertTrue(c.apps.contains { $0.bundleID == "com.anthropic.claudefordesktop" })
-    }
-
-    func testMinimalPreset() {
-        let c = Config.preset(named: "minimal")
-        XCTAssertFalse(c.features.visual.enabled)
-        XCTAssertTrue(c.apps.isEmpty)
-        XCTAssertTrue(c.features.monitors.jumpClickKeys.isEmpty)
-        XCTAssertTrue(c.features.monitors.enabled)           // monitors stay on
-    }
-
     func testDefaultHasNoConflicts() {
         XCTAssertTrue(Validation.conflicts(in: .default).isEmpty,
-                      "default preset should not self-conflict")
+                      "default config should not self-conflict")
     }
 
-    func testDuplicateModalBindingDetected() {
+    func testDuplicateLauncherKeyDetected() {
         var c = Config.default
-        c.apps.append(AppShortcut(key: "c"))   // duplicates ChatGPT's bare `c`
-        let conflicts = Validation.conflicts(in: c)
-        XCTAssertTrue(conflicts.contains { $0.scope == "NAV MODE" && $0.signature == "C" })
+        c.apps = [AppShortcut(key: "c", bundleID: "a"), AppShortcut(key: "c", bundleID: "b")]
+        XCTAssertTrue(Validation.conflicts(in: c).contains { $0.scope == "NAV MODE" && $0.signature == "C" })
+    }
+
+    func testLauncherOnReservedNavKeyDetected() {
+        var c = Config.default
+        c.apps = [AppShortcut(key: "j", bundleID: "a")]
+        XCTAssertTrue(Validation.conflicts(in: c).contains { $0.scope == "NAV MODE" && $0.signature == "J" })
+        XCTAssertTrue(Validation.isReservedNavKey(key: "j", mods: []))
+        XCTAssertTrue(Validation.isReservedNavKey(key: "m", mods: ["shift"]))
+        XCTAssertFalse(Validation.isReservedNavKey(key: "z", mods: []))
     }
 
     func testDuplicateGlobalBindingDetected() {
         var c = Config.default
-        // Make a monitor jump key collide with the reload key (⌥R).
-        c.features.monitors.jumpKeys = ["r"]
-        let conflicts = Validation.conflicts(in: c)
-        XCTAssertTrue(conflicts.contains { $0.scope == "Global" && $0.signature == "⌥R" })
+        c.features.monitors.jumpKeys = ["1", "1"]
+        XCTAssertTrue(Validation.conflicts(in: c).contains { $0.scope == "Global" && $0.signature == "⌥1" })
     }
 
     func testEncodedJSONOmitsAppID() throws {
-        let data = try ConfigStore.encode(.default)
-        let str = String(decoding: data, as: UTF8.self)
+        var c = Config.default
+        c.apps = [AppShortcut(key: "c", bundleID: "com.openai.chat", names: ["ChatGPT"])]
+        let str = String(decoding: try ConfigStore.encode(c), as: UTF8.self)
         XCTAssertFalse(str.contains("\"id\""), "app id must not be serialized")
         XCTAssertTrue(str.contains("com.openai.chat"))
     }

@@ -4,7 +4,7 @@ import SwiftUI
 struct KeyDeckApp: App {
     var body: some Scene {
         WindowGroup("KeyDeck") {
-            RootView()
+            MainView()
         }
         .windowResizability(.contentSize)
     }
