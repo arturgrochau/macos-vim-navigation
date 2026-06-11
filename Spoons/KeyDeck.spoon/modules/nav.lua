@@ -14,7 +14,7 @@ function M.setup(ctx)
   local scrollStep = t.scrollStep
   local scrollLargeStep = scrollStep
 
-  -- Modal lifecycle + overlays. The exit hook finalizes a pending visual selection.
+  -- Modal lifecycle + overlays.
   function modal:entered()
     ctx.navActive = true
     overlay.createNormal()
@@ -24,16 +24,6 @@ function M.setup(ctx)
     overlay.hideNormal()
     overlay.hideHelp()
     ctx.helpVisible = false
-    if ctx.mode == "visual" then
-      local pos = mouse.absolutePosition()
-      if ctx.dragging then
-        eventtap.event.newMouseEvent(eventtap.event.types.leftMouseUp, pos):post()
-        ctx.dragging = false
-      end
-      timer.doAfter(0.05, function() eventtap.leftClick(pos) end)
-      ctx.mode = "normal"
-      overlay.hideVisual()
-    end
   end
 
   -- Directional pointer movement: hjkl (1/8 screen) and HJKL (1/2 screen).
@@ -53,29 +43,15 @@ function M.setup(ctx)
       t.directionInitialDelay, t.directionRepeatInterval)
   end
 
-  -- Scroll keys (d/u vertical, w/b horizontal) with drag-aware behavior.
-  local dragFrac = t.dragMoveFrac
-  local dragLargeFrac = dragFrac * 5
-  ctx.bindScrollKey("d", { 0, -scrollLargeStep }, { 0, -scrollStep },
-    function() ctx.moveMouseByFraction(0, dragLargeFrac) end,
-    function() ctx.moveMouseByFraction(0, dragFrac) end)
-  ctx.bindScrollKey("u", { 0, scrollLargeStep }, { 0, scrollStep },
-    function() ctx.moveMouseByFraction(0, -dragLargeFrac) end,
-    function() ctx.moveMouseByFraction(0, -dragFrac) end)
-  ctx.bindScrollKey("w", { -scrollLargeStep, 0 }, { -scrollStep, 0 },
-    function() ctx.moveMouseByFraction(ctx.mode == "visual" and dragLargeFrac or -dragLargeFrac, 0) end,
-    function() ctx.moveMouseByFraction(ctx.mode == "visual" and dragFrac or -dragFrac, 0) end)
-  ctx.bindScrollKey("b", { scrollLargeStep, 0 }, { scrollStep, 0 },
-    function() ctx.moveMouseByFraction(ctx.mode == "visual" and -dragLargeFrac or dragLargeFrac, 0) end,
-    function() ctx.moveMouseByFraction(ctx.mode == "visual" and -dragFrac or dragFrac, 0) end)
+  -- Scroll keys (d/u vertical, w/b horizontal).
+  ctx.bindScrollKey("d", { 0, -scrollLargeStep }, { 0, -scrollStep })
+  ctx.bindScrollKey("u", { 0, scrollLargeStep }, { 0, scrollStep })
+  ctx.bindScrollKey("w", { -scrollLargeStep, 0 }, { -scrollStep, 0 })
+  ctx.bindScrollKey("b", { scrollLargeStep, 0 }, { scrollStep, 0 })
 
   -- Arrow keys: up/down scroll (like u/d), left/right move pointer (like h/l).
-  ctx.bindScrollKey("down", { 0, -scrollLargeStep }, { 0, -scrollStep },
-    function() ctx.moveMouseByFraction(0, dragLargeFrac) end,
-    function() ctx.moveMouseByFraction(0, dragFrac) end)
-  ctx.bindScrollKey("up", { 0, scrollLargeStep }, { 0, scrollStep },
-    function() ctx.moveMouseByFraction(0, -dragLargeFrac) end,
-    function() ctx.moveMouseByFraction(0, -dragFrac) end)
+  ctx.bindScrollKey("down", { 0, -scrollLargeStep }, { 0, -scrollStep })
+  ctx.bindScrollKey("up", { 0, scrollLargeStep }, { 0, scrollStep })
   for _, dir in ipairs({ { key = "left", dx = -1 }, { key = "right", dx = 1 } }) do
     local xFrac = dir.dx * (1/8)
     ctx.bindHoldWithDelay({}, dir.key, function() ctx.moveMouseByFraction(xFrac, 0) end,
@@ -105,7 +81,7 @@ function M.setup(ctx)
   end
 
   -- Clicks: triple-click line select (i), right-click (a).
-  modal:bind({}, "i", function() ctx.performClicks(3, false) end)
+  modal:bind({}, "i", function() ctx.performClicks(3) end)
   modal:bind({}, "a", function() eventtap.rightClick(mouse.absolutePosition()) end)
 
   -- Window focus cycling and center-mouse.
@@ -241,10 +217,6 @@ function M.setup(ctx)
     if bindable(hk.key) then ctx.bindGlobal(hk.mods or {}, hk.key, toggle) end
   elseif act and act.kind == "capsLock" then
     ctx.bindGlobal({}, "f18", toggle) -- the GUI remaps Caps Lock → F18
-  else
-    for _, b in ipairs(nav.enterKeys or {}) do
-      if bindable(b.key) then ctx.bindGlobal(b.mods or {}, b.key, function() modal:enter() end) end
-    end
   end
 
   -- Exit keys (e.g. escape) always apply.
@@ -257,7 +229,7 @@ function M.setup(ctx)
     local sections = {
       { title = "Navigation", items = {
         { "h j k l", "Move pointer" }, { "d / u", "Scroll down / up" },
-        { "gg / G", "Top / bottom" }, { "v", "Select" }, { "y / p", "Copy / paste" },
+        { "gg / G", "Top / bottom" }, { "i / a", "Click / right-click" },
         { "Esc", "Leave Navigation Mode" },
       } },
     }

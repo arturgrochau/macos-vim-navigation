@@ -40,10 +40,6 @@ function M.setup(ctx)
 
   local function centerMouseOn(scr)
     if not scr then return end
-    if ctx.dragging then
-      local win = window.focusedWindow()
-      if win then win:moveToScreen(scr) end
-    end
     local f = scr:frame()
     ctx.setMousePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
   end

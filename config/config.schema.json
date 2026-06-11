@@ -30,11 +30,6 @@
         "scrollRepeatInterval": { "type": "number", "minimum": 0 },
         "directionInitialDelay": { "type": "number", "minimum": 0 },
         "directionRepeatInterval": { "type": "number", "minimum": 0 },
-        "dragMoveFrac": { "type": "number", "exclusiveMinimum": 0 },
-        "globalCursorStep": { "type": "number", "minimum": 1 },
-        "globalCursorHoldStep": { "type": "number", "minimum": 1 },
-        "globalCursorRepeatDelay": { "type": "number", "minimum": 0 },
-        "globalCursorRepeatInterval": { "type": "number", "minimum": 0 },
         "optionReleaseIdleSeconds": {
           "type": "number", "minimum": 0,
           "description": "The on-release, no-conflict guard: a bare Option tap only cycles screens after the keyboard has been idle this long."
@@ -62,30 +57,7 @@
                 "hotkey": { "$ref": "#/definitions/binding" }
               }
             },
-            "enterKeys": { "type": "array", "items": { "$ref": "#/definitions/binding" } },
             "exitKeys": { "type": "array", "items": { "$ref": "#/definitions/binding" } }
-          }
-        },
-        "visual": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": { "enabled": { "type": "boolean" } }
-        },
-        "cursor": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "enabled": { "type": "boolean" },
-            "mods": { "type": "array", "items": { "$ref": "#/definitions/modifier" } },
-            "keys": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "left": { "type": "string" }, "down": { "type": "string" },
-                "up": { "type": "string" }, "right": { "type": "string" },
-                "click": { "type": "string" }
-              }
-            }
           }
         },
         "monitors": {
@@ -107,15 +79,6 @@
             "focusRight": { "$ref": "#/definitions/binding" },
             "nextDisplay": { "$ref": "#/definitions/binding" },
             "prevDisplay": { "$ref": "#/definitions/binding" }
-          }
-        },
-        "windows": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "enabled": { "type": "boolean" },
-            "hide": { "$ref": "#/definitions/binding" },
-            "restore": { "$ref": "#/definitions/binding" }
           }
         }
       }

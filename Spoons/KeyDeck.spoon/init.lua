@@ -83,12 +83,9 @@ function obj:_start()
   -- Load enabled modules. Order: nav first (owns the modal lifecycle), then the rest.
   local function enabled(name) return cfg.features[name] and cfg.features[name].enabled end
 
-  if enabled("nav")    then loadModule("modules/nav.lua").setup(ctx) end
-  if enabled("visual") then loadModule("modules/visual.lua").setup(ctx) end
+  if enabled("nav") then loadModule("modules/nav.lua").setup(ctx) end
   loadModule("modules/apps.lua").setup(ctx) -- no-ops when cfg.apps is empty
-  if enabled("cursor")   then loadModule("modules/cursor.lua").setup(ctx) end
   if enabled("monitors") then loadModule("modules/monitors.lua").setup(ctx) end
-  if enabled("windows")  then loadModule("modules/windows.lua").setup(ctx) end
 
   -- Optional power-user escape hatch: raw Lua appended to the engine.
   if type(cfg.customLua) == "string" and #cfg.customLua > 0 then
@@ -176,18 +173,9 @@ function obj:stop()
     end)
     ctx.holdTimers[key] = nil
   end
-  for key, h in pairs(ctx.cursorTimers or {}) do
-    pcall(function()
-      if h.delayTimer then h.delayTimer:stop() end
-      if h.repeatTimer then h.repeatTimer:stop() end
-    end)
-    ctx.cursorTimers[key] = nil
-  end
-
   -- Overlay canvases.
   if ctx.overlay then
     pcall(function() ctx.overlay.hideHelp() end)
-    if ctx.overlay.hideVisual then pcall(function() ctx.overlay.hideVisual() end) end
     if ctx.overlay.normal then
       pcall(function() ctx.overlay.normal:delete() end)
       ctx.overlay.normal = nil

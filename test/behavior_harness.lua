@@ -140,12 +140,10 @@ hs = {
 ----------------------------------------------------------------------
 -- Injected through the REAL config path: io.open says the config file exists,
 -- hs.json.read returns this table, and config.lua deep-merges it over defaults.
--- Cursor is enabled, the option-tap display cycle is on (off by default), and
--- the nav activator is pinned to a Right-⌘ tap so it doesn't overlap the
--- Option-based cycle in these tests.
+-- The option-tap display cycle is on, and the nav activator is pinned to a
+-- Right-⌘ tap so it doesn't overlap the Option-based cycle in these tests.
 local userConfig = {
   features = {
-    cursor = { enabled = true },
     monitors = { optionTapCycle = true },
     nav = { activator = { kind = "tapModifier", modifier = "rightCmd", onRelease = true } },
   },
@@ -243,10 +241,6 @@ pressGlobal({ "ctrl", "alt" }, "right"); pressGlobal({ "ctrl", "alt" }, "right")
 check("next display wraps S3 -> S1", approx(mousePos.x, centerOf(S[1]).x), ("x=%.0f"):format(mousePos.x))
 setMouse(centerOf(S[1])); pressGlobal({ "ctrl", "alt" }, "left")
 check("prev display wraps S1 -> S3", approx(mousePos.x, centerOf(S[3]).x), ("x=%.0f"):format(mousePos.x))
-
-print("Global cursor (cursor enabled): opt+cmd+shift+l moves right by globalCursorStep=180:")
-setMouse({ x = 100, y = 100 }); resetRec(); pressGlobal({ "alt", "cmd", "shift" }, "l")
-check("opt+cmd+shift+l moves +180px x", approx(mousePos.x, 100 + 180))
 
 print("Option-tap screen cycle + conflict guard (the no-conflict feature):")
 local flags = function(t, kc) for _, cb in ipairs(flagsCbs) do cb({ getFlags = function() return t end, getKeyCode = function() return kc or 0 end }) end end

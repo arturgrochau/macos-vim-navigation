@@ -1,11 +1,10 @@
--- On-screen mode overlays: "-- NORMAL --" while NAV MODE is active and
--- "-- VISUAL MODE --" while a selection is in progress. Faithful extraction of
--- the original createOverlay / showVisualIndicator / hideVisualIndicator helpers.
+-- On-screen overlays: the "-- NORMAL --" indicator while NAV MODE is active,
+-- and the centered help panel listing every binding.
 local Overlay = {}
 
 function Overlay.new(ctx)
   local canvas, mouse = ctx.hs.canvas, ctx.mouse
-  local self = { normal = nil, visual = nil }
+  local self = { normal = nil }
 
   function self.createNormal()
     if self.normal then self.normal:delete() end
@@ -26,30 +25,6 @@ function Overlay.new(ctx)
 
   function self.hideNormal()
     if self.normal then self.normal:hide() end
-  end
-
-  function self.showVisual()
-    if self.visual then return end
-    local scr = mouse.getCurrentScreen():frame()
-    self.visual = canvas.new({
-      x = scr.x + scr.w - 210, y = scr.y + scr.h - 90, w = 200, h = 30,
-    }):appendElements({
-      type = "rectangle", action = "fill",
-      fillColor = { red = 0.2, green = 0.2, blue = 1, alpha = 0.5 },
-      roundedRectRadii = { xRadius = 8, yRadius = 8 },
-    }, {
-      type = "text", text = "-- VISUAL MODE --",
-      textSize = 14, textColor = { white = 1 },
-      frame = { x = 0, y = 5, h = 30, w = 200 }, textAlignment = "center",
-    })
-    self.visual:show()
-  end
-
-  function self.hideVisual()
-    if self.visual then
-      self.visual:delete()
-      self.visual = nil
-    end
   end
 
   -- Centered help panel listing every binding. `sections` is a list of
