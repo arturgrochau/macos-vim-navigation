@@ -96,26 +96,16 @@ enum EngineInstaller {
         try fm.createDirectory(atPath: dest, withIntermediateDirectories: true)
 
         if let bundled = Bundle.main.url(forResource: "KeyDeck", withExtension: "spoon"),
-           fm.fileExists(atPath: bundled.appendingPathComponent("keydeck.lua").path) {
+           fm.fileExists(atPath: bundled.appendingPathComponent("defaults.lua").path) {
             try copyContents(of: bundled.path, into: dest)
             return
         }
 
-        // Dev fallback: assemble from the repo tree relative to this source file.
+        // Dev fallback: copy the canonical Spoon from the repo tree relative to this file.
         let root = URL(fileURLWithPath: #filePath)       // app/Sources/KeyDeck/EngineInstaller.swift
             .deletingLastPathComponent().deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent()  // -> repo root
-        let engine = root.appendingPathComponent("engine").path
-        let spoonInit = root.appendingPathComponent("spoon/KeyDeck.spoon/init.lua").path
-        try fm.copyItem(atPath: spoonInit, toPath: (dest as NSString).appendingPathComponent("init.lua"))
-        for f in ["keydeck.lua", "defaults.lua", "config.lua"] {
-            try fm.copyItem(atPath: (engine as NSString).appendingPathComponent(f),
-                            toPath: (dest as NSString).appendingPathComponent(f))
-        }
-        for sub in ["lib", "modules"] {
-            try fm.copyItem(atPath: (engine as NSString).appendingPathComponent(sub),
-                            toPath: (dest as NSString).appendingPathComponent(sub))
-        }
+        try copyContents(of: root.appendingPathComponent("Spoons/KeyDeck.spoon").path, into: dest)
     }
 
     private static func copyContents(of src: String, into dest: String) throws {

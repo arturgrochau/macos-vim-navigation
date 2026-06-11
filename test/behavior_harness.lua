@@ -3,8 +3,7 @@
 -- load_harness.lua (which only checks that setup() runs), this exercises the
 -- actual logic: movement math, scroll deltas, clicks, app launch, monitor jumps,
 -- and the option-tap idle/conflict guard.
-local ENGINE = arg[1]
-package.path = ENGINE .. "/?.lua;" .. ENGINE .. "/?/init.lua;" .. package.path
+local SPOON = arg[1]
 
 ----------------------------------------------------------------------
 -- Instrumented mock state
@@ -73,7 +72,7 @@ local function mkMouseEvent() -- result of newMouseEvent / newScrollEvent
 end
 
 hs = {
-  configdir = ENGINE,
+  configdir = SPOON,
   hotkey = {
     bind = function(mods, key, press, release)
       globalBinds[modKey(mods, key)] = { press = press, release = release }
@@ -137,16 +136,37 @@ hs = {
 }
 
 ----------------------------------------------------------------------
--- Load engine with cursor enabled (so we can exercise it too)
+-- Load the Spoon with a user config exercising extra features
 ----------------------------------------------------------------------
-local defaults = dofile(ENGINE .. "/defaults.lua")
-defaults.features.cursor.enabled = true
--- Exercise the option-tap display cycle (off by default) and pin the nav activator to a
--- Right-⌘ tap so it doesn't overlap the Option-based cycle in these tests.
-defaults.features.monitors.optionTapCycle = true
-defaults.features.nav.activator = { kind = "tapModifier", modifier = "rightCmd", onRelease = true, hotkey = { mods = { "ctrl" }, key = "=" } }
-package.loaded["config"] = { load = function() return defaults end, path = "x" }
-local ok, err = pcall(dofile, ENGINE .. "/init.lua")
+-- Injected through the REAL config path: io.open says the config file exists,
+-- hs.json.read returns this table, and config.lua deep-merges it over defaults.
+-- Cursor is enabled, the option-tap display cycle is on (off by default), and
+-- the nav activator is pinned to a Right-⌘ tap so it doesn't overlap the
+-- Option-based cycle in these tests.
+local userConfig = {
+  features = {
+    cursor = { enabled = true },
+    monitors = { optionTapCycle = true },
+    nav = { activator = { kind = "tapModifier", modifier = "rightCmd", onRelease = true } },
+  },
+}
+hs.json.read = function() return userConfig end
+local realopen = io.open
+io.open = function(path, mode)
+  if type(path) == "string" and path:match("keydeck%-config%.json") then
+    return { close = function() end }
+  end
+  if type(path) == "string" and (path:match("engine%-error%.txt") or path:match("engine%-status%.json")) then
+    return { write = function() end, close = function() end }
+  end
+  return realopen(path, mode)
+end
+
+local ok, err = pcall(function()
+  local spoonObj = dofile(SPOON .. "/init.lua")
+  spoonObj:init()
+  return spoonObj:_start()
+end)
 if not ok then print("FAIL load: " .. tostring(err)); os.exit(1) end
 
 ----------------------------------------------------------------------

@@ -3,8 +3,6 @@
 -- The user config lives at ~/.hammerspoon/keydeck-config.json (written by the
 -- SwiftUI preset editor, or hand-edited). If it is absent or unreadable the
 -- engine runs purely on defaults.lua, so a fresh install works with zero config.
-local defaults = require("defaults")
-
 local M = {}
 
 local CONFIG_PATH = os.getenv("HOME") .. "/.hammerspoon/keydeck-config.json"
@@ -38,7 +36,9 @@ local function deepMerge(base, override)
 end
 
 -- Returns the effective config table (defaults merged with the user file).
-function M.load()
+-- `defaults` is passed in by the Spoon's init.lua (loaded via dofile, so this
+-- module never touches package.loaded).
+function M.load(defaults)
   local user = nil
   local f = io.open(CONFIG_PATH, "r")
   if f then

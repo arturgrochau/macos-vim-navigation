@@ -1,7 +1,8 @@
--- Load-time harness: mock the Hammerspoon API and execute the engine so every
--- module's setup() actually runs. Catches require/runtime errors at load.
-local ENGINE = arg[1]
-package.path = ENGINE .. "/?.lua;" .. ENGINE .. "/?/init.lua;" .. package.path
+-- Load-time harness: mock the Hammerspoon API and execute the Spoon so every
+-- module's setup() actually runs. Catches load/runtime errors.
+-- The Spoon resolves its own path (debug.getinfo fallback) and dofile-loads
+-- its files, so no package.path setup is needed here.
+local SPOON = arg[1]
 
 local counts = { globalBind = 0, modalBind = 0, eventtaps = 0, alerts = {} }
 
@@ -42,7 +43,7 @@ local function makeModal()
 end
 
 hs = {
-  configdir = ENGINE,
+  configdir = SPOON,
   hotkey = {
     -- Mirror real Hammerspoon: an empty/nil key is an error. This is what catches
     -- accidental binds of cleared ("") config keys.
@@ -79,7 +80,8 @@ hs = {
 }
 
 -- Make config.lua's existence check (io.open on the config path) reflect whether
--- this scenario supplies a user config, while leaving all other file IO intact.
+-- this scenario supplies a user config, and swallow the Spoon's status/error
+-- file writes, while leaving all other file IO intact.
 local realopen = io.open
 local currentUserConfig = nil
 io.open = function(path, mode)
@@ -87,21 +89,25 @@ io.open = function(path, mode)
     if currentUserConfig == nil then return nil end
     return { close = function() end }
   end
+  if type(path) == "string" and (path:match("engine%-error%.txt") or path:match("engine%-status%.json")) then
+    return { write = function() end, close = function() end }
+  end
   return realopen(path, mode)
 end
 
 local function run(label, userConfig)
   currentUserConfig = userConfig
-  -- reset module cache so init/config/modules re-evaluate each scenario
-  for _, m in ipairs({ "init", "config", "defaults", "lib.core", "lib.overlay",
-    "modules.nav", "modules.visual", "modules.apps", "modules.cursor",
-    "modules.monitors", "modules.windows" }) do
-    package.loaded[m] = nil
-  end
   counts.globalBind, counts.modalBind, counts.eventtaps, counts.alerts = 0, 0, 0, {}
   hs.json.read = function() return userConfig end
 
-  local ok, err = pcall(dofile, ENGINE .. "/init.lua")
+  -- dofile re-evaluates the Spoon fresh each scenario (no package.loaded cache).
+  -- Use _start() (not start()) so errors propagate instead of being captured
+  -- to the error file.
+  local ok, err = pcall(function()
+    local spoonObj = dofile(SPOON .. "/init.lua")
+    spoonObj:init()
+    return spoonObj:_start()
+  end)
   if not ok then
     print(string.format("FAIL [%s]: %s", label, tostring(err)))
     return false

@@ -38,14 +38,11 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 </plist>
 PLIST
 
-# Assemble the engine as a self-contained Spoon inside the app's Resources, so the
-# in-app "Set up engine" can install it into ~/.hammerspoon/Spoons.
+# Bundle the canonical Spoon inside the app's Resources, so the in-app
+# "Set up engine" can install it into ~/.hammerspoon/Spoons.
 SPOON="$APP/Contents/Resources/KeyDeck.spoon"
-rm -rf "$SPOON"; mkdir -p "$SPOON/lib" "$SPOON/modules"
-cp ../spoon/KeyDeck.spoon/init.lua "$SPOON/"
-cp ../engine/keydeck.lua ../engine/defaults.lua ../engine/config.lua "$SPOON/"
-cp ../engine/lib/*.lua "$SPOON/lib/"
-cp ../engine/modules/*.lua "$SPOON/modules/"
+rm -rf "$SPOON"
+cp -R ../Spoons/KeyDeck.spoon "$SPOON"
 
 # Ad-hoc codesign so macOS lets it launch locally (no notarization yet).
 codesign --force --sign - "$APP" >/dev/null 2>&1 || true
