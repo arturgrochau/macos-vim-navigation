@@ -127,22 +127,22 @@ local function run(label, userConfig)
 end
 
 local allOk = true
--- Scenario 1: no user config (pure defaults).
+-- Scenario 1: no user config (defaults: cursor/windows OFF).
 allOk = run("defaults", nil) and allOk
--- Scenario 2: a STALE config still containing keys from removed features
--- (visual / cursor / windows, globalCursor* tuning) must load cleanly —
--- deep-merge keeps the unknown keys and nothing reads them.
-allOk = run("stale-config-with-removed-keys", {
-  preset = "old",
-  tuning = { globalCursorStep = 180, dragMoveFrac = 0.05 },
+-- Scenario 2: developer-like (all features ON).
+allOk = run("all-features-on", {
+  preset = "all-on",
   features = {
-    visual = { enabled = true },
     cursor = { enabled = true, mods = { "alt", "cmd", "shift" }, keys = { left = "h", down = "j", up = "k", right = "l", click = "i" } },
     windows = { enabled = true, hide = { mods = { "alt", "cmd" }, key = "h" }, restore = { mods = { "alt", "shift" }, key = "r" } },
   },
 }) and allOk
--- Scenario 3: no app launchers configured.
-allOk = run("no-apps", { preset = "no-apps", apps = {} }) and allOk
+-- Scenario 3: minimal (visual OFF, no apps).
+allOk = run("minimal", {
+  preset = "minimal",
+  features = { visual = { enabled = false } },
+  apps = {},
+}) and allOk
 -- Scenarios 4-6: every activator kind loads without error.
 allOk = run("activator:double-tap", { features = { nav = { activator = { kind = "doubleTapModifier", modifier = "alt" } } } }) and allOk
 allOk = run("activator:capslock", { features = { nav = { activator = { kind = "capsLock" } } } }) and allOk

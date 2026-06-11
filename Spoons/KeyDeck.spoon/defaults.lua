@@ -18,6 +18,13 @@ return {
     scrollRepeatInterval   = 0.05,    -- interval between repeated scrolls while held
     directionInitialDelay  = 0.05,    -- delay before hold-to-repeat cursor movement
     directionRepeatInterval = 0.15,   -- interval between repeated cursor moves while held
+    dragMoveFrac           = 1/20,    -- fraction of screen moved per drag step in visual mode
+
+    -- Global cursor module (option+cmd+shift+hjkl)
+    globalCursorStep          = 180,  -- pixels per single tap
+    globalCursorHoldStep      = 68,   -- pixels per repeat while held
+    globalCursorRepeatDelay   = 0.05, -- delay before repeat starts
+    globalCursorRepeatInterval = 0.02,-- interval between repeats (fast)
 
     -- Option-tap screen cycling: the "on-release, no-conflict" guard.
     -- A bare Option tap only fires the screen-cycle if no other key was pressed
@@ -46,11 +53,26 @@ return {
         onRelease = true,
         hotkey = { mods = { "ctrl" }, key = "=" },
       },
+      -- Legacy fallback entry keys, used only when `activator` is absent.
+      enterKeys = {
+        { mods = { "ctrl", "alt", "cmd" }, key = "space" },
+        { mods = {},                       key = "f12" },
+        { mods = { "ctrl" },               key = "=" },
+      },
       -- Keys that exit NAV MODE.
       exitKeys = {
         { mods = {},        key = "escape" },
         { mods = { "ctrl" }, key = "c" },
       },
+    },
+
+    visual = { enabled = true },
+
+    -- Global cursor movement outside NAV MODE (off by default; on in "developer").
+    cursor = {
+      enabled = false,
+      mods = { "alt", "cmd", "shift" },
+      keys = { left = "h", down = "j", up = "k", right = "l", click = "i" },
     },
 
     monitors = {
@@ -76,6 +98,13 @@ return {
       -- Move the pointer to the next / previous physical display (wrap-around).
       nextDisplay = { mods = { "ctrl", "alt" }, key = "right" },
       prevDisplay = { mods = { "ctrl", "alt" }, key = "left" },
+    },
+
+    -- Hide frontmost app / restore all hidden+minimized windows (off by default).
+    windows = {
+      enabled = false,
+      hide    = { mods = { "alt", "cmd" },   key = "h" },
+      restore = { mods = { "alt", "shift" }, key = "r" },
     },
   },
 

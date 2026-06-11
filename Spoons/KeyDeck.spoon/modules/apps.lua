@@ -40,6 +40,18 @@ function M.setup(ctx)
   end
 
   local function activate(entry)
+    -- Finalize a pending visual selection before switching apps.
+    if ctx.mode == "visual" then
+      local pos = mouse.absolutePosition()
+      if ctx.dragging then
+        eventtap.event.newMouseEvent(eventtap.event.types.leftMouseUp, pos):post()
+        ctx.dragging = false
+      end
+      timer.doAfter(0.05, function() eventtap.leftClick(pos) end)
+      ctx.mode = "normal"
+      ctx.overlay.hideVisual()
+    end
+
     local target = entry.clickTarget or "center"
     local label = (entry.names and entry.names[1]) or entry.bundleID or "App"
 
